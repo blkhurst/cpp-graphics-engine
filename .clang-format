@@ -1,0 +1,7 @@
+BasedOnStyle: LLVM
+ColumnLimit: 100
+PackConstructorInitializers: Never
+AllowShortFunctionsOnASingleLine: None
+DerivePointerAlignment: false
+PointerAlignment: Left
+InsertNewlineAtEOF: true

@@ -1,0 +1,12 @@
+Checks: >
+  bugprone-*,
+  performance-*,
+  clang-analyzer-*,
+  cppcoreguidelines-*,
+  modernize-*,
+  readability-*,
+  -modernize-use-trailing-return-type,
+
+WarningsAsErrors: ""
+HeaderFilterRegex: "^(src|include|examples)/"
+FormatStyle: none
