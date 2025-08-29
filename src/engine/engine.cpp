@@ -1,5 +1,6 @@
 #include "engine/clock.hpp"
 #include "logging/logger.hpp"
+#include "window/window_manager.hpp"
 #include <blkhurst/engine.hpp>
 #include <blkhurst/engine/config.hpp>
 
@@ -13,12 +14,15 @@ class Engine::Impl {
 public:
   explicit Impl(const EngineConfig& cfg)
       : config_(cfg),
-        logger_(cfg.loggerConfig.level) {
+        logger_(cfg.loggerConfig.level),
+        window_(cfg.windowConfig) {
   }
 
   void run() {
-    while (false) {
+    while (!window_.shouldClose()) {
       const auto tick = clock_.tick();
+
+      window_.swapBuffersPollEvents();
     }
   }
 
@@ -26,6 +30,7 @@ private:
   EngineConfig config_;
   Logger logger_;
   Clock clock_;
+  WindowManager window_;
 };
 
 // Public
