@@ -10,7 +10,7 @@ inline constexpr int GL_VERSION_MINOR = 5;
 inline constexpr GLVersion openGlVersion{GL_VERSION_MAJOR, GL_VERSION_MINOR};
 
 // Logger
-inline constexpr blkhurst::LogLevel logLevel = blkhurst::LogLevel::debug;
+inline constexpr blkhurst::LogLevel logLevel = blkhurst::LogLevel::warn;
 
 // Window
 inline constexpr const char* windowTitle = "Blkhurst";
