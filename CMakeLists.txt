@@ -15,6 +15,13 @@ find_package(OpenGL REQUIRED)
 if (BLKHURST_USE_FETCHCONTENT)
   include(FetchContent)
 
+  set(GLM_BUILD_INSTALL ON)
+  FetchContent_Declare(glm
+    GIT_REPOSITORY	https://github.com/g-truc/glm.git
+    GIT_TAG 1.0.1
+  )
+  FetchContent_MakeAvailable(glm)
+
   set(GLFW_INSTALL ON)
   FetchContent_Declare(glfw
     GIT_REPOSITORY https://github.com/glfw/glfw.git
@@ -29,6 +36,7 @@ if (BLKHURST_USE_FETCHCONTENT)
   )
   FetchContent_MakeAvailable(spdlog)
 else()
+  find_package(glm 1.0.1 REQUIRED)
   find_package(glfw3 3.4 REQUIRED)
   find_package(spdlog 1.15.3 REQUIRED)
 endif()
@@ -62,6 +70,7 @@ target_link_libraries(BlkhurstEngine
   PUBLIC
     OpenGL::GL
     glfw
+    glm::glm
     spdlog::spdlog
 )
 
