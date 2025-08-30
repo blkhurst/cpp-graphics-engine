@@ -5,3 +5,12 @@
 - [ ] Decide whether to make spdlog internal by:
   - Removing `find_dependency(spdlog ...)` from Config.cmake
   - Linking header only `PRIVATE $<BUILD_INTERFACE:spdlog::spdlog_header_only>`.
+
+## Class Constructors
+
+- [ ] Understand and implement correct copy/move semantics.
+
+## Buffer
+
+- [ ] Make `std::span<T>` const in constructor.
+- [ ] Add helper to cast non-const `std::span<T>` to `std::span<const T>`.
