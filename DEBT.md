@@ -20,4 +20,4 @@
 - [ ] Remove `// NOLINT` comments by disabling or resolving:
   - `readability-identifier-length`
   - `bugprone-easily-swappable-parameters`
-- [ ] Resolve shader/asset paths via executable-relative or CMake-defined asset root; add fallback search paths.
+- [x] Resolve shader/asset paths via executable-relative or CMake-defined asset root; add fallback search paths.
