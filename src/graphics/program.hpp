@@ -9,7 +9,6 @@
 namespace blkhurst {
 
 struct PreprocessOptions {
-  std::string includeRoot;
   std::vector<std::string> macros;
   std::string glslVersion = "450 core";
   bool insertHeader = true;
@@ -62,7 +61,6 @@ protected:
   static std::string getStageString(unsigned type);
   int uniformLocation(std::string_view name) const;
 
-  static std::string readTextFile(std::string_view path);
   static std::string preprocess(std::string_view source, const PreprocessOptions& opts,
                                 std::string_view currentDir = {});
   static std::string preprocessFile(std::string_view path, const PreprocessOptions& opts);

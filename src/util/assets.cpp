@@ -158,18 +158,21 @@ std::optional<fs::path> find(std::string_view relOrAbs) {
   const fs::path inPath(relOrAbs);
 
   // Absolute?
-  if (inPath.is_absolute() && exists_file(inPath)) {
-    spdlog::trace("Assets: found absolute '{}'", inPath.string());
-    return fs::weakly_canonical(inPath);
+  if (inPath.is_absolute()) {
+    fs::path canonAbs = fs::weakly_canonical(inPath);
+    if (exists_file(canonAbs)) {
+      spdlog::trace("Assets: found absolute '{}'", canonAbs.string());
+      return canonAbs;
+    }
   }
 
   // Try user paths + defaults
   std::scoped_lock lock(mtx());
   for (const auto& root : user_paths()) {
-    fs::path cand = root / inPath;
+    fs::path cand = fs::weakly_canonical(root / inPath);
     if (exists_file(cand)) {
       spdlog::trace("Assets: found '{}' in '{}'", inPath.string(), root.string());
-      return fs::weakly_canonical(cand);
+      return cand;
     }
   }
 

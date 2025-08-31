@@ -1,6 +1,7 @@
 // NOLINTBEGIN(readability-identifier-length)
 #include "graphics/program.hpp"
-#include <fstream>
+#include <blkhurst/util/assets.hpp>
+#include <filesystem>
 #include <glad/gl.h>
 #include <spdlog/spdlog.h>
 #include <sstream>
@@ -183,43 +184,26 @@ std::string Program::getStageString(GLenum type) {
 }
 
 // ============== Read files + Preprocess ==============
-std::string Program::readTextFile(std::string_view path) {
-  std::ifstream f(std::string(path), std::ios::in | std::ios::binary);
-  if (!f) {
-    spdlog::error("Program read failed: {}", path);
-  }
-  std::ostringstream ss;
-  ss << f.rdbuf();
-  return ss.str();
-}
-
-// TODO: ...
 static std::string preprocessImpl(std::string_view source, const PreprocessOptions& opts,
                                   std::string_view currentDir,
-                                  std::unordered_set<std::string>& seen,
-                                  const std::function<std::string(std::string_view)>& reader);
+                                  std::unordered_set<std::string>& seen);
 
 static std::string preprocessFileImpl(std::string_view path, const PreprocessOptions& opts,
-                                      std::unordered_set<std::string>& seen,
-                                      const std::function<std::string(std::string_view)>& reader) {
-  auto src = reader(path);
-  auto pos = std::string(path).find_last_of("/\\");
-  std::string curDir =
-      (pos == std::string::npos) ? std::string{} : std::string(path).substr(0, pos);
-  return preprocessImpl(src, opts, curDir, seen, reader);
+                                      std::unordered_set<std::string>& seen) {
+  auto src = assets::read_text(path);
+  const std::string curDir = std::filesystem::path(std::string(path)).parent_path().string();
+  return preprocessImpl(src, opts, curDir, seen);
 }
 
 std::string Program::preprocess(std::string_view source, const PreprocessOptions& opts,
                                 std::string_view currentDir) {
   std::unordered_set<std::string> seen;
-  auto reader = [](std::string_view p) { return Program::readTextFile(p); };
-  return preprocessImpl(source, opts, currentDir, seen, reader);
+  return preprocessImpl(source, opts, currentDir, seen);
 }
 
 std::string Program::preprocessFile(std::string_view path, const PreprocessOptions& opts) {
   std::unordered_set<std::string> seen;
-  auto reader = [](std::string_view p) { return Program::readTextFile(p); };
-  return preprocessFileImpl(path, opts, seen, reader);
+  return preprocessFileImpl(path, opts, seen);
 }
 
 namespace {
@@ -241,21 +225,7 @@ inline bool parseIncludeQuoted(const std::string& line, std::string& relPath) {
   return true;
 }
 
-// NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
-inline std::string joinPath(std::string_view base, std::string_view rel) {
-  if (base.empty()) {
-    return std::string(rel);
-  }
-  std::string out(base);
-  if (out.back() != '/' && out.back() != '\\') {
-    out.push_back('/');
-  }
-  out.append(rel);
-  return out;
-}
-
-inline void emitHeaderOnce(std::ostringstream& out, const blkhurst::PreprocessOptions& opts,
-                           bool isFirst) {
+inline void emitHeaderOnce(std::ostringstream& out, const PreprocessOptions& opts, bool isFirst) {
   if (!opts.insertHeader || !isFirst) {
     return;
   }
@@ -268,10 +238,9 @@ inline void emitHeaderOnce(std::ostringstream& out, const blkhurst::PreprocessOp
 }
 
 } // namespace
-static std::string preprocessImpl(std::string_view source, const blkhurst::PreprocessOptions& opts,
+static std::string preprocessImpl(std::string_view source, const PreprocessOptions& opts,
                                   std::string_view currentDir,
-                                  std::unordered_set<std::string>& seen,
-                                  const std::function<std::string(std::string_view)>& reader) {
+                                  std::unordered_set<std::string>& seen) {
   std::istringstream in{std::string(source)};
   std::ostringstream out;
 
@@ -285,15 +254,18 @@ static std::string preprocessImpl(std::string_view source, const blkhurst::Prepr
       continue;
     }
 
-    const std::string base = opts.includeRoot.empty() ? std::string(currentDir) : opts.includeRoot;
-    const std::string full = joinPath(base, rel);
+    const std::filesystem::path basePath = std::string(currentDir);
+    const std::filesystem::path fullPath =
+        basePath.empty() ? std::filesystem::path(rel) : (basePath / std::string(rel));
+    // Normalise the joined include to prevent duplicates via different relative paths
+    const std::string full = fullPath.lexically_normal().string();
 
     if (!seen.insert(full).second) {
       spdlog::warn("Shader include suppressed (already included once): {}", full);
       continue;
     }
 
-    out << preprocessFileImpl(full, opts, seen, reader) << '\n';
+    out << preprocessFileImpl(full, opts, seen) << '\n';
   }
 
   return out.str();
