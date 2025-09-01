@@ -26,3 +26,8 @@
 
 - [ ] Add `layerMask` to `Object3D`
 - [ ] Add `setCullingMask` and `cullingMask` to `Camera`
+
+## Geometry
+
+- [ ] Allow `setAttribute` to take `BufferAttribute` or `InterleavedBufferAttribute`.
+- [ ] Use `std::unordered_map<Attrib, BufferAttribute>` and add utility `calcDrawCount`.

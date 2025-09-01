@@ -1,0 +1,66 @@
+#pragma once
+
+#include "graphics/buffer.hpp"
+#include "graphics/vertex_array.hpp"
+
+#include <cstdint>
+#include <memory>
+#include <span>
+#include <vector>
+
+namespace blkhurst {
+
+enum class PrimitiveMode : std::uint8_t { Triangles, Lines, Points };
+
+struct DrawRange {
+  int start = 0;
+  int count = 0;
+};
+
+enum class Attrib : std::uint8_t {
+  Position = 0,
+  Uv = 1,
+  Normal = 2,
+  Tangent = 3,
+  Bitangent = 4,
+  Color = 5
+};
+
+class Geometry {
+public:
+  Geometry() = default;
+  virtual ~Geometry() = default;
+
+  Geometry(const Geometry&) = delete;
+  Geometry& operator=(const Geometry&) = delete;
+  Geometry(Geometry&&) = delete;
+  Geometry& operator=(Geometry&&) = delete;
+
+  void setAttribute(Attrib attrib, std::span<const float> data, int componentCount);
+  void setIndex(std::span<const unsigned> indices);
+
+  void setPrimitive(PrimitiveMode mode);
+  void setDrawRange(int start, int count);
+  void clearDrawRange();
+
+  [[nodiscard]] PrimitiveMode primitive() const;
+  [[nodiscard]] DrawRange drawRange() const;
+  [[nodiscard]] bool isIndexed() const;
+  [[nodiscard]] const VertexArray& vertexArray() const;
+
+private:
+  VertexArray vao_;
+  // Geometry owns Buffer; one attribute per Buffer
+  std::vector<std::unique_ptr<Buffer>> vbos_;
+  std::unique_ptr<Buffer> ebo_;
+
+  PrimitiveMode primitive_ = PrimitiveMode::Triangles;
+  DrawRange drawRange_;
+  bool isIndexed_ = false;
+
+  // Cache for clearDrawRange
+  int vertexCount_ = 0;
+  int indexCount_ = 0;
+};
+
+} // namespace blkhurst
