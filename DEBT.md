@@ -21,3 +21,8 @@
   - `readability-identifier-length`
   - `bugprone-easily-swappable-parameters`
 - [x] Resolve shader/asset paths via executable-relative or CMake-defined asset root; add fallback search paths.
+
+## Layer Mask
+
+- [ ] Add `layerMask` to `Object3D`
+- [ ] Add `setCullingMask` and `cullingMask` to `Camera`
