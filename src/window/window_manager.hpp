@@ -21,6 +21,7 @@ public:
   [[nodiscard]] GLFWwindow* getWindow() const;
   [[nodiscard]] GLVersion getOpenGlVersion() const;
   [[nodiscard]] Resolution getFramebufferResolution() const;
+  [[nodiscard]] float getContentScale() const;
 
   [[nodiscard]] bool shouldClose() const;
   void swapBuffersPollEvents();

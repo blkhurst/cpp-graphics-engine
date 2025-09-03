@@ -59,6 +59,19 @@ Resolution WindowManager::getFramebufferResolution() const {
   return {width, height};
 }
 
+float WindowManager::getContentScale() const {
+  GLFWmonitor* currentMonitor = getMonitorForWindow(window_);
+  if (currentMonitor == nullptr) {
+    spdlog::error("getContentScale failed: no monitor found for window");
+    return 1.0;
+  }
+
+  float xscale = 1;
+  float yscale = 1;
+  glfwGetMonitorContentScale(currentMonitor, &xscale, &yscale);
+  return xscale;
+}
+
 bool WindowManager::shouldClose() const {
   const bool closing = glfwWindowShouldClose(window_) != 0;
   if (closing) {
