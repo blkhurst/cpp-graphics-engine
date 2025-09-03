@@ -1,5 +1,7 @@
 #pragma once
 
+#include "engine/root_state.hpp"
+
 #include <cstdint>
 #include <functional>
 #include <glm/glm.hpp>
@@ -10,8 +12,6 @@
 #include <vector>
 
 namespace blkhurst {
-
-class RootState; // forward-declare
 
 enum class NodeKind { Object, Mesh, Lines, Points, Light, Camera };
 
