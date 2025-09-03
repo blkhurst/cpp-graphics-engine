@@ -1,0 +1,44 @@
+#pragma once
+
+#include "engine/root_state.hpp"
+#include "ui/ui_entry.hpp"
+#include "window/window_manager.hpp"
+#include <blkhurst/engine/config/ui.hpp>
+
+#include <imgui.h>
+#include <string>
+
+namespace blkhurst {
+
+class UiManager {
+public:
+  UiManager(UiConfig config, WindowManager& windowManager);
+  ~UiManager();
+
+  UiManager(const UiManager&) = delete;
+  UiManager& operator=(const UiManager&) = delete;
+  UiManager(UiManager&&) = delete;
+  UiManager& operator=(UiManager&&) = delete;
+
+  void beginFrame() const;
+  void endFrame() const;
+
+  void drawBaseUi(const RootState& state);
+  void draw(UiEntry& entry, const RootState& state);
+
+private:
+  UiConfig config_;
+  WindowManager& window_;
+  float contentScale_ = 1.0F;
+
+  void initialiseImGui(WindowManager& windowManager);
+  [[nodiscard]] std::string getGlVersionString() const;
+  void setImGuiFont(const std::string& fontPath) const;
+
+  void drawStatsHeader(const RootState& state);
+  void drawScenesHeader(const RootState& state);
+
+  static void defaultStyle();
+};
+
+} // namespace blkhurst

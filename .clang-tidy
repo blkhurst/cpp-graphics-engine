@@ -6,6 +6,7 @@ Checks: >
   modernize-*,
   readability-*,
   -modernize-use-trailing-return-type,
+  -cppcoreguidelines-pro-type-vararg,
 
 WarningsAsErrors: ""
 HeaderFilterRegex: "^(src|include|examples)/"

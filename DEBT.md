@@ -31,3 +31,7 @@
 
 - [ ] Allow `setAttribute` to take `BufferAttribute` or `InterleavedBufferAttribute`.
 - [ ] Use `std::unordered_map<Attrib, BufferAttribute>` and add utility `calcDrawCount`.
+
+## UI
+
+- [ ] Make global `uuid` utility; add `uuid` to `UiEntry` and use `ImGui::PushID / PopID` to prevent duplicate naming errors.
