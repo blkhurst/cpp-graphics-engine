@@ -25,4 +25,18 @@ inline constexpr bool vSync = true;
 inline constexpr RGBA clearColor{0.07F, 0.13F, 0.17F, 1.0F};
 } // namespace window
 
+namespace ui {
+inline constexpr const char* title = "Blkhurst";
+
+inline constexpr float fontSize = 14.0F;
+inline constexpr const char* fontPath = "fonts/Inter.ttc";
+
+inline constexpr float scale = 1.0F;
+inline constexpr float minWindowWidth = 225.0F;
+
+inline constexpr bool useDefaultStyle = true;
+inline constexpr bool showStatsHeader = true;
+inline constexpr bool showScenesHeader = true;
+} // namespace ui
+
 } // namespace blkhurst::defaults
