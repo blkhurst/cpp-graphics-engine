@@ -6,7 +6,7 @@
 namespace blkhurst {
 
 struct LoggerConfig {
-  LogLevel level{defaults::logLevel};
+  LogLevel level{defaults::logger::logLevel};
 };
 
 } // namespace blkhurst

@@ -4,22 +4,25 @@
 
 namespace blkhurst::defaults {
 
-// OpenGL
-inline constexpr int GL_VERSION_MAJOR = 4;
-inline constexpr int GL_VERSION_MINOR = 5;
-inline constexpr GLVersion openGlVersion{GL_VERSION_MAJOR, GL_VERSION_MINOR};
+namespace opengl {
+inline constexpr int major = 4;
+inline constexpr int minor = 5;
+inline constexpr GLVersion version{major, minor};
+} // namespace opengl
 
-// Logger
-inline constexpr blkhurst::LogLevel logLevel = blkhurst::LogLevel::warn;
+namespace logger {
+inline constexpr LogLevel logLevel = LogLevel::warn;
+}
 
-// Window
-inline constexpr const char* windowTitle = "Blkhurst";
-inline constexpr int windowPosX = 100;
-inline constexpr int windowPosY = 100;
-inline constexpr int windowWidth = 1600;
-inline constexpr int windowHeight = 800;
+namespace window {
+inline constexpr const char* title = "Blkhurst";
+inline constexpr int posX = 100;
+inline constexpr int posY = 100;
+inline constexpr int width = 1600;
+inline constexpr int height = 800;
 inline constexpr int msaaSamples = 4;
 inline constexpr bool vSync = true;
-inline constexpr RGBA clearColor{0.07F, 0.13F, 0.17F, 1.0F}; // NOLINT(readability-magic-numbers)
+inline constexpr RGBA clearColor{0.07F, 0.13F, 0.17F, 1.0F};
+} // namespace window
 
 } // namespace blkhurst::defaults

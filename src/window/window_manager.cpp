@@ -166,9 +166,9 @@ void WindowManager::useFullscreen(bool useFullscreen) {
                          monitorRefresh);
   } else {
     spdlog::debug("Exiting fullscreen to windowed mode ({}x{} at {},{})", config_.width,
-                  config_.height, defaults::windowPosX, defaults::windowPosY);
+                  config_.height, defaults::window::posX, defaults::window::posY);
 
-    glfwSetWindowMonitor(window_, nullptr, defaults::windowPosX, defaults::windowPosY,
+    glfwSetWindowMonitor(window_, nullptr, defaults::window::posX, defaults::window::posY,
                          config_.width, config_.height, GLFW_DONT_CARE);
   }
 }

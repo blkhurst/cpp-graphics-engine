@@ -6,13 +6,13 @@
 namespace blkhurst {
 
 struct WindowConfig {
-  const char* title = defaults::windowTitle;
-  GLVersion openGlVersion{defaults::openGlVersion};
-  int width = defaults::windowWidth;
-  int height = defaults::windowHeight;
-  int msaa = defaults::msaaSamples;
-  bool enableVSync = defaults::vSync;
-  RGBA clearColor{defaults::clearColor};
+  const char* title = defaults::window::title;
+  GLVersion openGlVersion{defaults::opengl::version};
+  int width = defaults::window::width;
+  int height = defaults::window::height;
+  int msaa = defaults::window::msaaSamples;
+  bool enableVSync = defaults::window::vSync;
+  RGBA clearColor{defaults::window::clearColor};
 };
 
 } // namespace blkhurst
