@@ -11,8 +11,4 @@ struct GLVersion {
   int minor;
 };
 
-struct RGBA {
-  float r = 0, g = 0, b = 0, a = 1;
-};
-
 } // namespace blkhurst

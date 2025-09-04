@@ -101,7 +101,7 @@ bool WindowManager::initialiseGlfw() {
 
   glfwSetErrorCallback(WindowManager::errorCallback);
 
-  window_ = glfwCreateWindow(config_.width, config_.height, config_.title, nullptr, nullptr);
+  window_ = glfwCreateWindow(config_.size[0], config_.size[1], config_.title, nullptr, nullptr);
 
   if (window_ == nullptr) {
     spdlog::error("glfwCreateWindow() returned null");
@@ -109,7 +109,7 @@ bool WindowManager::initialiseGlfw() {
     return false;
   }
 
-  spdlog::debug("GLFW window created ({}x{})", config_.width, config_.height);
+  spdlog::debug("GLFW window created ({}x{})", config_.size[0], config_.size[1]);
 
   glfwMakeContextCurrent(window_);
 
@@ -130,8 +130,8 @@ bool WindowManager::initialiseGlad() {
 }
 
 void WindowManager::configureOpenGL() const {
-  const auto [r, g, b, a] = config_.clearColor;
-  glClearColor(r, g, b, a);
+  const auto col = config_.clearColor;
+  glClearColor(col[0], col[1], col[2], col[3]);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
   /* Enable OpenGL Features */
@@ -178,11 +178,11 @@ void WindowManager::useFullscreen(bool useFullscreen) {
     glfwSetWindowMonitor(window_, currentMonitor, 0, 0, monitorWidth, monitorHeight,
                          monitorRefresh);
   } else {
-    spdlog::debug("Exiting fullscreen to windowed mode ({}x{} at {},{})", config_.width,
-                  config_.height, defaults::window::posX, defaults::window::posY);
+    spdlog::debug("Exiting fullscreen to windowed mode ({}x{} at {},{})", config_.size[0],
+                  config_.size[1], config_.pos[0], config_.pos[1]);
 
-    glfwSetWindowMonitor(window_, nullptr, defaults::window::posX, defaults::window::posY,
-                         config_.width, config_.height, GLFW_DONT_CARE);
+    glfwSetWindowMonitor(window_, nullptr, config_.pos[0], config_.pos[1], config_.size[0],
+                         config_.size[1], GLFW_DONT_CARE);
   }
 }
 

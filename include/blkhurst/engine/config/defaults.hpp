@@ -1,6 +1,8 @@
 #pragma once
 
 #include <blkhurst/engine/config/types.hpp>
+#include <glm/vec2.hpp>
+#include <glm/vec4.hpp>
 
 namespace blkhurst::defaults {
 
@@ -16,13 +18,11 @@ inline constexpr LogLevel logLevel = LogLevel::warn;
 
 namespace window {
 inline constexpr const char* title = "Blkhurst";
-inline constexpr int posX = 100;
-inline constexpr int posY = 100;
-inline constexpr int width = 1600;
-inline constexpr int height = 800;
+inline constexpr glm::ivec2 pos = {100, 100};
+inline constexpr glm::ivec2 size = {1600, 800};
 inline constexpr int msaaSamples = 4;
 inline constexpr bool vSync = true;
-inline constexpr RGBA clearColor{0.07F, 0.13F, 0.17F, 1.0F};
+inline constexpr glm::vec4 clearColor = {0.07F, 0.13F, 0.17F, 1.0F};
 } // namespace window
 
 namespace ui {
