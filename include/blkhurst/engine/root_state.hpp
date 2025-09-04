@@ -1,7 +1,7 @@
 #pragma once
 
-#include <span>
 #include <string>
+#include <vector>
 
 namespace blkhurst {
 
@@ -22,7 +22,7 @@ struct RootState {
   Scene* scene = nullptr;
 
   int currentSceneIndex = -1;
-  std::span<const std::string> sceneNames;
+  std::vector<std::string> sceneNames;
 };
 
 } // namespace blkhurst

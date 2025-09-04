@@ -1,6 +1,7 @@
 // NOLINTBEGIN(readability-identifier-length)
-#include "graphics/program.hpp"
+#include <blkhurst/graphics/program.hpp>
 #include <blkhurst/util/assets.hpp>
+
 #include <filesystem>
 #include <glad/gl.h>
 #include <spdlog/spdlog.h>

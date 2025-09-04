@@ -1,4 +1,4 @@
-#include "scene/scene.hpp"
+#include <blkhurst/scene/scene.hpp>
 
 #include <spdlog/spdlog.h>
 #include <utility>

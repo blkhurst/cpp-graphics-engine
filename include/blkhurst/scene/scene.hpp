@@ -1,9 +1,9 @@
 #pragma once
 
-#include "cameras/ortho_camera.hpp"
-#include "objects/object3d.hpp"
-#include "ui/ui_entry.hpp"
+#include <blkhurst/cameras/ortho_camera.hpp>
 #include <blkhurst/engine/config/defaults.hpp>
+#include <blkhurst/objects/object3d.hpp>
+#include <blkhurst/ui/ui_entry.hpp>
 
 #include <glm/glm.hpp>
 #include <vector>

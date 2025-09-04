@@ -1,9 +1,9 @@
 #pragma once
 
-#include "engine/root_state.hpp"
-#include "ui/ui_entry.hpp"
 #include "window/window_manager.hpp"
 #include <blkhurst/engine/config/ui.hpp>
+#include <blkhurst/engine/root_state.hpp>
+#include <blkhurst/ui/ui_entry.hpp>
 
 #include <imgui.h>
 #include <string>

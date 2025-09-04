@@ -1,4 +1,4 @@
-#include "graphics/buffer.hpp"
+#include <blkhurst/graphics/buffer.hpp>
 #include <glad/gl.h>
 #include <spdlog/spdlog.h>
 

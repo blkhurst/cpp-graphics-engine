@@ -1,6 +1,6 @@
 #pragma once
 
-#include "objects/object3d.hpp"
+#include <blkhurst/objects/object3d.hpp>
 #include <glm/glm.hpp>
 
 namespace blkhurst {

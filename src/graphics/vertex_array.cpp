@@ -1,4 +1,4 @@
-#include "graphics/vertex_array.hpp"
+#include <blkhurst/graphics/vertex_array.hpp>
 #include <glad/gl.h>
 #include <spdlog/spdlog.h>
 

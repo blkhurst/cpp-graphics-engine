@@ -1,4 +1,4 @@
-#include "objects/object3d.hpp"
+#include <blkhurst/objects/object3d.hpp>
 #include <random>
 #include <spdlog/spdlog.h>
 

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "engine/root_state.hpp"
+#include <blkhurst/engine/root_state.hpp>
 #include <string>
 
 namespace blkhurst {

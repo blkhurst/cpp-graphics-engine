@@ -1,7 +1,7 @@
 #pragma once
 
-#include "graphics/buffer.hpp"
-#include "graphics/vertex_array.hpp"
+#include <blkhurst/graphics/buffer.hpp>
+#include <blkhurst/graphics/vertex_array.hpp>
 
 #include <cstdint>
 #include <memory>

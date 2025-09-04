@@ -1,6 +1,6 @@
 #pragma once
 
-#include "cameras/camera.hpp"
+#include <blkhurst/cameras/camera.hpp>
 
 namespace blkhurst {
 

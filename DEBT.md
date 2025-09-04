@@ -35,3 +35,11 @@
 ## UI
 
 - [ ] Make global `uuid` utility; add `uuid` to `UiEntry` and use `ImGui::PushID / PopID` to prevent duplicate naming errors.
+
+## API
+
+- [ ] Hide low-level classes from public API:
+  - Make `VertexArray` and `Buffer` internal (private headers).
+  - Convert `Geometry` to PImpl; forward declare VAO/Buffer in header.
+  - Replace `Geometry::vertexArray()` with `Geometry::bind()`.
+  - Make dtor virtual and define in source to ensure forwarded types are ok.

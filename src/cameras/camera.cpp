@@ -1,4 +1,5 @@
-#include "cameras/camera.hpp"
+#include <blkhurst/cameras/camera.hpp>
+
 #include <glm/gtc/matrix_transform.hpp>
 #include <spdlog/spdlog.h>
 
