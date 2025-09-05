@@ -16,15 +16,15 @@ using UniformValue =
 
 class Material {
 public:
-  Material(std::shared_ptr<Program> prog)
-      : program(std::move(prog)) {
-  }
-  virtual ~Material() = default;
+  Material(std::shared_ptr<Program> prog);
+  virtual ~Material();
 
   Material(const Material&) = delete;
   Material& operator=(const Material&) = delete;
   Material(Material&&) = delete;
   Material& operator=(Material&&) = delete;
+
+  static std::shared_ptr<Material> create(std::shared_ptr<Program> prog);
 
   std::shared_ptr<Program> program;
   PipelineState pipeline;

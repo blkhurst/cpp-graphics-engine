@@ -6,7 +6,7 @@
 namespace blkhurst {
 
 OrthoCamera::OrthoCamera() {
-  spdlog::trace("OrthoCamera constructed (defaults)");
+  spdlog::trace("OrthoCamera({}) constructed (defaults)", uuid());
 }
 
 OrthoCamera::OrthoCamera(float left, float right, float bottom, float top, float nearZ, float farZ)
@@ -16,8 +16,22 @@ OrthoCamera::OrthoCamera(float left, float right, float bottom, float top, float
       top_(top),
       nearZ_(nearZ),
       farZ_(farZ) {
-  spdlog::trace("OrthoCamera constructed lrtb=({:.3f},{:.3f},{:.3f},{:.3f}) near={:.3f} far={:.3f}",
-                left, right, bottom, top, nearZ, farZ);
+  spdlog::trace(
+      "OrthoCamera({}) constructed lrtb=({:.2f},{:.2f},{:.2f},{:.2f}) near={:.2f} far={:.2f}",
+      uuid(), left, right, bottom, top, nearZ, farZ);
+}
+
+OrthoCamera::~OrthoCamera() {
+  spdlog::trace("OrthoCamera({}) destroyed", uuid());
+}
+
+std::shared_ptr<OrthoCamera> OrthoCamera::create() {
+  return std::make_shared<OrthoCamera>();
+}
+
+std::shared_ptr<OrthoCamera> OrthoCamera::create(float left, float right, float bottom, float top,
+                                                 float nearZ, float farZ) {
+  return std::make_shared<OrthoCamera>(left, right, bottom, top, nearZ, farZ);
 }
 
 void OrthoCamera::setBounds(float left, float right, float bottom, float top) {
@@ -26,7 +40,7 @@ void OrthoCamera::setBounds(float left, float right, float bottom, float top) {
   bottom_ = bottom;
   top_ = top;
   projNeedsUpdate_ = true;
-  spdlog::trace("OrthoCamera setBounds lrtb=({:.3f},{:.3f},{:.3f},{:.3f})", left, right, bottom,
+  spdlog::trace("OrthoCamera setBounds lrtb=({:.2f},{:.2f},{:.2f},{:.2f})", left, right, bottom,
                 top);
 }
 
@@ -34,7 +48,7 @@ void OrthoCamera::setNearFar(float nearZ, float farZ) {
   nearZ_ = nearZ;
   farZ_ = farZ;
   projNeedsUpdate_ = true;
-  spdlog::trace("OrthoCamera setNearFar near={:.3f} far={:.3f}", nearZ, farZ);
+  spdlog::trace("OrthoCamera setNearFar near={:.2f} far={:.2f}", nearZ, farZ);
 }
 
 const glm::mat4& OrthoCamera::projectionMatrix() const {

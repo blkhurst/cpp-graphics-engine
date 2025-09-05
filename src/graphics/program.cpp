@@ -25,20 +25,26 @@ Program::Program(std::string_view vertSrc, std::string_view fragSrc)
   spdlog::trace("Program({}) created (VS+FS)", id_);
 }
 
-// NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
-Program Program::fromFiles(std::string_view vertPath, std::string_view fragPath,
-                           const PreprocessOptions& opts) {
-  spdlog::trace("Program preprocessing VS='{}' FS='{}'", vertPath, fragPath);
-  auto vs = preprocessFile(vertPath, opts);
-  auto fs = preprocessFile(fragPath, opts);
-  return {vs, fs};
-}
-
 Program::~Program() {
   if (id_ != 0U) {
     glDeleteProgram(id_);
     spdlog::trace("Program({}) deleted", id_);
   }
+}
+
+// NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
+std::shared_ptr<Program> create(std::string_view vertSrc, std::string_view fragSrc) {
+  return std::make_shared<Program>(vertSrc, fragSrc);
+}
+
+// NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
+std::shared_ptr<Program> Program::createFromFiles(std::string_view vertPath,
+                                                  std::string_view fragPath,
+                                                  const PreprocessOptions& opts) {
+  spdlog::trace("Program preprocessing VS='{}' FS='{}'", vertPath, fragPath);
+  auto vs = preprocessFile(vertPath, opts);
+  auto fs = preprocessFile(fragPath, opts);
+  return std::make_shared<Program>(vs, fs);
 }
 
 void Program::use() const {

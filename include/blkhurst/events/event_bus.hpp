@@ -28,7 +28,7 @@ struct EventBusConst {
 };
 
 // Subscription - Unsubscribes in destructor (RAII)
-class Subscription {
+class [[nodiscard]] Subscription {
 public:
   // Constructors
   Subscription() = default;
@@ -77,6 +77,7 @@ public:
   }
 
   void unsubscribe();
+
   [[nodiscard]] bool valid() const {
     return bus_ != nullptr && id_ != EventBusConst::kInvalidListenerId;
   }

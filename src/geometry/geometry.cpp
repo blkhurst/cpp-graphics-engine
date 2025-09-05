@@ -9,6 +9,18 @@ constexpr bool kDynamic = false;
 
 namespace blkhurst {
 
+Geometry::Geometry() {
+  spdlog::trace("Geometry constructed");
+}
+
+Geometry::~Geometry() {
+  spdlog::trace("Geometry destroyed");
+}
+
+std::shared_ptr<Geometry> Geometry::create() {
+  return std::make_shared<Geometry>();
+}
+
 void Geometry::setAttribute(Attrib attrib, std::span<const float> data, int componentCount) {
   const auto attribIndex = static_cast<unsigned int>(attrib);
 

@@ -17,12 +17,16 @@ class OrthoCamera : public Camera {
 public:
   OrthoCamera();
   OrthoCamera(float left, float right, float bottom, float top, float nearZ, float farZ);
-  ~OrthoCamera() override = default;
+  ~OrthoCamera() override;
 
   OrthoCamera(const OrthoCamera&) = delete;
   OrthoCamera& operator=(const OrthoCamera&) = delete;
   OrthoCamera(OrthoCamera&&) = delete;
   OrthoCamera& operator=(OrthoCamera&&) = delete;
+
+  static std::shared_ptr<OrthoCamera> create();
+  static std::shared_ptr<OrthoCamera> create(float left, float right, float bottom, float top,
+                                             float nearZ, float farZ);
 
   void setBounds(float left, float right, float bottom, float top);
   void setNearFar(float nearZ, float farZ);

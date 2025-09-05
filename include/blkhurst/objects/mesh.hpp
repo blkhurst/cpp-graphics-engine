@@ -10,7 +10,7 @@ namespace blkhurst {
 
 class Mesh : public Object3D {
 public:
-  Mesh(std::shared_ptr<Geometry> geom, std::shared_ptr<Material> mat);
+  Mesh(std::shared_ptr<Geometry> geometry, std::shared_ptr<Material> material);
   ~Mesh() override;
 
   Mesh(const Mesh&) = delete;
@@ -18,9 +18,9 @@ public:
   Mesh(Mesh&&) = delete;
   Mesh& operator=(Mesh&&) = delete;
 
-  static std::unique_ptr<Mesh> create(std::shared_ptr<Geometry> geom,
-                                      std::shared_ptr<Material> mat) {
-    return std::make_unique<Mesh>(std::move(geom), std::move(mat));
+  static std::unique_ptr<Mesh> create(std::shared_ptr<Geometry> geometry,
+                                      std::shared_ptr<Material> material) {
+    return std::make_unique<Mesh>(std::move(geometry), std::move(material));
   }
 
   NodeKind kind() const override {
@@ -32,8 +32,8 @@ public:
   [[nodiscard]] int instanceCount() const;
   [[nodiscard]] bool wireframe() const;
 
-  void setGeometry(std::shared_ptr<Geometry> geom);
-  void setMaterial(std::shared_ptr<Material> mat);
+  void setGeometry(std::shared_ptr<Geometry> geometry);
+  void setMaterial(std::shared_ptr<Material> material);
   void setInstanceCount(int count);
   void setWireframe(bool enabled);
 

@@ -15,12 +15,16 @@ class PerspectiveCamera : public Camera {
 public:
   PerspectiveCamera();
   PerspectiveCamera(float fovYDeg, float aspect, float nearZ, float farZ);
-  ~PerspectiveCamera() override = default;
+  ~PerspectiveCamera() override;
 
   PerspectiveCamera(const PerspectiveCamera&) = delete;
   PerspectiveCamera& operator=(const PerspectiveCamera&) = delete;
   PerspectiveCamera(PerspectiveCamera&&) = delete;
   PerspectiveCamera& operator=(PerspectiveCamera&&) = delete;
+
+  static std::shared_ptr<PerspectiveCamera> create();
+  static std::shared_ptr<PerspectiveCamera> create(float fovYDeg, float aspect, float nearZ,
+                                                   float farZ);
 
   void setFovYDeg(float fovYDeg);
   void setAspect(float aspect);

@@ -1,6 +1,8 @@
 #pragma once
+
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <memory>
 #include <string>
 #include <string_view>
 #include <unordered_map>
@@ -16,17 +18,18 @@ struct PreprocessOptions {
 
 class Program {
 public:
-  Program() = default;
   Program(std::string_view vertSrc, std::string_view fragSrc);
-  static Program fromFiles(std::string_view vertPath, std::string_view fragPath,
-                           const PreprocessOptions& opts = {});
-
-  ~Program();
+  virtual ~Program();
 
   Program(const Program&) = delete;
   Program(Program&&) = delete;
   Program& operator=(const Program&) = delete;
   Program& operator=(Program&&) = delete;
+
+  static std::shared_ptr<Program> create(std::string_view vertSrc, std::string_view fragSrc);
+  static std::shared_ptr<Program> createFromFiles(std::string_view vertPath,
+                                                  std::string_view fragPath,
+                                                  const PreprocessOptions& opts = {});
 
   void use() const;
 

@@ -9,6 +9,10 @@ Scene::Scene() {
   spdlog::trace("Scene({}) constructed", uuid());
 }
 
+Scene::~Scene() {
+  spdlog::trace("Scene({}) destroyed", uuid());
+}
+
 glm::vec4 Scene::background() const {
   return background_;
 }

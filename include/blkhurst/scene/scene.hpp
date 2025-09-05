@@ -15,7 +15,7 @@ class Controller; // Forward
 class Scene : public Object3D {
 public:
   Scene();
-  ~Scene() override = default;
+  ~Scene() override;
 
   Scene(const Scene&) = delete;
   Scene& operator=(const Scene&) = delete;

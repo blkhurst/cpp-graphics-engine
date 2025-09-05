@@ -3,6 +3,19 @@
 
 namespace blkhurst {
 
+Material::Material(std::shared_ptr<Program> prog)
+    : program(std::move(prog)) {
+  spdlog::trace("Material constructed using Program({})", program->id());
+}
+
+Material::~Material() {
+  spdlog::trace("Material destroyed");
+}
+
+std::shared_ptr<Material> Material::create(std::shared_ptr<Program> prog) {
+  return std::make_shared<Material>(prog);
+}
+
 void Material::apply() const {
   if (!program) {
     spdlog::error("Material::apply called with null Program");

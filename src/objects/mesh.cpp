@@ -4,9 +4,9 @@
 
 namespace blkhurst {
 
-Mesh::Mesh(std::shared_ptr<Geometry> geom, std::shared_ptr<Material> mat)
-    : geometry_(std::move(geom)),
-      material_(std::move(mat)) {
+Mesh::Mesh(std::shared_ptr<Geometry> geometry, std::shared_ptr<Material> material)
+    : geometry_(std::move(geometry)),
+      material_(std::move(material)) {
   if (!geometry_ || !material_) {
     spdlog::error("Mesh requires non-null Geometry and Material.");
   }
@@ -33,13 +33,13 @@ bool Mesh::wireframe() const {
   return wireframe_;
 }
 
-void Mesh::setGeometry(std::shared_ptr<Geometry> geom) {
-  geometry_ = std::move(geom);
+void Mesh::setGeometry(std::shared_ptr<Geometry> geometry) {
+  geometry_ = std::move(geometry);
   spdlog::trace("Mesh({}) setGeometry {}", uuid(), geometry_ ? "OK" : "null");
 }
 
-void Mesh::setMaterial(std::shared_ptr<Material> mat) {
-  material_ = std::move(mat);
+void Mesh::setMaterial(std::shared_ptr<Material> material) {
+  material_ = std::move(material);
   spdlog::trace("Mesh({}) setMaterial {}", uuid(), material_ ? "OK" : "null");
 }
 

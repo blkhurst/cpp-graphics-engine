@@ -28,13 +28,15 @@ enum class Attrib : std::uint8_t {
 
 class Geometry {
 public:
-  Geometry() = default;
-  virtual ~Geometry() = default;
+  Geometry();
+  virtual ~Geometry();
 
   Geometry(const Geometry&) = delete;
   Geometry& operator=(const Geometry&) = delete;
   Geometry(Geometry&&) = delete;
   Geometry& operator=(Geometry&&) = delete;
+
+  static std::shared_ptr<Geometry> create();
 
   void setAttribute(Attrib attrib, std::span<const float> data, int componentCount);
   void setIndex(std::span<const unsigned> indices);
