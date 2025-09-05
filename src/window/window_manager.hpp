@@ -22,8 +22,9 @@ public:
   [[nodiscard]] GLVersion getOpenGlVersion() const;
   [[nodiscard]] Resolution getFramebufferResolution() const;
   [[nodiscard]] float getContentScale() const;
-
   [[nodiscard]] bool shouldClose() const;
+
+  void useFullscreen(bool useFullscreen);
   void swapBuffersPollEvents();
 
 private:
@@ -35,7 +36,6 @@ private:
   void configureOpenGL() const;
 
   static GLFWmonitor* getMonitorForWindow(GLFWwindow* window);
-  void useFullscreen(bool useFullscreen);
 
   static void framebufferSizeCallback(GLFWwindow* window, int width, int height);
   static void errorCallback(int error, const char* description);

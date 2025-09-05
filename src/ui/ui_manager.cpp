@@ -1,5 +1,6 @@
 #include "ui/ui_manager.hpp"
-#include "blkhurst/util/assets.hpp"
+#include <blkhurst/events/events.hpp>
+#include <blkhurst/util/assets.hpp>
 
 #include <cstdio>
 #include <glad/gl.h>
@@ -17,12 +18,13 @@ constexpr float kWindowPosY = 10.0F;
 
 namespace blkhurst {
 
-UiManager::UiManager(UiConfig config, WindowManager& windowManager)
+UiManager::UiManager(UiConfig config, const EventBus& events, const WindowManager& windowManager)
     : config_(std::move(config)),
+      events_(events),
       window_(windowManager) {
   spdlog::debug("UiManager initialising...");
   initialiseImGui(windowManager);
-  spdlog::debug("UiManager initialised scale={:.2f}", contentScale_);
+  spdlog::debug("UiManager initialised");
 }
 
 UiManager::~UiManager() {
@@ -35,7 +37,7 @@ UiManager::~UiManager() {
   spdlog::info("UiManager shutdown");
 }
 
-void UiManager::initialiseImGui(WindowManager& windowManager) {
+void UiManager::initialiseImGui(const WindowManager& windowManager) {
   IMGUI_CHECKVERSION();
   ImGui::CreateContext();
   ImGui_ImplGlfw_InitForOpenGL(windowManager.getWindow(), true);
@@ -57,6 +59,7 @@ void UiManager::initialiseImGui(WindowManager& windowManager) {
   style.ScaleAllSizes(contentScale_); // Widgets/Padding
   style.FontScaleDpi = contentScale_; // Fonts DPI
   style.FontScaleMain = 1.0F;
+  spdlog::debug("UiManager contentScale({:.2f})", contentScale_);
 }
 
 std::string UiManager::getGlVersionString() const {
@@ -128,8 +131,8 @@ void UiManager::drawStatsHeader(const RootState& state) {
     // Event Manager Fullscreen Event
     static bool useFullscreen = false;
     if (ImGui::Checkbox("Fullscreen", &useFullscreen)) {
-      // TODO: Implement Fullscreen Event
-      spdlog::debug("UiManager: Fullscreen({})", useFullscreen);
+      spdlog::debug("UiManager toggled fullscreen({})", useFullscreen);
+      events_.emit<events::ToggleFullscreen>(useFullscreen);
     }
   }
 }
@@ -141,13 +144,14 @@ void UiManager::drawScenesHeader(const RootState& state) {
 
   if (ImGui::CollapsingHeader("Scenes")) {
     int selected = state.currentSceneIndex;
-    for (int i = 0; i < state.sceneNames.size(); ++i) {
-      const std::string& sceneName = state.sceneNames[i];
-      if (ImGui::RadioButton(sceneName.c_str(), selected == i)) {
-        // TODO: Implement SceneChange Event
-        spdlog::debug("UiManager: Selected Scene({}, {})", i, sceneName);
-        selected = i;
+    int index = 0;
+    for (const auto& sceneName : state.sceneNames) {
+      if (ImGui::RadioButton(sceneName.c_str(), selected == index)) {
+        spdlog::debug("UiManager selected Scene({})", sceneName);
+        events_.emit<events::SceneChange>(sceneName, index);
+        selected = index;
       }
+      ++index;
     }
   }
 }

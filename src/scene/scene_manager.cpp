@@ -30,7 +30,7 @@ void SceneManager::registerFactory(const std::string& name,
 void SceneManager::setScene(const std::string& name) {
   const int idx = indexOf(name);
   if (idx == kNoActiveIndex) {
-    spdlog::warn("SceneManager: setScene({}) not found", name);
+    spdlog::warn("SceneManager Scene({}) not found", name);
     return;
   }
   setScene(idx);
@@ -38,12 +38,12 @@ void SceneManager::setScene(const std::string& name) {
 
 void SceneManager::setScene(int index) {
   if (index < 0 || index >= sceneEntries_.size()) {
-    spdlog::warn("SceneManager: setScene index out of range {}", index);
+    spdlog::warn("SceneManager setScene index({}) out of range", index);
     return;
   }
   ensureConstructed(index);
   currentIndex_ = index;
-  spdlog::info("SceneManager: setScene({}, {})", sceneEntries_[index].name, index);
+  spdlog::info("SceneManager setScene({})", sceneEntries_[index].name);
 }
 
 void SceneManager::preload(const std::string& name) {
@@ -60,21 +60,21 @@ void SceneManager::unload(const std::string& name) {
     return;
   }
   if (currentIndex_ == idx) {
-    spdlog::warn("SceneManager: unloading current Scene");
+    spdlog::warn("SceneManager unloading current Scene");
     currentIndex_ = kNoActiveIndex;
   }
   sceneEntries_[idx].instance.reset();
-  spdlog::debug("SceneManager: unloaded Scene({})", name);
+  spdlog::debug("SceneManager unloaded Scene({})", name);
 }
 
 void SceneManager::reload(const std::string& name) {
   const int idx = indexOf(name);
   if (idx == kNoActiveIndex) {
-    spdlog::warn("SceneManager: reload name not found '{}'", name);
+    spdlog::warn("SceneManager reload Scene({}) not found", name);
     return;
   }
 
-  spdlog::debug("SceneManager: reloading Scene({})", name);
+  spdlog::debug("SceneManager reloading Scene({})", name);
 
   sceneEntries_[idx].instance.reset();
   ensureConstructed(idx);
@@ -111,15 +111,15 @@ int SceneManager::indexOf(const std::string& name) const {
 
 void SceneManager::ensureConstructed(int index) {
   if (index < 0 || index >= sceneEntries_.size()) {
-    spdlog::warn("SceneManager: ensureConstructed index out of range {}", index);
+    spdlog::warn("SceneManager ensureConstructed index({}) out of range", index);
     return;
   }
   auto& sceneEntry = sceneEntries_[index];
   if (!sceneEntry.instance) {
-    spdlog::debug("SceneManager: constructing Scene({})", sceneEntry.name);
+    spdlog::debug("SceneManager constructing Scene({})", sceneEntry.name);
     sceneEntry.instance = sceneEntry.factory();
     if (!sceneEntry.instance) {
-      spdlog::error("SceneManager: failed to construct Scene({})", sceneEntry.name);
+      spdlog::error("SceneManager failed to construct Scene({})", sceneEntry.name);
     }
   }
 }

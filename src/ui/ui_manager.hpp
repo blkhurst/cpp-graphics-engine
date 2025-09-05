@@ -3,6 +3,7 @@
 #include "window/window_manager.hpp"
 #include <blkhurst/engine/config/ui.hpp>
 #include <blkhurst/engine/root_state.hpp>
+#include <blkhurst/events/event_bus.hpp>
 #include <blkhurst/ui/ui_entry.hpp>
 
 #include <imgui.h>
@@ -12,7 +13,7 @@ namespace blkhurst {
 
 class UiManager {
 public:
-  UiManager(UiConfig config, WindowManager& windowManager);
+  UiManager(UiConfig config, const EventBus& events, const WindowManager& windowManager);
   ~UiManager();
 
   UiManager(const UiManager&) = delete;
@@ -28,10 +29,12 @@ public:
 
 private:
   UiConfig config_;
-  WindowManager& window_;
+  const EventBus& events_;
+  const WindowManager& window_;
+
   float contentScale_ = 1.0F;
 
-  void initialiseImGui(WindowManager& windowManager);
+  void initialiseImGui(const WindowManager& windowManager);
   [[nodiscard]] std::string getGlVersionString() const;
   void setImGuiFont(const std::string& fontPath) const;
 

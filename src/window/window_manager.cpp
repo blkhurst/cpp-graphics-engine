@@ -80,6 +80,33 @@ bool WindowManager::shouldClose() const {
   return closing;
 }
 
+void WindowManager::useFullscreen(bool useFullscreen) {
+  GLFWmonitor* currentMonitor = getMonitorForWindow(window_);
+  if (currentMonitor == nullptr) {
+    spdlog::error("useFullscreen({}) failed: no monitor found for window", useFullscreen);
+    return;
+  }
+
+  if (useFullscreen) {
+    const GLFWvidmode* mode = glfwGetVideoMode(currentMonitor);
+    const int monitorWidth = mode->width;
+    const int monitorHeight = mode->height;
+    const int monitorRefresh = mode->refreshRate;
+
+    spdlog::debug("Entering fullscreen on monitor '{}' ({}x{} @ {}Hz)",
+                  glfwGetMonitorName(currentMonitor), monitorWidth, monitorHeight, monitorRefresh);
+
+    glfwSetWindowMonitor(window_, currentMonitor, 0, 0, monitorWidth, monitorHeight,
+                         monitorRefresh);
+  } else {
+    spdlog::debug("Exiting fullscreen to windowed mode ({}x{} at {},{})", config_.size[0],
+                  config_.size[1], config_.pos[0], config_.pos[1]);
+
+    glfwSetWindowMonitor(window_, nullptr, config_.pos[0], config_.pos[1], config_.size[0],
+                         config_.size[1], GLFW_DONT_CARE);
+  }
+}
+
 void WindowManager::swapBuffersPollEvents() {
   glfwSwapBuffers(window_);
   glfwPollEvents();
@@ -157,33 +184,6 @@ void WindowManager::configureOpenGL() const {
   glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
 
   spdlog::debug("OpenGL state configured (depth, MSAA, culling, blend, stencil, debug output)");
-}
-
-void WindowManager::useFullscreen(bool useFullscreen) {
-  GLFWmonitor* currentMonitor = getMonitorForWindow(window_);
-  if (currentMonitor == nullptr) {
-    spdlog::error("useFullscreen({}) failed: no monitor found for window", useFullscreen);
-    return;
-  }
-
-  if (useFullscreen) {
-    const GLFWvidmode* mode = glfwGetVideoMode(currentMonitor);
-    const int monitorWidth = mode->width;
-    const int monitorHeight = mode->height;
-    const int monitorRefresh = mode->refreshRate;
-
-    spdlog::debug("Entering fullscreen on monitor '{}' ({}x{} @ {}Hz)",
-                  glfwGetMonitorName(currentMonitor), monitorWidth, monitorHeight, monitorRefresh);
-
-    glfwSetWindowMonitor(window_, currentMonitor, 0, 0, monitorWidth, monitorHeight,
-                         monitorRefresh);
-  } else {
-    spdlog::debug("Exiting fullscreen to windowed mode ({}x{} at {},{})", config_.size[0],
-                  config_.size[1], config_.pos[0], config_.pos[1]);
-
-    glfwSetWindowMonitor(window_, nullptr, config_.pos[0], config_.pos[1], config_.size[0],
-                         config_.size[1], GLFW_DONT_CARE);
-  }
 }
 
 GLFWmonitor* WindowManager::getMonitorForWindow(GLFWwindow* window) {

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <blkhurst/events/event_bus.hpp>
 #include <string>
 #include <vector>
 
@@ -20,6 +21,7 @@ struct RootState {
   Camera* camera = nullptr;
   Input* input = nullptr;
   Scene* scene = nullptr;
+  EventBus* events = nullptr;
 
   int currentSceneIndex = -1;
   std::vector<std::string> sceneNames;
