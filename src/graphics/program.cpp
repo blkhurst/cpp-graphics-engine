@@ -33,7 +33,7 @@ Program::~Program() {
 }
 
 // NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
-std::shared_ptr<Program> create(std::string_view vertSrc, std::string_view fragSrc) {
+std::shared_ptr<Program> Program::create(std::string_view vertSrc, std::string_view fragSrc) {
   return std::make_shared<Program>(vertSrc, fragSrc);
 }
 
