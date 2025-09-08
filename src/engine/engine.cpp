@@ -8,6 +8,7 @@
 #include <blkhurst/engine/root_state.hpp>
 #include <blkhurst/events/event_bus.hpp>
 #include <blkhurst/events/events.hpp>
+#include <blkhurst/util/assets.hpp>
 
 #include <spdlog/spdlog.h>
 #include <spdlog/stopwatch.h>
@@ -19,7 +20,6 @@ class Engine::Impl {
 public:
   explicit Impl(const EngineConfig& cfg)
       : config_(cfg),
-        logger_(cfg.loggerConfig.level),
         window_(cfg.windowConfig),
         ui_(cfg.uiConfig, events_, window_) {
     registerEvents();
@@ -70,7 +70,6 @@ public:
 private:
   // Initialisation order (ui_ must be after window_)
   EngineConfig config_;
-  Logger logger_;
   Clock clock_;
   EventBus events_;
   WindowManager window_;
@@ -93,18 +92,16 @@ private:
 };
 
 // Public
-Engine::Engine() {
-  spdlog::stopwatch stopWatch;
-
-  impl_ = std::make_unique<Impl>(EngineConfig{});
-  spdlog::info("Engine initialised successfully {:.2}s (default config)", stopWatch);
-}
-
 Engine::Engine(const EngineConfig& config) {
-  spdlog::stopwatch stopWatch;
+  // Configure Logger and Assets
+  Logger logger_(config.loggerConfig.level);
+  assets::setInstallRoot(config.assetsConfig.installRoot);
+  assets::setSearchPaths(config.assetsConfig.searchPaths);
 
+  // Initialise Engine
+  spdlog::stopwatch stopWatch;
   impl_ = std::make_unique<Impl>(config);
-  spdlog::info("Engine initialised successfully {:.2}s (custom config)", stopWatch);
+  spdlog::info("Engine initialised successfully in {:.2}s", stopWatch);
 }
 
 Engine::~Engine() {

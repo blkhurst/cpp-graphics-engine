@@ -21,6 +21,7 @@
   - `readability-identifier-length`
   - `bugprone-easily-swappable-parameters`
 - [x] Resolve shader/asset paths via executable-relative or CMake-defined asset root; add fallback search paths.
+- [ ] Separate out preprocessing logic.
 
 ## Layer Mask
 
@@ -43,3 +44,8 @@
   - Convert `Geometry` to PImpl; forward declare VAO/Buffer in header.
   - Replace `Geometry::vertexArray()` with `Geometry::bind()`.
   - Make dtor virtual and define in source to ensure forwarded types are ok.
+
+## Assets
+
+- [ ] Extend `assetsConfig` with `envVar`, `useCwd`, `useExeDir`, `verbose`.
+- [ ] Embed font and load using `AddFontFromMemoryTTF`.

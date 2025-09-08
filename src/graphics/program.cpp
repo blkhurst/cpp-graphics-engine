@@ -197,7 +197,7 @@ static std::string preprocessImpl(std::string_view source, const PreprocessOptio
 
 static std::string preprocessFileImpl(std::string_view path, const PreprocessOptions& opts,
                                       std::unordered_set<std::string>& seen) {
-  auto src = assets::read_text(path);
+  auto src = assets::readText(path);
   const std::string curDir = std::filesystem::path(std::string(path)).parent_path().string();
   return preprocessImpl(src, opts, curDir, seen);
 }

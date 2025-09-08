@@ -8,8 +8,7 @@ namespace blkhurst {
 
 class Engine {
 public:
-  Engine();
-  Engine(const EngineConfig& config);
+  Engine(const EngineConfig& config = {});
   ~Engine();
 
   Engine(const Engine&) = delete;

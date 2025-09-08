@@ -1,46 +1,179 @@
 #include <blkhurst/util/assets.hpp>
+#include <filesystem>
+#include <spdlog/spdlog.h>
+
+#include <algorithm>
 #include <cstdlib>
 #include <fstream>
-#include <mutex>
-#include <spdlog/spdlog.h>
-#include <sstream>
 
 #ifdef _WIN32
-#include <windows.h>
+#include <windows.h> // GetModuleFileNameA
 #elif defined(__APPLE__)
-#include <mach-o/dyld.h>
+#include <mach-o/dyld.h> // _NSGetExecutablePath
 #endif
 
 namespace fs = std::filesystem;
-namespace blkhurst::assets {
 
 namespace {
-std::mutex& mtx() {
-  static std::mutex mutexInstance;
-  return mutexInstance;
-}
-std::vector<fs::path>& user_paths() {
-  static std::vector<fs::path> userPathsVec;
-  return userPathsVec;
-}
-fs::path& install_root() {
-  static fs::path installRootPath;
-  return installRootPath;
-}
-bool& inited() {
-  static bool initializedFlag = false;
-  return initializedFlag;
-}
 
-char path_delim() {
 #ifdef _WIN32
-  return ';';
+constexpr char kPathListDelimiter = ';';
 #else
-  return ':';
+constexpr char kPathListDelimiter = ':';
 #endif
+
+bool exists_any(const fs::path& path) {
+  std::error_code errorCode;
+  return fs::exists(path, errorCode);
 }
 
-std::optional<fs::path> exe_dir() {
+bool is_file(const fs::path& path) {
+  std::error_code errorCode;
+  return fs::is_regular_file(path, errorCode);
+}
+
+fs::path join_clean(const fs::path& base, const fs::path& rel) {
+  // Avoid double separators and handle "."/".."
+  std::error_code errorCode;
+  auto combined = fs::weakly_canonical(base / rel, errorCode);
+  if (!errorCode) {
+    return combined;
+  }
+  return base / rel;
+}
+
+} // namespace
+
+namespace blkhurst {
+
+// Configuration
+void Assets::setInstallRoot(const std::string& root) {
+  installRoot_ = weaklyCanonicalOrOriginal(root);
+  spdlog::trace("Assets setInstallRoot {}", installRoot_.string());
+}
+
+void Assets::setSearchPaths(const std::vector<std::string>& paths) {
+  searchPaths_.clear();
+  for (const auto& path : paths) {
+    addSearchPath(path);
+  }
+}
+
+void Assets::addSearchPath(const std::string& path) {
+  if (path.empty()) {
+    spdlog::warn("Assets addSearchPath ignored empty path");
+    return;
+  }
+
+  // Keep relativeness; DO NOT canonicalize here; but normalise ".." and "."
+  fs::path normalisedPath = fs::path(path).lexically_normal();
+  const auto found = std::find(searchPaths_.begin(), searchPaths_.end(), normalisedPath);
+  if (found == searchPaths_.end()) {
+    searchPaths_.push_back(normalisedPath);
+    spdlog::trace("Assets addSearchPath {}", normalisedPath.string());
+  } else {
+    spdlog::trace("Assets addSearchPath duplicate ignored {}", normalisedPath.string());
+  }
+}
+
+void Assets::setEnvVarName(std::string name) {
+  envVarName_ = std::move(name);
+  spdlog::trace("Assets setEnvVarName {}", envVarName_);
+}
+
+const fs::path& Assets::installRoot() const {
+  return installRoot_;
+}
+
+const std::vector<fs::path>& Assets::searchPaths() const {
+  return searchPaths_;
+}
+
+const std::string& Assets::envVarName() const {
+  return envVarName_;
+}
+
+std::optional<std::string> Assets::find(std::string_view file) const {
+  if (file.empty()) {
+    spdlog::warn("Assets find called with empty path");
+    return std::nullopt;
+  }
+
+  const fs::path inPath{file};
+
+  // Absolute
+  if (inPath.is_absolute()) {
+    if (exists_any(inPath)) {
+      auto out = weaklyCanonicalOrOriginal(inPath);
+      spdlog::debug("Assets find absolute OK: {}", out.string());
+      return out.string();
+    }
+    spdlog::warn("Assets absolute not found: {}", inPath.string());
+    return std::nullopt;
+  }
+
+  const auto roots = buildSearchOrder();
+
+  // Collect relative prefixes
+  std::vector<fs::path> relPrefixes;
+  relPrefixes.reserve(searchPaths_.size());
+  for (const auto& path : searchPaths_) {
+    if (!path.is_absolute()) {
+      relPrefixes.push_back(path);
+    }
+  }
+
+  spdlog::trace("Assets find searching {} roots, {} rel-prefixes for '{}'", roots.size(),
+                relPrefixes.size(), std::string(file));
+
+  auto try_one = [&](const fs::path& candidate) -> std::optional<fs::path> {
+    if (exists_any(candidate)) {
+      spdlog::debug("Assets found: {}", candidate.string());
+      return candidate.string();
+    }
+    spdlog::trace("Assets miss: {}", candidate.string());
+    return std::nullopt;
+  };
+
+  // 1) <root>/<rel>
+  for (const auto& root : roots) {
+    if (auto hit = try_one(join_clean(root, inPath))) {
+      return hit;
+    }
+  }
+
+  // 2) <root>/<rel-prefix>/<rel>
+  for (const auto& root : roots) {
+    for (const auto& prefix : relPrefixes) {
+      if (auto hit = try_one(join_clean(join_clean(root, prefix), inPath))) {
+        return hit;
+      }
+    }
+  }
+
+  spdlog::warn("Assets not found '{}'", std::string(file));
+  return std::nullopt;
+}
+
+std::string Assets::readText(std::string_view pathLike) const {
+  const auto found = find(pathLike);
+  if (!found) {
+    return {};
+  }
+  std::ifstream file(*found, std::ios::in | std::ios::binary);
+  if (!file) {
+    spdlog::error("Assets readText failed to open '{}'", found->c_str());
+    return {};
+  }
+
+  std::ostringstream buffer;
+  buffer << file.rdbuf();
+  const std::string out = buffer.str();
+  spdlog::trace("Assets readText {} bytes from {}", out.size(), found->c_str());
+  return out;
+}
+
+std::optional<fs::path> Assets::exeDir() {
 #ifdef _WIN32
   char buf[MAX_PATH];
   DWORD len = GetModuleFileNameA(nullptr, buf, MAX_PATH);
@@ -66,133 +199,93 @@ std::optional<fs::path> exe_dir() {
 #endif
 }
 
-void init_defaults_if_needed() {
-  if (inited()) {
-    return;
-  }
-  std::scoped_lock lock(mtx());
-  if (inited()) {
-    return;
-  }
-
-  // Env var: BLKHURST_ASSETS=a:b:c (or ; on Windows)
-  if (const char* env = std::getenv("BLKHURST_ASSETS")) {
-    std::string envStr(env);
-    std::string acc;
-    for (char chr : envStr) {
-      if (chr == path_delim()) {
-        if (!acc.empty()) {
-          user_paths().emplace_back(acc), acc.clear();
-        }
-      } else {
-        acc.push_back(chr);
-      }
-    }
-    if (!acc.empty()) {
-      user_paths().emplace_back(acc);
-    }
-  }
-
-  // Default: current working dir
-  user_paths().push_back(fs::current_path());
-
-  // Default: executable dir (best-effort)
-  if (auto exeDir = exe_dir()) {
-    user_paths().push_back(*exeDir);
-  }
-
-  // Optional install root (set via set_install_root)
-  if (!install_root().empty()) {
-    user_paths().push_back(install_root());
-  }
-
-  inited() = true;
-}
-
-bool exists_file(const fs::path& path) {
+fs::path Assets::cwd() {
   std::error_code errorCode;
-  auto status = fs::status(path, errorCode);
-  return !errorCode && fs::exists(status) && fs::is_regular_file(status);
-}
-
-} // namespace
-
-void add_search_path(const fs::path& path) {
-  init_defaults_if_needed();
-  std::scoped_lock lock(mtx());
-
-  auto push_unique = [](const fs::path& path) {
-    const fs::path canon = fs::weakly_canonical(path);
-    auto& roots = user_paths();
-    if (std::find(roots.begin(), roots.end(), canon) == roots.end()) {
-      roots.push_back(canon);
-      spdlog::trace("Assets: added search path '{}'", canon.string());
-    }
-  };
-
-  if (path.is_absolute()) {
-    push_unique(path);
-  } else {
-    push_unique(fs::current_path() / path);
-    if (auto exeDir = exe_dir()) {
-      push_unique(*exeDir / path);
-    }
-  }
-}
-
-void clear_search_paths() {
-  std::scoped_lock lock(mtx());
-  user_paths().clear();
-  inited() = false; // force re-init next time (re-reads env, cwd, exe dir)
-  spdlog::trace("Assets: cleared search paths");
-}
-
-void set_install_root(const fs::path& path) {
-  std::scoped_lock lock(mtx());
-  install_root() = path;
-  spdlog::trace("Assets: set install root '{}'", path.string());
-}
-
-std::optional<fs::path> find(std::string_view relOrAbs) {
-  init_defaults_if_needed();
-  const fs::path inPath(relOrAbs);
-
-  // Absolute?
-  if (inPath.is_absolute()) {
-    fs::path canonAbs = fs::weakly_canonical(inPath);
-    if (exists_file(canonAbs)) {
-      spdlog::trace("Assets: found absolute '{}'", canonAbs.string());
-      return canonAbs;
-    }
-  }
-
-  // Try user paths + defaults
-  std::scoped_lock lock(mtx());
-  for (const auto& root : user_paths()) {
-    fs::path cand = fs::weakly_canonical(root / inPath);
-    if (exists_file(cand)) {
-      spdlog::trace("Assets: found '{}' in '{}'", inPath.string(), root.string());
-      return cand;
-    }
-  }
-
-  spdlog::warn("Assets: not found '{}'", inPath.string());
-  return std::nullopt;
-}
-
-std::string read_text(std::string_view pathLike) {
-  auto foundPath = find(pathLike);
-  if (!foundPath) {
+  auto path = fs::current_path(errorCode);
+  if (errorCode) {
     return {};
   }
-  std::ifstream file(*foundPath, std::ios::in | std::ios::binary);
-  if (!file) {
-    spdlog::error("Assets: read failed (open error): '{}'", foundPath->string());
-    return {};
-  }
-  std::ostringstream buffer;
-  buffer << file.rdbuf();
-  return buffer.str();
+  return path;
 }
 
-} // namespace blkhurst::assets
+// Private
+std::vector<fs::path> Assets::buildSearchOrder() const {
+  std::vector<fs::path> order;
+
+  // 1) Env-var roots
+  auto envPaths = parseEnvPaths();
+  order.insert(order.end(), envPaths.begin(), envPaths.end());
+
+  // 2) Install root
+  if (!installRoot_.empty()) {
+    order.push_back(installRoot_);
+  }
+
+  // 3) CWD
+  if (auto currentDir = cwd(); !currentDir.empty()) {
+    order.push_back(currentDir);
+  }
+
+  // 4) Executable dir
+  if (auto exDir = exeDir()) {
+    order.push_back(*exDir);
+  }
+
+  // 5) Absolute configured search paths behave like independent roots
+  for (const auto& path : searchPaths_) {
+    if (path.is_absolute()) {
+      order.push_back(path);
+    }
+  }
+
+  // Dedup + canonicalise
+  std::vector<fs::path> deduped;
+  deduped.reserve(order.size());
+  for (const auto& path : order) {
+    if (path.empty()) {
+      continue;
+    }
+    const auto canon = weaklyCanonicalOrOriginal(path);
+    if (std::find(deduped.begin(), deduped.end(), canon) == deduped.end()) {
+      deduped.push_back(canon);
+    }
+  }
+  return deduped;
+}
+
+std::vector<fs::path> Assets::parseEnvPaths() const {
+  std::vector<fs::path> out;
+  const char* raw = std::getenv(envVarName_.c_str());
+  if ((raw == nullptr) || (*raw == 0)) {
+    spdlog::trace("Assets env var '{}' not set", envVarName_);
+    return out;
+  }
+  std::string value(raw);
+  spdlog::trace("Assets env '{}' = '{}'", envVarName_, value);
+
+  size_t start = 0;
+  while (start <= value.size()) {
+    const auto pos = value.find(kPathListDelimiter, start);
+    const auto len = (pos == std::string::npos) ? value.size() - start : pos - start;
+    auto token = value.substr(start, len);
+    if (!token.empty()) {
+      out.push_back(weaklyCanonicalOrOriginal(fs::path(token)));
+    }
+    if (pos == std::string::npos) {
+      break;
+    }
+    start = pos + 1;
+  }
+  return out;
+}
+
+fs::path Assets::weaklyCanonicalOrOriginal(const fs::path& path) {
+  std::error_code errorCode;
+  auto canonical = fs::weakly_canonical(path, errorCode);
+  if (!errorCode && !canonical.empty()) {
+    return canonical;
+  }
+  return path;
+}
+
+} // namespace blkhurst
