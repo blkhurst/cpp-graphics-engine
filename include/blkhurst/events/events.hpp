@@ -13,4 +13,9 @@ struct SceneChange {
   int index = -1;
 };
 
+struct FramebufferResized {
+  int width;
+  int height;
+};
+
 } // namespace blkhurst::events

@@ -2,12 +2,14 @@
 #include "logging/logger.hpp"
 #include "scene/scene_manager.hpp"
 #include "ui/ui_manager.hpp"
+#include "window/glfw_callbacks.hpp"
 #include "window/window_manager.hpp"
 #include <blkhurst/engine.hpp>
 #include <blkhurst/engine/config.hpp>
 #include <blkhurst/engine/root_state.hpp>
 #include <blkhurst/events/event_bus.hpp>
 #include <blkhurst/events/events.hpp>
+#include <blkhurst/input/input.hpp>
 #include <blkhurst/util/assets.hpp>
 
 #include <spdlog/spdlog.h>
@@ -21,12 +23,21 @@ public:
   explicit Impl(const EngineConfig& cfg)
       : config_(cfg),
         window_(cfg.windowConfig),
-        ui_(cfg.uiConfig, events_, window_) {
+        ui_(cfg.uiConfig, events_, window_),
+        input_(events_) {
+    // Register EventBus Subscriptions
     registerEvents();
+
+    // Wire GLFW Callbacks to our Input System
+    GlfwCallbacks::attach(window_.getWindow(), input_);
   }
 
   void run() {
     while (!window_.shouldClose()) {
+      input_.beginFrame();
+      window_.pollEvents();
+      input_.endFrame();
+
       const auto tick = clock_.tick();
 
       auto* currentScene = scene_.currentScene();
@@ -38,7 +49,7 @@ public:
           .ms = tick.ms,
           .renderer = nullptr,
           .camera = nullptr,
-          .input = nullptr,
+          .input = &input_,
           .scene = currentScene,
           .events = &events_,
           .currentSceneIndex = scene_.currentIndex(),
@@ -58,7 +69,8 @@ public:
       }
       ui_.endFrame();
 
-      window_.swapBuffersPollEvents();
+      window_.swapBuffers();
+      // TODO: glClear in renderer
     }
   }
 
@@ -75,6 +87,7 @@ private:
   WindowManager window_;
   SceneManager scene_;
   UiManager ui_;
+  Input input_;
 
   std::vector<Subscription> subscriptions_;
 
@@ -83,6 +96,9 @@ private:
     on<SceneChange>([this](const SceneChange& scene) { scene_.setScene(scene.index); });
     on<ToggleFullscreen>(
         [this](const ToggleFullscreen& fullscreen) { window_.useFullscreen(fullscreen.enabled); });
+    on<FramebufferResized>([this](const FramebufferResized& size) {
+      // TODO: Update glViewport via renderer
+    });
   }
 
   // registerEvents helper

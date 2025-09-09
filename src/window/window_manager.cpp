@@ -107,10 +107,13 @@ void WindowManager::useFullscreen(bool useFullscreen) {
   }
 }
 
-void WindowManager::swapBuffersPollEvents() {
-  glfwSwapBuffers(window_);
+// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
+void WindowManager::pollEvents() {
   glfwPollEvents();
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+}
+
+void WindowManager::swapBuffers() {
+  glfwSwapBuffers(window_);
 }
 
 // Private
@@ -139,8 +142,6 @@ bool WindowManager::initialiseGlfw() {
   spdlog::debug("GLFW window created ({}x{})", config_.size[0], config_.size[1]);
 
   glfwMakeContextCurrent(window_);
-
-  glfwSetFramebufferSizeCallback(window_, WindowManager::framebufferSizeCallback);
 
   glfwSwapInterval(static_cast<int>(config_.enableVSync));
 
@@ -210,17 +211,6 @@ GLFWmonitor* WindowManager::getMonitorForWindow(GLFWwindow* window) {
   }
   spdlog::warn("Could not determine monitor for window");
   return nullptr;
-}
-
-void WindowManager::framebufferSizeCallback(GLFWwindow* window, int width, int height) {
-  if (width == 0 || height == 0) {
-    spdlog::debug("Framebuffer size callback received zero dimension ({}x{}), skipping viewport",
-                  width, height);
-    return;
-  }
-  // glViewport lets OpenGL know how to map the NDC coordinates to the framebuffer coordinates
-  glViewport(0, 0, width, height);
-  spdlog::debug("Viewport updated to {}x{}", width, height);
 }
 
 void WindowManager::errorCallback(int error, const char* description) {

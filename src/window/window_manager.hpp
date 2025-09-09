@@ -25,7 +25,8 @@ public:
   [[nodiscard]] bool shouldClose() const;
 
   void useFullscreen(bool useFullscreen);
-  void swapBuffersPollEvents();
+  void pollEvents();
+  void swapBuffers();
 
 private:
   GLFWwindow* window_ = nullptr;
@@ -37,7 +38,6 @@ private:
 
   static GLFWmonitor* getMonitorForWindow(GLFWwindow* window);
 
-  static void framebufferSizeCallback(GLFWwindow* window, int width, int height);
   static void errorCallback(int error, const char* description);
 };
 
