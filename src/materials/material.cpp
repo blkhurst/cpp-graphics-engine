@@ -16,13 +16,7 @@ std::shared_ptr<Material> Material::create(std::shared_ptr<Program> prog) {
   return std::make_shared<Material>(prog);
 }
 
-void Material::apply() const {
-  if (!program) {
-    spdlog::error("Material::apply called with null Program");
-    return;
-  }
-  program->use();
-
+void Material::applyUniforms() const {
   for (const auto& [name, val] : uniforms) {
     applyUniform(*program, name, val);
   }

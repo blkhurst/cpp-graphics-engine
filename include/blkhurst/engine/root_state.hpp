@@ -1,6 +1,7 @@
 #pragma once
 
 #include <blkhurst/events/event_bus.hpp>
+#include <glm/glm.hpp>
 #include <string>
 #include <vector>
 
@@ -16,6 +17,8 @@ struct RootState {
   float elapsed = 0.0F;
   float fps = 0.0F;
   float ms = 0.0F;
+
+  glm::vec2 windowFramebufferSize{0.0F};
 
   Renderer* renderer = nullptr;
   Camera* camera = nullptr;

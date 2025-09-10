@@ -56,8 +56,7 @@ public:
     uniforms[name] = value;
   }
 
-  // Use program and apply uniforms
-  void apply() const;
+  void applyUniforms() const;
 
 private:
   static void applyUniform(Program& prog, const std::string& name, const UniformValue& uniform);
