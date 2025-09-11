@@ -26,15 +26,20 @@ public:
   static std::shared_ptr<PerspectiveCamera> create(float fovYDeg, float aspect, float nearZ,
                                                    float farZ);
 
+  void onUpdate(const RootState& state) override;
+  const glm::mat4& projectionMatrix() const override;
+
   void setFovYDeg(float fovYDeg);
   void setAspect(float aspect);
   void setNearFar(float nearZ, float farZ);
-
-  const glm::mat4& projectionMatrix() const override;
+  void setAutoUpdateAspect(bool enabled = true);
 
 private:
   mutable glm::mat4 proj_{1.0F};
   mutable bool projNeedsUpdate_ = true;
+
+  bool autoUpdateAspect_ = true;
+  void updateAspectFromState(const RootState& state);
 
   float fovYDeg_ = PerspectiveDefaults::kFovYDeg;
   float aspect_ = PerspectiveDefaults::kAspect;

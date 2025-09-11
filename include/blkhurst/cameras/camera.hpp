@@ -19,6 +19,9 @@ public:
     return NodeKind::Camera;
   }
 
+  void onUpdate(const RootState& state) override {
+  }
+
   glm::mat4 viewMatrix() const;
   virtual const glm::mat4& projectionMatrix() const = 0;
 };

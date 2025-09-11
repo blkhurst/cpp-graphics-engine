@@ -49,3 +49,9 @@
 
 - [ ] Extend `assetsConfig` with `envVar`, `useCwd`, `useExeDir`, `verbose`.
 - [ ] Embed font and load using `AddFontFromMemoryTTF`.
+
+## Engine/Renderer
+
+- [ ] use `vec4` for `clearColor`
+- [ ] Clarify that `uResolution` represents `windowFramebufferSize`, not `renderTargetFramebufferSize`, or `viewportSize`
+- [ ] Add callbacks & RootState for `windowSize` and `contentScale` (in addition to `windowFramebufferSize`)

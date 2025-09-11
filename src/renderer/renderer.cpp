@@ -1,3 +1,4 @@
+#include "blkhurst/cameras/perspective_camera.hpp"
 #include <blkhurst/materials/material.hpp>
 #include <blkhurst/renderer/renderer.hpp>
 
@@ -31,6 +32,11 @@ void Renderer::render(Object3D& root, Camera& camera) {
   if (autoClear_) {
     clear();
   }
+
+  // const glm::vec2 frameSize = framebufferSize_;
+  // const float aspect = frameSize[0] / frameSize[1];
+  // auto* pcam = dynamic_cast<PerspectiveCamera*>(&camera);
+  // pcam->setAspect(aspect);
 
   applyPerFrameUniforms(camera);
 
@@ -91,7 +97,7 @@ void Renderer::clearStencil() {
 }
 
 // NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
-void Renderer::setFramebufferSize(int width, int height) {
+void Renderer::setDefaultFramebufferSize(int width, int height) {
   framebufferSize_[0] = width;
   framebufferSize_[1] = height;
   setViewport(0, 0, width, height);

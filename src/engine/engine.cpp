@@ -10,6 +10,8 @@
 #include <blkhurst/events/event_bus.hpp>
 #include <blkhurst/events/events.hpp>
 #include <blkhurst/input/input.hpp>
+#include <blkhurst/renderer/renderer.hpp>
+#include <blkhurst/renderer/uniforms.hpp>
 #include <blkhurst/util/assets.hpp>
 
 #include <spdlog/spdlog.h>
@@ -30,48 +32,101 @@ public:
 
     // Wire GLFW Callbacks to our Input System
     GlfwCallbacks::attach(window_.getWindow(), input_);
+
+    // Trigger FramebufferResized Event; Set Renderers Default Framebuffer Size
+    auto windowFramebufferSize = window_.getFramebufferResolution();
+    input_.pushFramebufferSize(windowFramebufferSize.width, windowFramebufferSize.height);
   }
 
   void run() {
     while (!window_.shouldClose()) {
+      // Poll Events & Input
       input_.beginFrame();
       window_.pollEvents();
       input_.endFrame();
 
+      // Gather Frame State
       const auto tick = clock_.tick();
-
       auto* currentScene = scene_.currentScene();
+      bool availableScene = (currentScene != nullptr);
+      auto* currentCamera = availableScene ? currentScene->activeCamera() : nullptr;
+      auto* currentController = availableScene ? currentScene->activeController() : nullptr;
+      auto rootState = buildRootState(tick, currentScene, currentCamera);
 
-      RootState rootState = {
-          .delta = tick.delta,
-          .elapsed = tick.elapsed,
-          .fps = tick.fps,
-          .ms = tick.ms,
-          .renderer = nullptr,
-          .camera = nullptr,
-          .input = &input_,
-          .scene = currentScene,
-          .events = &events_,
-          .currentSceneIndex = scene_.currentIndex(),
-          .sceneNames = scene_.names(),
-      };
-
-      if (currentScene != nullptr) {
-        currentScene->traverse([&](Object3D& node) { node.onUpdate(rootState); });
+      // UI only if no active scene/camera
+      if ((currentScene == nullptr) || (currentCamera == nullptr)) {
+        renderer_.clear();
+        drawUi(rootState, currentScene);
+        window_.swapBuffers();
+        continue;
       }
 
-      ui_.beginFrame();
-      ui_.drawBaseUi(rootState);
-      if (currentScene != nullptr) {
-        for (const auto& uiEntry : currentScene->uiEntries()) {
-          ui_.draw(*uiEntry, rootState);
-        }
+      // Update Controller
+      if (currentController != nullptr) {
+        currentController->update(rootState);
       }
-      ui_.endFrame();
+
+      // Update Camera (PerspectiveCamera calls updateAspectFromState)
+      currentCamera->onUpdate(rootState);
+
+      // Build/Set Uniforms
+      auto frameUniforms = buildFrameUniforms(input_, tick, currentCamera);
+      renderer_.setFrameUniforms(frameUniforms);
+
+      // Update Scene (May call renderer.render)
+      currentScene->traverse([&](Object3D& node) { node.onUpdate(rootState); });
+
+      // Render
+      renderer_.render(*currentScene, *currentCamera);
+
+      // Ui
+      drawUi(rootState, currentScene);
 
       window_.swapBuffers();
-      // TODO: glClear in renderer
     }
+  }
+
+  RootState buildRootState(const ClockInfo& tick, Scene* currentScene, Camera* currentCam) {
+    RootState rootState = {
+        .delta = tick.delta,
+        .elapsed = tick.elapsed,
+        .fps = tick.fps,
+        .ms = tick.ms,
+        .windowFramebufferSize = input_.framebufferSize(),
+        .renderer = &renderer_,
+        .camera = currentCam,
+        .input = &input_,
+        .scene = currentScene,
+        .events = &events_,
+        .currentSceneIndex = scene_.currentIndex(),
+        .sceneNames = scene_.names(),
+    };
+    return rootState;
+  }
+
+  FrameUniforms buildFrameUniforms(const Input& input, const ClockInfo& tick, Camera* currentCam) {
+    FrameUniforms frameUniforms{};
+    frameUniforms.uTime = tick.elapsed;
+    frameUniforms.uDelta = tick.delta;
+    frameUniforms.uMouse = input_.mousePosition();
+    frameUniforms.uResolution = input_.framebufferSize();
+    if (currentCam != nullptr) {
+      frameUniforms.uView = currentCam->viewMatrix();
+      frameUniforms.uProjection = currentCam->projectionMatrix();
+      frameUniforms.uCameraPos = glm::vec4{currentCam->position(), 0.0};
+    }
+    return frameUniforms;
+  }
+
+  void drawUi(const RootState& rootState, Scene* currentScene) {
+    ui_.beginFrame();
+    ui_.drawBaseUi(rootState);
+    if (currentScene != nullptr) {
+      for (const auto& uiEntry : currentScene->uiEntries()) {
+        ui_.draw(*uiEntry, rootState);
+      }
+    }
+    ui_.endFrame();
   }
 
   void registerSceneFactory(const std::string& name,
@@ -88,16 +143,20 @@ private:
   SceneManager scene_;
   UiManager ui_;
   Input input_;
+  Renderer renderer_;
 
   std::vector<Subscription> subscriptions_;
 
   void registerEvents() {
     using namespace events;
-    on<SceneChange>([this](const SceneChange& scene) { scene_.setScene(scene.index); });
+    on<SceneChange>([this](const SceneChange& scene) {
+      renderer_.resetState();
+      scene_.setScene(scene.index);
+    });
     on<ToggleFullscreen>(
         [this](const ToggleFullscreen& fullscreen) { window_.useFullscreen(fullscreen.enabled); });
     on<FramebufferResized>([this](const FramebufferResized& size) {
-      // TODO: Update glViewport via renderer
+      renderer_.setDefaultFramebufferSize(size.width, size.height);
     });
   }
 

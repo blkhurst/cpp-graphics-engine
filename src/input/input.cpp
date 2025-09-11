@@ -180,7 +180,7 @@ void Input::pushWindowSize(int width, int height) {
 void Input::pushFramebufferSize(int width, int height) {
   framebufferWidth_ = std::max(0, width);
   framebufferHeight_ = std::max(0, height);
-  spdlog::debug("Viewport updated to {}x{}", width, height);
+  spdlog::debug("Window framebuffer resized {}x{}", width, height);
 
   events_.emit<events::FramebufferResized>(framebufferWidth_, framebufferHeight_);
 }

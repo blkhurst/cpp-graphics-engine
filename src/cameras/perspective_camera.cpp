@@ -31,6 +31,18 @@ std::shared_ptr<PerspectiveCamera> PerspectiveCamera::create(float fovYDeg, floa
   return std::make_shared<PerspectiveCamera>(fovYDeg, aspect, nearZ, farZ);
 }
 
+void PerspectiveCamera::onUpdate(const RootState& state) {
+  updateAspectFromState(state);
+}
+
+const glm::mat4& PerspectiveCamera::projectionMatrix() const {
+  if (projNeedsUpdate_) {
+    proj_ = glm::perspective(glm::radians(fovYDeg_), aspect_, nearZ_, farZ_);
+    projNeedsUpdate_ = false;
+  }
+  return proj_;
+}
+
 void PerspectiveCamera::setFovYDeg(float fovYDeg) {
   fovYDeg_ = fovYDeg;
   projNeedsUpdate_ = true;
@@ -50,12 +62,19 @@ void PerspectiveCamera::setNearFar(float nearZ, float farZ) {
   spdlog::trace("PerspectiveCamera setNearFar near={:.2f} far={:.2f}", nearZ, farZ);
 }
 
-const glm::mat4& PerspectiveCamera::projectionMatrix() const {
-  if (projNeedsUpdate_) {
-    proj_ = glm::perspective(glm::radians(fovYDeg_), aspect_, nearZ_, farZ_);
-    projNeedsUpdate_ = false;
+void PerspectiveCamera::setAutoUpdateAspect(bool enabled) {
+  autoUpdateAspect_ = enabled;
+}
+
+void PerspectiveCamera::updateAspectFromState(const RootState& state) {
+  if (!autoUpdateAspect_ || state.windowFramebufferSize[1] == 0.0F) {
+    return;
   }
-  return proj_;
+
+  float aspect = state.windowFramebufferSize[0] / state.windowFramebufferSize[1];
+  if (aspect != aspect_) {
+    setAspect(aspect);
+  }
 }
 
 } // namespace blkhurst

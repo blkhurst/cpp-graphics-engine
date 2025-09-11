@@ -32,7 +32,7 @@ public:
   void clearDepth();
   void clearStencil();
 
-  void setFramebufferSize(int width, int height); // Set by engine
+  void setDefaultFramebufferSize(int width, int height); // Set by engine
   void setViewport(int xpos, int ypos, int width, int height);
   void setScissor(int xpos, int ypos, int width, int height);
   void setScissorTest(bool enabled);
