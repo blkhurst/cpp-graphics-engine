@@ -1,6 +1,7 @@
 #pragma once
 
 #include <blkhurst/cameras/ortho_camera.hpp>
+#include <blkhurst/controllers/controller.hpp>
 #include <blkhurst/engine/config/defaults.hpp>
 #include <blkhurst/objects/object3d.hpp>
 #include <blkhurst/ui/ui_entry.hpp>
@@ -9,8 +10,6 @@
 #include <vector>
 
 namespace blkhurst {
-
-class Controller; // Forward
 
 class Scene : public Object3D {
 public:
