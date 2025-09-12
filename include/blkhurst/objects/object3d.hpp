@@ -5,7 +5,6 @@
 #include <cstdint>
 #include <functional>
 #include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/quaternion.hpp>
 #include <memory>
 #include <string>
@@ -38,27 +37,42 @@ public:
   virtual NodeKind kind() const;
   bool visible() const;
 
+  // Getters
   const glm::vec3& position() const;
-  const glm::quat& rotation() const;
+  const glm::quat& rotation() const; // Quaternion, no euler angles yet.
   const glm::vec3& scale() const;
 
+  const glm::mat4& matrix() const;
+  const glm::mat4& worldMatrix() const;
+
+  glm::vec3 worldPosition() const;
+  glm::vec3 worldDirection() const;
+
+  // Setters
   void setName(std::string n);
   void setVisible(bool visible);
-  void setPosition(const glm::vec3& position);
-  void setScale(const glm::vec3& scale);
-  void setRotation(const glm::quat& quat);
 
+  void setPosition(const glm::vec3& position);
+  void setRotation(const glm::quat& quat);
+  void setScale(const glm::vec3& scale);
+  void setWorldPosition(const glm::vec3& position);
+
+  void rotateOnAxis(const glm::vec3& axis, float radians);
+  void rotateOnWorldAxis(const glm::vec3& axis, float radians);
   void rotateX(float radians);
   void rotateY(float radians);
   void rotateZ(float radians);
+
+  void translateOnAxis(const glm::vec3& axis, float distance);
+  void translateOnWorldAxis(const glm::vec3& axis, float distance);
   void translateX(float distance);
   void translateY(float distance);
   void translateZ(float distance);
 
-  void needsUpdate();
-  const glm::mat4& worldMatrix() const;
+  void lookAt(const glm::vec3& target);
 
   void traverse(const std::function<void(Object3D&)>& func);
+  void needsUpdate();
 
 private:
   Object3D* parent_ = nullptr;
@@ -73,8 +87,11 @@ private:
   glm::quat rotation_{1.0F, 0.0F, 0.0F, 0.0F};
   glm::vec3 scale_{1.0F, 1.0F, 1.0F};
 
+  mutable glm::mat4 matrix_{1.0F};
   mutable glm::mat4 worldMatrix_{1.0F};
+
   mutable bool needsUpdate_ = true;
+  void calculateMatrices() const;
 
   static std::uint64_t make_uuid_();
 };
