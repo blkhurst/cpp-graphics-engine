@@ -62,6 +62,6 @@
 
 ## Object
 
-- [ ] Make `clone` virtual to avoid duplicating logic in `Mesh` and `Camera`.
+- [ ] Make `clone` virtual to avoid duplicating logic in `Mesh`, `PerspectiveCamera`, and `OrthoCamera`.
   - The problem is that you cannot use virtual covariant return types when using smart pointers.
   - `Material` implements `cloneAs` helper, which also cannot be used on unique pointers.

@@ -66,6 +66,30 @@ void PerspectiveCamera::setAutoUpdateAspect(bool enabled) {
   autoUpdateAspect_ = enabled;
 }
 
+std::unique_ptr<PerspectiveCamera> PerspectiveCamera::clone(bool recursive) {
+  auto copy = std::make_unique<PerspectiveCamera>();
+  // Copy Object3D state
+  copy->setName(name());
+  copy->setVisible(visible());
+  copy->setPosition(position());
+  copy->setRotation(rotation());
+  copy->setScale(scale());
+  // Copy PerspectiveCamera state
+  copy->fovYDeg_ = fovYDeg_;
+  copy->aspect_ = aspect_;
+  copy->nearZ_ = nearZ_;
+  copy->farZ_ = farZ_;
+  copy->autoUpdateAspect_ = autoUpdateAspect_;
+  copy->projNeedsUpdate_ = true; // Force update
+
+  if (recursive) {
+    for (const auto& child : children()) {
+      copy->addChild_(child->clone(true));
+    }
+  }
+  return copy;
+}
+
 void PerspectiveCamera::updateAspectFromState(const RootState& state) {
   if (!autoUpdateAspect_ || state.windowFramebufferSize[1] == 0.0F) {
     return;

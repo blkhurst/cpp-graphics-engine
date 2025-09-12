@@ -68,7 +68,7 @@ std::unique_ptr<Mesh> Mesh::clone(bool recursive) const {
 
   if (recursive) {
     for (const auto& child : children()) {
-      copy->add(child->clone(true));
+      copy->addChild_(child->clone(true));
     }
   }
   return copy;

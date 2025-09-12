@@ -34,17 +34,19 @@ public:
   void setNearFar(float nearZ, float farZ);
   void setAutoUpdateAspect(bool enabled = true);
 
+  std::unique_ptr<PerspectiveCamera> clone(bool recursive = true);
+
 private:
   mutable glm::mat4 proj_{1.0F};
   mutable bool projNeedsUpdate_ = true;
-
-  bool autoUpdateAspect_ = true;
-  void updateAspectFromState(const RootState& state);
 
   float fovYDeg_ = PerspectiveDefaults::kFovYDeg;
   float aspect_ = PerspectiveDefaults::kAspect;
   float nearZ_ = PerspectiveDefaults::kNearZ;
   float farZ_ = PerspectiveDefaults::kFarZ;
+
+  bool autoUpdateAspect_ = true;
+  void updateAspectFromState(const RootState& state);
 };
 
 } // namespace blkhurst

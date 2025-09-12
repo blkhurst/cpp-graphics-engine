@@ -34,6 +34,14 @@ std::shared_ptr<OrthoCamera> OrthoCamera::create(float left, float right, float 
   return std::make_shared<OrthoCamera>(left, right, bottom, top, nearZ, farZ);
 }
 
+const glm::mat4& OrthoCamera::projectionMatrix() const {
+  if (projNeedsUpdate_) {
+    proj_ = glm::ortho(left_, right_, bottom_, top_, nearZ_, farZ_);
+    projNeedsUpdate_ = false;
+  }
+  return proj_;
+}
+
 void OrthoCamera::setBounds(float left, float right, float bottom, float top) {
   left_ = left;
   right_ = right;
@@ -51,12 +59,29 @@ void OrthoCamera::setNearFar(float nearZ, float farZ) {
   spdlog::trace("OrthoCamera setNearFar near={:.2f} far={:.2f}", nearZ, farZ);
 }
 
-const glm::mat4& OrthoCamera::projectionMatrix() const {
-  if (projNeedsUpdate_) {
-    proj_ = glm::ortho(left_, right_, bottom_, top_, nearZ_, farZ_);
-    projNeedsUpdate_ = false;
+std::unique_ptr<OrthoCamera> OrthoCamera::clone(bool recursive) {
+  auto copy = std::make_unique<OrthoCamera>();
+  // Copy Object3D state
+  copy->setName(name());
+  copy->setVisible(visible());
+  copy->setPosition(position());
+  copy->setRotation(rotation());
+  copy->setScale(scale());
+  // Copy PerspectiveCamera state
+  copy->left_ = left_;
+  copy->right_ = right_;
+  copy->bottom_ = bottom_;
+  copy->top_ = top_;
+  copy->nearZ_ = nearZ_;
+  copy->farZ_ = farZ_;
+  copy->projNeedsUpdate_ = true; // Force update
+
+  if (recursive) {
+    for (const auto& child : children()) {
+      copy->addChild_(child->clone(true));
+    }
   }
-  return proj_;
+  return copy;
 }
 
 } // namespace blkhurst

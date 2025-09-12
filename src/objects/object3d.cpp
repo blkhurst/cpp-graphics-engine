@@ -26,14 +26,6 @@ Object3D::Object3D()
     : uuid_(make_uuid_()) {
 }
 
-Object3D* Object3D::add(std::unique_ptr<Object3D> child) {
-  child->parent_ = this;
-  child->needsUpdate();
-  spdlog::trace("Object3D({}) add child Object3D({})", uuid_, child->uuid_);
-  children_.push_back(std::move(child));
-  return children_.back().get();
-}
-
 void Object3D::onUpdate(const RootState& /*state*/) {
   // Default
 }
@@ -255,7 +247,7 @@ std::unique_ptr<Object3D> Object3D::clone(bool recursive) const {
 
   if (recursive) {
     for (const auto& child : children_) {
-      copy->add(child->clone(true));
+      copy->addChild_(child->clone(true));
     }
   }
   return copy;
@@ -265,6 +257,14 @@ std::uint64_t Object3D::make_uuid_() {
   static std::mt19937_64 rng{std::random_device{}()};
   static std::uniform_int_distribution<std::uint64_t> dist;
   return dist(rng);
+}
+
+Object3D* Object3D::addChild_(std::unique_ptr<Object3D> child) {
+  child->parent_ = this;
+  child->needsUpdate();
+  spdlog::trace("Object3D({}) add child Object3D({})", uuid_, child->uuid_);
+  children_.push_back(std::move(child));
+  return children_.back().get();
 }
 
 } // namespace blkhurst

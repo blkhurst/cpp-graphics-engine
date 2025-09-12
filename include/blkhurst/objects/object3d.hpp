@@ -27,8 +27,8 @@ public:
   Object3D* parent() const;
   const std::vector<std::unique_ptr<Object3D>>& children() const;
 
-  Object3D* add(std::unique_ptr<Object3D> child);
-  template <class T, class... Args> T* emplace(Args&&... args);
+  template <class T> T* addChild(std::unique_ptr<T> child);
+  template <class T, class... Args> T* addChild(Args&&... args);
 
   virtual void onUpdate(const RootState& /*state*/);
 
@@ -75,6 +75,9 @@ public:
   void traverse(const std::function<void(Object3D&)>& func);
   std::unique_ptr<Object3D> clone(bool recursive = true) const;
 
+protected:
+  Object3D* addChild_(std::unique_ptr<Object3D> child);
+
 private:
   Object3D* parent_ = nullptr;
   std::vector<std::unique_ptr<Object3D>> children_;
@@ -99,11 +102,16 @@ private:
 
 // Template Definition
 // Create, Move ownership, Return reference
-template <class T, class... Args> T* Object3D::emplace(Args&&... args) {
+template <class T, class... Args> T* Object3D::addChild(Args&&... args) {
   auto object = std::make_unique<T>(std::forward<Args>(args)...);
-  T* raw = object.get();
-  add(std::move(object));
-  return raw;
+  auto* rawPtr = object.get();
+  addChild_(std::move(object));
+  return rawPtr;
+}
+// Move ownership, Return reference
+template <class T> T* Object3D::addChild(std::unique_ptr<T> child) {
+  static_assert(std::is_base_of_v<Object3D, T>, "T must derive from Object3D");
+  return static_cast<T*>(addChild_(std::move(child)));
 }
 
 } // namespace blkhurst

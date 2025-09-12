@@ -28,10 +28,12 @@ public:
   static std::shared_ptr<OrthoCamera> create(float left, float right, float bottom, float top,
                                              float nearZ, float farZ);
 
+  const glm::mat4& projectionMatrix() const override;
+
   void setBounds(float left, float right, float bottom, float top);
   void setNearFar(float nearZ, float farZ);
 
-  const glm::mat4& projectionMatrix() const override;
+  std::unique_ptr<OrthoCamera> clone(bool recursive = true);
 
 private:
   mutable glm::mat4 proj_{1.0F};
