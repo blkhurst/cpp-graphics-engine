@@ -26,4 +26,12 @@ void Material::applyUniform(Program& prog, const std::string& name, const Unifor
   std::visit([&](const auto& value) { prog.setUniform(name, value); }, uniform);
 }
 
+// Share Program, Copy Uniforms
+std::shared_ptr<Material> Material::clone() const {
+  auto newMaterial = std::make_shared<Material>(program);
+  newMaterial->pipeline = pipeline;
+  newMaterial->uniforms = uniforms;
+  return newMaterial;
+}
+
 } // namespace blkhurst

@@ -53,4 +53,24 @@ void Mesh::setWireframe(bool enabled) {
   spdlog::trace("Mesh({}) setWireframe {}", uuid(), wireframe_);
 }
 
+// Shallow copy of Geometry and Material
+std::unique_ptr<Mesh> Mesh::clone(bool recursive) const {
+  auto copy = std::make_unique<Mesh>(geometry_, material_);
+  // Copy Object3D state
+  copy->setName(name());
+  copy->setVisible(visible());
+  copy->setPosition(position());
+  copy->setRotation(rotation());
+  copy->setScale(scale());
+  // Copy Mesh state; sets needsUpdate_ internally
+  copy->setInstanceCount(instanceCount_);
+  copy->setWireframe(wireframe_);
+
+  if (recursive) {
+    for (const auto& child : children()) {
+      copy->add(child->clone(true));
+    }
+  }
+  return copy;
+}
 } // namespace blkhurst

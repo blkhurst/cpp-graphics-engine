@@ -37,6 +37,8 @@ public:
   void setInstanceCount(int count);
   void setWireframe(bool enabled);
 
+  std::unique_ptr<Mesh> clone(bool recursive = true) const;
+
 private:
   std::shared_ptr<Geometry> geometry_;
   std::shared_ptr<Material> material_;

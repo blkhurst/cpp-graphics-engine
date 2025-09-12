@@ -58,6 +58,11 @@ public:
 
   void applyUniforms() const;
 
+  virtual std::shared_ptr<Material> clone() const;
+  template <class T> std::shared_ptr<T> cloneAs() const {
+    return std::dynamic_pointer_cast<T>(this->clone());
+  }
+
 private:
   static void applyUniform(Program& prog, const std::string& name, const UniformValue& uniform);
 };

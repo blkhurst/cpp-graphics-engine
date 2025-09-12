@@ -55,3 +55,13 @@
 - [ ] use `vec4` for `clearColor`
 - [ ] Clarify that `uResolution` represents `windowFramebufferSize`, not `renderTargetFramebufferSize`, or `viewportSize`
 - [ ] Add callbacks & RootState for `windowSize` and `contentScale` (in addition to `windowFramebufferSize`)
+
+## Controllers
+
+- [ ] `OrbitController` does not support `OrthoCamera`.
+
+## Object
+
+- [ ] Make `clone` virtual to avoid duplicating logic in `Mesh` and `Camera`.
+  - The problem is that you cannot use virtual covariant return types when using smart pointers.
+  - `Material` implements `cloneAs` helper, which also cannot be used on unique pointers.

@@ -39,7 +39,7 @@ public:
 
   // Getters
   const glm::vec3& position() const;
-  const glm::quat& rotation() const; // Quaternion, no euler angles yet.
+  const glm::quat& rotation() const; // Quaternion, do not need euler angles currently.
   const glm::vec3& scale() const;
 
   const glm::mat4& matrix() const;
@@ -71,8 +71,9 @@ public:
 
   void lookAt(const glm::vec3& target);
 
-  void traverse(const std::function<void(Object3D&)>& func);
   void needsUpdate();
+  void traverse(const std::function<void(Object3D&)>& func);
+  std::unique_ptr<Object3D> clone(bool recursive = true) const;
 
 private:
   Object3D* parent_ = nullptr;
