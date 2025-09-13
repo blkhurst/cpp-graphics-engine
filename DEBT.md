@@ -22,6 +22,7 @@
   - `bugprone-easily-swappable-parameters`
 - [x] Resolve shader/asset paths via executable-relative or CMake-defined asset root; add fallback search paths.
 - [ ] Separate out preprocessing logic.
+- [ ] **Upgrade to DI + Lazy Build**: Replace `ShaderRegistry` singleton and static `ShaderPreprocessor` with Engine-owned variants, add `Program::ensureBuilt(BuildServices` and call on first use / warmup; deprecate old static-singleton path.
 
 ## Layer Mask
 

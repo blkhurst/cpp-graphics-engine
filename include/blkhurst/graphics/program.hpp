@@ -1,5 +1,6 @@
 #pragma once
 
+#include <blkhurst/shaders/shader_preprocessor.hpp>
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <memory>
@@ -10,15 +11,20 @@
 
 namespace blkhurst {
 
-struct PreprocessOptions {
-  std::vector<std::string> macros;
+struct ProgramDesc {
+  std::string vert;
+  std::string frag;
+  std::string tesc;
+  std::string tese;
+  std::string comp;
+  std::vector<std::string> defines;
   std::string glslVersion = "450 core";
-  bool insertHeader = true;
 };
 
 class Program {
 public:
-  Program(std::string_view vertSrc, std::string_view fragSrc);
+  Program(std::string_view vert, std::string_view frag, std::string_view tesc = {},
+          std::string_view tese = {});
   virtual ~Program();
 
   Program(const Program&) = delete;
@@ -26,10 +32,9 @@ public:
   Program& operator=(const Program&) = delete;
   Program& operator=(Program&&) = delete;
 
-  static std::shared_ptr<Program> create(std::string_view vertSrc, std::string_view fragSrc);
-  static std::shared_ptr<Program> createFromFiles(std::string_view vertPath,
-                                                  std::string_view fragPath,
-                                                  const PreprocessOptions& opts = {});
+  static std::shared_ptr<Program> create(const ProgramDesc& desc);
+  static std::shared_ptr<Program> createFromRegistry(const ProgramDesc& desc);
+  static std::shared_ptr<Program> createFromFiles(const ProgramDesc& desc);
 
   void use() const;
 
@@ -57,7 +62,7 @@ protected:
   }
 
   static unsigned compileShader(unsigned type, std::string_view src);
-  static unsigned linkProgram(std::initializer_list<unsigned> shaders);
+  static unsigned linkProgram(const std::vector<unsigned>& shaders);
   static void checkCompile(unsigned shader, const char* stage);
   static void checkLink(unsigned prog);
 

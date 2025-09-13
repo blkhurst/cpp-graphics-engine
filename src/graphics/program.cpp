@@ -1,28 +1,35 @@
-// NOLINTBEGIN(readability-identifier-length)
+#include "blkhurst/shaders/shader_preprocessor.hpp"
 #include <blkhurst/graphics/program.hpp>
 #include <blkhurst/util/assets.hpp>
 
-#include <filesystem>
 #include <glad/gl.h>
 #include <spdlog/spdlog.h>
-#include <sstream>
 #include <string>
 #include <string_view>
-#include <unordered_set>
 
 namespace blkhurst {
 
-struct Shaders {
-  std::string vertPath;
-  std::string fragPath;
-  std::string compPath;
-  std::string tessEvalPath;
-};
+Program::Program(std::string_view vert, std::string_view frag, std::string_view tesc,
+                 std::string_view tese) {
+  std::vector<GLuint> shaders;
+  shaders.reserve(4);
 
-Program::Program(std::string_view vertSrc, std::string_view fragSrc)
-    : id_(linkProgram(
-          {compileShader(GL_VERTEX_SHADER, vertSrc), compileShader(GL_FRAGMENT_SHADER, fragSrc)})) {
-  spdlog::trace("Program({}) created (VS+FS)", id_);
+  if (!vert.empty()) {
+    shaders.push_back(compileShader(GL_VERTEX_SHADER, vert));
+  }
+  if (!frag.empty()) {
+    shaders.push_back(compileShader(GL_FRAGMENT_SHADER, frag));
+  }
+  if (!tesc.empty()) {
+    shaders.push_back(compileShader(GL_TESS_CONTROL_SHADER, tesc));
+  }
+  if (!tese.empty()) {
+    shaders.push_back(compileShader(GL_TESS_EVALUATION_SHADER, tese));
+  }
+
+  id_ = linkProgram(shaders);
+  spdlog::trace("Program({}) created (V:{} F:{} TC:{} TE:{})", id_, !vert.empty(), !frag.empty(),
+                !tesc.empty(), !tese.empty());
 }
 
 Program::~Program() {
@@ -32,19 +39,60 @@ Program::~Program() {
   }
 }
 
-// NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
-std::shared_ptr<Program> Program::create(std::string_view vertSrc, std::string_view fragSrc) {
-  return std::make_shared<Program>(vertSrc, fragSrc);
+enum class PreprocessKind { Source, Registry, File };
+static std::tuple<std::string, std::string, std::string, std::string>
+preprocessAll(const ProgramDesc& desc, PreprocessKind kind) {
+  bool hasVert = !desc.vert.empty();
+  bool hasFrag = !desc.frag.empty();
+  bool hasTesc = !desc.tesc.empty();
+  bool hasTese = !desc.tese.empty();
+  if (!hasVert || !hasFrag) {
+    spdlog::error("ProgramDesc missing required stages: vertex/fragment");
+  }
+  if ((hasTesc && !hasTese) || (!hasTesc && hasTese)) {
+    spdlog::warn("ProgramDesc missing required tessellation stages tesc/tese");
+  }
+
+  PreprocessOptions preprocessOptions{.defines = desc.defines, .glslVersion = desc.glslVersion};
+
+  auto load = [&](std::string_view val) -> std::string {
+    if (val.empty()) {
+      return {};
+    }
+    switch (kind) {
+    case PreprocessKind::Source:
+      return ShaderPreprocessor::processSource(val, preprocessOptions);
+    case PreprocessKind::Registry:
+      return ShaderPreprocessor::processRegistry(val, preprocessOptions);
+    case PreprocessKind::File:
+      return ShaderPreprocessor::processFile(val, preprocessOptions);
+    }
+    return {};
+  };
+
+  std::string vert = load(desc.vert);
+  std::string frag = load(desc.frag);
+  std::string tesc = load(desc.tesc);
+  std::string tese = load(desc.tese);
+  return {std::move(vert), std::move(frag), std::move(tesc), std::move(tese)};
 }
 
 // NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
-std::shared_ptr<Program> Program::createFromFiles(std::string_view vertPath,
-                                                  std::string_view fragPath,
-                                                  const PreprocessOptions& opts) {
-  spdlog::trace("Program preprocessing VS='{}' FS='{}'", vertPath, fragPath);
-  auto vs = preprocessFile(vertPath, opts);
-  auto fs = preprocessFile(fragPath, opts);
-  return std::make_shared<Program>(vs, fs);
+std::shared_ptr<Program> Program::create(const ProgramDesc& desc) {
+  auto [vert, frag, tesc, tese] = preprocessAll(desc, PreprocessKind::Source);
+  return std::make_shared<Program>(vert, frag, tesc, tese);
+}
+
+// NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
+std::shared_ptr<Program> Program::createFromRegistry(const ProgramDesc& desc) {
+  auto [vert, frag, tesc, tese] = preprocessAll(desc, PreprocessKind::Registry);
+  return std::make_shared<Program>(vert, frag, tesc, tese);
+}
+
+// NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
+std::shared_ptr<Program> Program::createFromFiles(const ProgramDesc& desc) {
+  auto [vert, frag, tesc, tese] = preprocessAll(desc, PreprocessKind::File);
+  return std::make_shared<Program>(vert, frag, tesc, tese);
 }
 
 void Program::use() const {
@@ -54,9 +102,9 @@ void Program::use() const {
 // Cache response of "glGetUniformLocation" (expensive)
 int Program::uniformLocation(std::string_view name) const {
   auto key = std::string(name);
-  auto it = uniformCache_.find(key);
-  if (it != uniformCache_.end()) {
-    return it->second;
+  auto found = uniformCache_.find(key);
+  if (found != uniformCache_.end()) {
+    return found->second;
   }
   int loc = glGetUniformLocation(id_, key.c_str());
   uniformCache_.emplace(std::move(key), loc);
@@ -96,13 +144,6 @@ void Program::setUniform(std::string_view name, const glm::mat4& value) {
   glUniformMatrix4fv(uniformLocation(name), 1, GL_FALSE, glm::value_ptr(value));
 }
 
-// NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
-void Program::setSampler(std::string_view name, GLuint textureID, int unit) {
-  glUniform1i(uniformLocation(name), unit); // Set the sampler uniform
-  glActiveTexture(GL_TEXTURE0 + unit);      // Activate the specific texture unit
-  glBindTexture(GL_TEXTURE_2D, textureID);  // Bind the texture to that unit
-}
-
 void Program::linkUniformBlock(std::string_view blockName, unsigned bindingPoint) const {
   unsigned idx = glGetUniformBlockIndex(id_, std::string(blockName).c_str());
   if (idx != GL_INVALID_INDEX) {
@@ -112,6 +153,7 @@ void Program::linkUniformBlock(std::string_view blockName, unsigned bindingPoint
     spdlog::warn("Program({}) UBO not found: '{}'", id_, blockName);
   }
 }
+
 void Program::linkStorageBlock(std::string_view blockName, unsigned bindingPoint) const {
   unsigned idx =
       glGetProgramResourceIndex(id_, GL_SHADER_STORAGE_BLOCK, std::string(blockName).c_str());
@@ -125,32 +167,32 @@ void Program::linkStorageBlock(std::string_view blockName, unsigned bindingPoint
 
 unsigned Program::compileShader(GLenum type, std::string_view src) {
   unsigned shader = glCreateShader(type);
-  const char* s = src.data();
+  const char* source = src.data();
   int len = (int)src.size();
-  glShaderSource(shader, 1, &s, &len);
+  glShaderSource(shader, 1, &source, &len);
   glCompileShader(shader);
   checkCompile(shader, getStageString(type).c_str());
   return shader;
 }
 
-unsigned Program::linkProgram(std::initializer_list<unsigned> shaders) {
+unsigned Program::linkProgram(const std::vector<GLuint>& shaders) {
   unsigned prog = glCreateProgram();
-  for (auto sh : shaders) {
-    glAttachShader(prog, sh);
+  for (auto shader : shaders) {
+    glAttachShader(prog, shader);
   }
   glLinkProgram(prog);
   checkLink(prog);
-  for (auto sh : shaders) {
-    glDetachShader(prog, sh);
-    glDeleteShader(sh);
+  for (auto shader : shaders) {
+    glDetachShader(prog, shader);
+    glDeleteShader(shader);
   }
   return prog;
 }
 
 void Program::checkCompile(unsigned shader, const char* stage) {
-  int ok = 0;
-  glGetShaderiv(shader, GL_COMPILE_STATUS, &ok);
-  if (ok == 0) {
+  int compileOk = 0;
+  glGetShaderiv(shader, GL_COMPILE_STATUS, &compileOk);
+  if (compileOk == 0) {
     int len = 0;
     glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &len);
     std::string log(len, '\0');
@@ -160,9 +202,9 @@ void Program::checkCompile(unsigned shader, const char* stage) {
 }
 
 void Program::checkLink(unsigned prog) {
-  int ok = 0;
-  glGetProgramiv(prog, GL_LINK_STATUS, &ok);
-  if (ok == 0) {
+  int linkOk = 0;
+  glGetProgramiv(prog, GL_LINK_STATUS, &linkOk);
+  if (linkOk == 0) {
     int len = 0;
     glGetProgramiv(prog, GL_INFO_LOG_LENGTH, &len);
     std::string log(len, '\0');
@@ -190,94 +232,4 @@ std::string Program::getStageString(GLenum type) {
   }
 }
 
-// ============== Read files + Preprocess ==============
-static std::string preprocessImpl(std::string_view source, const PreprocessOptions& opts,
-                                  std::string_view currentDir,
-                                  std::unordered_set<std::string>& seen);
-
-static std::string preprocessFileImpl(std::string_view path, const PreprocessOptions& opts,
-                                      std::unordered_set<std::string>& seen) {
-  auto src = assets::readText(path);
-  const std::string curDir = std::filesystem::path(std::string(path)).parent_path().string();
-  return preprocessImpl(src, opts, curDir, seen);
-}
-
-std::string Program::preprocess(std::string_view source, const PreprocessOptions& opts,
-                                std::string_view currentDir) {
-  std::unordered_set<std::string> seen;
-  return preprocessImpl(source, opts, currentDir, seen);
-}
-
-std::string Program::preprocessFile(std::string_view path, const PreprocessOptions& opts) {
-  std::unordered_set<std::string> seen;
-  return preprocessFileImpl(path, opts, seen);
-}
-
-namespace {
-
-inline bool parseIncludeQuoted(const std::string& line, std::string& relPath) {
-  if (line.rfind("#include", 0) != 0) {
-    return false;
-  }
-  auto first = line.find('"');
-  if (first == std::string::npos) {
-    return false;
-  }
-  auto last = line.find('"', first + 1);
-  if (last == std::string::npos || last <= first + 1) {
-    return false;
-  }
-  relPath.assign(line, first + 1, last - first - 1);
-
-  return true;
-}
-
-inline void emitHeaderOnce(std::ostringstream& out, const PreprocessOptions& opts, bool isFirst) {
-  if (!opts.insertHeader || !isFirst) {
-    return;
-  }
-  if (!opts.glslVersion.empty()) {
-    out << "#version " << opts.glslVersion << "\n";
-  }
-  for (const auto& m : opts.macros) {
-    out << "#define " << m << "\n";
-  }
-}
-
-} // namespace
-static std::string preprocessImpl(std::string_view source, const PreprocessOptions& opts,
-                                  std::string_view currentDir,
-                                  std::unordered_set<std::string>& seen) {
-  std::istringstream in{std::string(source)};
-  std::ostringstream out;
-
-  emitHeaderOnce(out, opts, seen.empty());
-
-  std::string line;
-  while (std::getline(in, line)) {
-    std::string rel;
-    if (!parseIncludeQuoted(line, rel)) {
-      out << line << '\n';
-      continue;
-    }
-
-    const std::filesystem::path basePath = std::string(currentDir);
-    const std::filesystem::path fullPath =
-        basePath.empty() ? std::filesystem::path(rel) : (basePath / std::string(rel));
-    // Normalise the joined include to prevent duplicates via different relative paths
-    const std::string full = fullPath.lexically_normal().string();
-
-    if (!seen.insert(full).second) {
-      spdlog::warn("Shader include suppressed (already included once): {}", full);
-      continue;
-    }
-
-    out << preprocessFileImpl(full, opts, seen) << '\n';
-  }
-
-  return out.str();
-}
-
 } // namespace blkhurst
-
-// NOLINTEND(readability-identifier-length)
