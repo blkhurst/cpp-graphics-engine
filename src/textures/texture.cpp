@@ -127,6 +127,10 @@ GLenum Texture::toGLInternal(TextureFormat format) {
     return GL_DEPTH24_STENCIL8;
   case F::D32F:
     return GL_DEPTH_COMPONENT32F;
+  case F::SRGB8:
+    return GL_SRGB8;
+  case F::SRGB8A8:
+    return GL_SRGB8_ALPHA8;
   }
   return GL_RGBA8;
 }
@@ -192,6 +196,14 @@ void Texture::pixelFormatAndType(TextureFormat format, GLenum& outFormat, GLenum
   case F::D32F:
     outFormat = GL_DEPTH_COMPONENT;
     outType = GL_FLOAT;
+    break;
+  case F::SRGB8:
+    outFormat = GL_RGB;
+    outType = GL_UNSIGNED_BYTE;
+    break;
+  case F::SRGB8A8:
+    outFormat = GL_RGBA;
+    outType = GL_UNSIGNED_BYTE;
     break;
   }
 }

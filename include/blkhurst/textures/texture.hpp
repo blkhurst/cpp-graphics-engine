@@ -5,7 +5,18 @@
 
 namespace blkhurst {
 
-enum class TextureFormat : std::uint8_t { RGBA8, RGBA16F, RGBA32F, R8, R16F, R32F, D24S8, D32F };
+enum class TextureFormat : std::uint8_t {
+  RGBA8,
+  RGBA16F,
+  RGBA32F,
+  R8,
+  R16F,
+  R32F,
+  D24S8,
+  D32F,
+  SRGB8,
+  SRGB8A8
+};
 enum class TextureFilter : std::uint8_t { Nearest, Linear, LinearMipmapLinear };
 enum class TextureWrap : std::uint8_t { ClampToEdge, Repeat, MirroredRepeat };
 
