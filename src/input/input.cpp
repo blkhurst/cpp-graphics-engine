@@ -145,7 +145,7 @@ void Input::pushMouseButton(int button, bool down) {
 // NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
 void Input::pushMouseMove(double posX, double posY) {
   mouseX_ = posX;
-  mouseY_ = posY;
+  mouseY_ = framebufferHeight_ - posY; // Match OpenGL convention (bottom-left origin)
 
   if (!mouseHasPrev_) {
     mousePrevX_ = posX;
