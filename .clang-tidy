@@ -7,7 +7,10 @@ Checks: >
   readability-*,
   -modernize-use-trailing-return-type,
   -cppcoreguidelines-pro-type-vararg,
-
+  -cppcoreguidelines-avoid-magic-numbers,
+CheckOptions:
+  - key: readability-magic-numbers.IgnoredFloatingPointValues
+    value: "1.0;100.0;2.0;0.5"
 WarningsAsErrors: ""
 HeaderFilterRegex: "^(src|include|examples)/"
 FormatStyle: none
