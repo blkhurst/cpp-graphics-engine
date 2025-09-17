@@ -1,6 +1,8 @@
 #include <algorithm>
 #include <blkhurst/geometry/geometry.hpp>
 #include <cassert>
+#include <glm/gtc/type_ptr.hpp>
+#include <span>
 #include <spdlog/spdlog.h>
 
 namespace {
@@ -31,7 +33,11 @@ void Geometry::setAttribute(Attrib attrib, std::span<const float> data, int comp
   if (attrib == Attrib::Position) {
     const int vertexCount = static_cast<int>(data.size() / componentCount);
     vertexCount_ = vertexCount;
-    drawRange_.count = vertexCount;
+
+    // Only set draw count if not indexed
+    if (!isIndexed_) {
+      drawRange_.count = vertexCount;
+    }
   }
   // TODO: Attribute count mismatch
 }
@@ -81,4 +87,18 @@ const VertexArray& Geometry::vertexArray() const {
   return vao_;
 }
 
+std::shared_ptr<Geometry> Geometry::from(const MeshData& meshData) {
+  auto geometry = Geometry::create();
+
+  geometry->setIndex(meshData.indices);
+  geometry->setAttribute(Attrib::Position, meshData.positions, 3);
+  geometry->setAttribute(Attrib::Uv, meshData.uvs, 2);
+  geometry->setAttribute(Attrib::Normal, meshData.normals, 3);
+
+  if (!meshData.tangents.empty()) {
+    geometry->setAttribute(Attrib::Tangent, meshData.tangents, 3);
+  }
+
+  return geometry;
+}
 } // namespace blkhurst

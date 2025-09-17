@@ -1,5 +1,6 @@
 #pragma once
 
+#include <blkhurst/geometry/mesh_data.hpp>
 #include <blkhurst/graphics/buffer.hpp>
 #include <blkhurst/graphics/vertex_array.hpp>
 
@@ -49,6 +50,8 @@ public:
   [[nodiscard]] DrawRange drawRange() const;
   [[nodiscard]] bool isIndexed() const;
   [[nodiscard]] const VertexArray& vertexArray() const;
+
+  static std::shared_ptr<Geometry> from(const MeshData& meshData);
 
 private:
   VertexArray vao_;
