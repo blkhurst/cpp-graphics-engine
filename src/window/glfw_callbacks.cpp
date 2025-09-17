@@ -50,6 +50,10 @@ static void mouse_button_callback(GLFWwindow* win, int btn, int act, int mod) {
 
 static void cursor_pos_callback(GLFWwindow* win, double xpos, double ypos) {
   ImGui_ImplGlfw_CursorPosCallback(win, xpos, ypos);
+  ImGuiIO& imguiIo = ImGui::GetIO();
+  if (imguiIo.WantCaptureMouse) {
+    return;
+  }
 
   if (Input* input = get_input(win)) {
     input->pushMouseMove(xpos, ypos);
@@ -58,6 +62,10 @@ static void cursor_pos_callback(GLFWwindow* win, double xpos, double ypos) {
 
 static void scroll_callback(GLFWwindow* win, double xoffset, double yoffset) {
   ImGui_ImplGlfw_ScrollCallback(win, xoffset, yoffset);
+  ImGuiIO& imguiIo = ImGui::GetIO();
+  if (imguiIo.WantCaptureMouse) {
+    return;
+  }
 
   if (Input* input = get_input(win)) {
     input->pushScroll(xoffset, yoffset);
