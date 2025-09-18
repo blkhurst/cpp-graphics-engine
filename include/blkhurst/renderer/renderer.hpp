@@ -59,6 +59,7 @@ private:
 
   // Helpers
   static unsigned toGlPrimitive(PrimitiveMode mode);
+  static unsigned toGLDepthFunc(blkhurst::DepthFunc func);
 };
 
 } // namespace blkhurst

@@ -154,6 +154,7 @@ void Renderer::renderMesh(const Mesh& mesh, const Camera& camera) {
 void Renderer::applyPipeline(const PipelineState& state, bool wireframe) {
   if (state.depthTest) {
     glEnable(GL_DEPTH_TEST);
+    glDepthFunc(toGLDepthFunc(state.depthFunc));
   } else {
     glDisable(GL_DEPTH_TEST);
   }
@@ -236,7 +237,7 @@ void Renderer::drawGeometry(const Geometry& geom, int instanceCount) {
 }
 
 // ------- Helpers -------
-unsigned Renderer::toGlPrimitive(PrimitiveMode mode) {
+GLenum Renderer::toGlPrimitive(PrimitiveMode mode) {
   switch (mode) {
   case PrimitiveMode::Triangles:
     return GL_TRIANGLES;
@@ -247,6 +248,29 @@ unsigned Renderer::toGlPrimitive(PrimitiveMode mode) {
   default:
     return GL_TRIANGLES;
   }
+}
+
+GLenum Renderer::toGLDepthFunc(blkhurst::DepthFunc func) {
+  using DF = blkhurst::DepthFunc;
+  switch (func) {
+  case DF::Never:
+    return GL_NEVER;
+  case DF::Less:
+    return GL_LESS;
+  case DF::Equal:
+    return GL_EQUAL;
+  case DF::Lequal:
+    return GL_LEQUAL;
+  case DF::Greater:
+    return GL_GREATER;
+  case DF::NotEqual:
+    return GL_NOTEQUAL;
+  case DF::Gequal:
+    return GL_GEQUAL;
+  case DF::Always:
+    return GL_ALWAYS;
+  }
+  return GL_LESS;
 }
 
 } // namespace blkhurst
