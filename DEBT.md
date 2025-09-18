@@ -17,12 +17,25 @@
 
 ## Program
 
-- [ ] Remove `// NOLINT` comments by disabling or resolving:
+- [x] Remove `// NOLINT` comments by disabling or resolving:
   - `readability-identifier-length`
   - `bugprone-easily-swappable-parameters`
 - [x] Resolve shader/asset paths via executable-relative or CMake-defined asset root; add fallback search paths.
-- [ ] Separate out preprocessing logic.
-- [ ] **Upgrade to DI + Lazy Build**: Replace `ShaderRegistry` singleton and static `ShaderPreprocessor` with Engine-owned variants, add `Program::ensureBuilt(BuildServices` and call on first use / warmup; deprecate old static-singleton path.
+- [x] Separate out preprocessing logic.
+- [x] **Upgrade to Lazy Build**: Add `Program::ensureBuilt_` and call on first use / warmup;
+- [ ] **Upgrade to DI**: Replace `ShaderRegistry` singleton and static `ShaderPreprocessor` with Engine-owned variants. Pass `BuildServices` to `Program::ensureBuilt_`.
+- [ ] Replace `Program::createFrom...` with a single function that takes `ProgramDesc{ Src vert; Src frag... }`
+
+  ```
+  struct Src {
+    enum Kind { None, Inline, Reg, File } kind = None;
+    std::string val;
+
+    static Src in(std::string s)  { return {Inline, std::move(s)}; }
+    static Src reg(std::string s) { return {Reg,    std::move(s)}; }
+    static Src file(std::string s){ return {File,   std::move(s)}; }
+  };
+  ```
 
 ## Layer Mask
 

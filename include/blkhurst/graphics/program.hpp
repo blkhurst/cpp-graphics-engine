@@ -1,6 +1,5 @@
 #pragma once
 
-#include <blkhurst/shaders/shader_preprocessor.hpp>
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <memory>
@@ -21,10 +20,11 @@ struct ProgramDesc {
   std::string glslVersion = "450 core";
 };
 
+enum class SourceKind { Source, Registry, File };
+
 class Program {
 public:
-  Program(std::string_view vert, std::string_view frag, std::string_view tesc = {},
-          std::string_view tese = {});
+  Program(ProgramDesc desc);
   virtual ~Program();
 
   Program(const Program&) = delete;
@@ -37,6 +37,11 @@ public:
   static std::shared_ptr<Program> createFromFiles(const ProgramDesc& desc);
 
   void use() const;
+
+  void needsUpdate() const;
+  void addDefine(const std::string& define);
+  void removeDefine(const std::string& define);
+  void setDefines(std::vector<std::string> defines);
 
   void setUniform(std::string_view name, int value);
   void setUniform(std::string_view name, float value);
@@ -69,13 +74,17 @@ protected:
   static std::string getStageString(unsigned type);
   int uniformLocation(std::string_view name) const;
 
-  static std::string preprocess(std::string_view source, const PreprocessOptions& opts,
-                                std::string_view currentDir = {});
-  static std::string preprocessFile(std::string_view path, const PreprocessOptions& opts);
-
 private:
-  unsigned id_ = 0;
+  mutable unsigned id_ = 0;
   mutable std::unordered_map<std::string, int> uniformCache_;
+
+  ProgramDesc desc_;
+  SourceKind sourceKind_ = SourceKind::Source;
+
+  mutable bool needsUpdate_ = true;
+  void ensureBuilt_() const;
+  void buildFromStrings_(std::string_view vert, std::string_view frag, std::string_view tesc,
+                         std::string_view tese) const;
 };
 
 } // namespace blkhurst

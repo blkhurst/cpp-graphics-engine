@@ -1,5 +1,5 @@
-#include "blkhurst/shaders/shader_preprocessor.hpp"
 #include <blkhurst/graphics/program.hpp>
+#include <blkhurst/shaders/shader_preprocessor.hpp>
 #include <blkhurst/util/assets.hpp>
 
 #include <glad/gl.h>
@@ -9,27 +9,9 @@
 
 namespace blkhurst {
 
-Program::Program(std::string_view vert, std::string_view frag, std::string_view tesc,
-                 std::string_view tese) {
-  std::vector<GLuint> shaders;
-  shaders.reserve(4);
-
-  if (!vert.empty()) {
-    shaders.push_back(compileShader(GL_VERTEX_SHADER, vert));
-  }
-  if (!frag.empty()) {
-    shaders.push_back(compileShader(GL_FRAGMENT_SHADER, frag));
-  }
-  if (!tesc.empty()) {
-    shaders.push_back(compileShader(GL_TESS_CONTROL_SHADER, tesc));
-  }
-  if (!tese.empty()) {
-    shaders.push_back(compileShader(GL_TESS_EVALUATION_SHADER, tese));
-  }
-
-  id_ = linkProgram(shaders);
-  spdlog::trace("Program({}) created (V:{} F:{} TC:{} TE:{})", id_, !vert.empty(), !frag.empty(),
-                !tesc.empty(), !tese.empty());
+Program::Program(ProgramDesc desc)
+    : desc_(std::move(desc)) {
+  // spdlog in factories
 }
 
 Program::~Program() {
@@ -39,64 +21,60 @@ Program::~Program() {
   }
 }
 
-enum class PreprocessKind { Source, Registry, File };
-static std::tuple<std::string, std::string, std::string, std::string>
-preprocessAll(const ProgramDesc& desc, PreprocessKind kind) {
-  bool hasVert = !desc.vert.empty();
-  bool hasFrag = !desc.frag.empty();
-  bool hasTesc = !desc.tesc.empty();
-  bool hasTese = !desc.tese.empty();
-  if (!hasVert || !hasFrag) {
-    spdlog::error("ProgramDesc missing required stages: vertex/fragment");
-  }
-  if ((hasTesc && !hasTese) || (!hasTesc && hasTese)) {
-    spdlog::warn("ProgramDesc missing required tessellation stages tesc/tese");
-  }
-
-  PreprocessOptions preprocessOptions{.defines = desc.defines, .glslVersion = desc.glslVersion};
-
-  auto load = [&](std::string_view val) -> std::string {
-    if (val.empty()) {
-      return {};
-    }
-    switch (kind) {
-    case PreprocessKind::Source:
-      return ShaderPreprocessor::processSource(val, preprocessOptions);
-    case PreprocessKind::Registry:
-      return ShaderPreprocessor::processRegistry(val, preprocessOptions);
-    case PreprocessKind::File:
-      return ShaderPreprocessor::processFile(val, preprocessOptions);
-    }
-    return {};
-  };
-
-  std::string vert = load(desc.vert);
-  std::string frag = load(desc.frag);
-  std::string tesc = load(desc.tesc);
-  std::string tese = load(desc.tese);
-  return {std::move(vert), std::move(frag), std::move(tesc), std::move(tese)};
-}
-
-// NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
+// Factory
 std::shared_ptr<Program> Program::create(const ProgramDesc& desc) {
-  auto [vert, frag, tesc, tese] = preprocessAll(desc, PreprocessKind::Source);
-  return std::make_shared<Program>(vert, frag, tesc, tese);
+  auto program = std::make_shared<Program>(desc);
+  program->sourceKind_ = SourceKind::Source;
+  program->needsUpdate_ = true;
+  spdlog::trace("Program(<deferred>) created (SourceKind=Source)");
+  return program;
 }
 
-// NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
 std::shared_ptr<Program> Program::createFromRegistry(const ProgramDesc& desc) {
-  auto [vert, frag, tesc, tese] = preprocessAll(desc, PreprocessKind::Registry);
-  return std::make_shared<Program>(vert, frag, tesc, tese);
+  auto program = std::make_shared<Program>(desc);
+  program->sourceKind_ = SourceKind::Registry;
+  program->needsUpdate_ = true;
+  spdlog::trace("Program(<deferred>) created (SourceKind=Registry)");
+  return program;
 }
 
-// NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
 std::shared_ptr<Program> Program::createFromFiles(const ProgramDesc& desc) {
-  auto [vert, frag, tesc, tese] = preprocessAll(desc, PreprocessKind::File);
-  return std::make_shared<Program>(vert, frag, tesc, tese);
+  auto program = std::make_shared<Program>(desc);
+  program->sourceKind_ = SourceKind::File;
+  program->needsUpdate_ = true;
+  spdlog::trace("Program(<deferred>) created (SourceKind=File)");
+  return program;
 }
 
 void Program::use() const {
+  ensureBuilt_();
   glUseProgram(id_);
+}
+
+void Program::needsUpdate() const {
+  needsUpdate_ = true;
+}
+
+void Program::addDefine(const std::string& define) {
+  if (std::find(desc_.defines.begin(), desc_.defines.end(), define) == desc_.defines.end()) {
+    desc_.defines.push_back(define);
+    needsUpdate_ = true;
+  }
+}
+
+void Program::removeDefine(const std::string& define) {
+  auto found = std::remove(desc_.defines.begin(), desc_.defines.end(), define);
+  if (found != desc_.defines.end()) {
+    desc_.defines.erase(found, desc_.defines.end());
+    needsUpdate_ = true;
+  }
+}
+
+void Program::setDefines(std::vector<std::string> defines) {
+  std::sort(defines.begin(), defines.end());
+  defines.erase(std::unique(defines.begin(), defines.end()), defines.end());
+  desc_.defines = std::move(defines);
+  needsUpdate_ = true;
 }
 
 // Cache response of "glGetUniformLocation" (expensive)
@@ -230,6 +208,81 @@ std::string Program::getStageString(GLenum type) {
   default:
     return "UNKNOWN";
   }
+}
+
+void Program::ensureBuilt_() const {
+  if (!needsUpdate_) {
+    return;
+  }
+
+  PreprocessOptions preprocessOptions{.defines = desc_.defines, .glslVersion = desc_.glslVersion};
+
+  auto load = [&](std::string_view val) -> std::string {
+    if (val.empty()) {
+      return {};
+    }
+    switch (sourceKind_) {
+    case SourceKind::Source:
+      return ShaderPreprocessor::processSource(val, preprocessOptions);
+    case SourceKind::Registry:
+      return ShaderPreprocessor::processRegistry(val, preprocessOptions);
+    case SourceKind::File:
+      return ShaderPreprocessor::processFile(val, preprocessOptions);
+    }
+    return {};
+  };
+
+  const std::string vert = load(desc_.vert);
+  const std::string frag = load(desc_.frag);
+  const std::string tesc = load(desc_.tesc);
+  const std::string tese = load(desc_.tese);
+
+  // Compile + link
+  buildFromStrings_(vert, frag, tesc, tese);
+
+  needsUpdate_ = false;
+}
+
+// Build / Rebuild
+void Program::buildFromStrings_(std::string_view vert, std::string_view frag, std::string_view tesc,
+                                std::string_view tese) const {
+
+  bool hasVert = !desc_.vert.empty();
+  bool hasFrag = !desc_.frag.empty();
+  bool hasTesc = !desc_.tesc.empty();
+  bool hasTese = !desc_.tese.empty();
+  if (!hasVert || !hasFrag) {
+    spdlog::error("Program missing required stages vertex/fragment");
+  }
+  if ((hasTesc && !hasTese) || (!hasTesc && hasTese)) {
+    spdlog::warn("Program missing required tessellation stages tesc/tese");
+  }
+
+  std::vector<GLuint> shaders;
+  shaders.reserve(4);
+  if (hasVert) {
+    shaders.push_back(compileShader(GL_VERTEX_SHADER, vert));
+  }
+  if (hasFrag) {
+    shaders.push_back(compileShader(GL_FRAGMENT_SHADER, frag));
+  }
+  if (hasTesc) {
+    shaders.push_back(compileShader(GL_TESS_CONTROL_SHADER, tesc));
+  }
+  if (hasTese) {
+    shaders.push_back(compileShader(GL_TESS_EVALUATION_SHADER, tese));
+  }
+
+  const GLuint newId = linkProgram(shaders);
+
+  if (id_ != 0U) {
+    glDeleteProgram(id_);
+  }
+  id_ = newId;
+  uniformCache_.clear();
+
+  spdlog::trace("Program({}) built (V:{} F:{} TC:{} TE:{})", id_, !vert.empty(), !frag.empty(),
+                !tesc.empty(), !tese.empty());
 }
 
 } // namespace blkhurst
