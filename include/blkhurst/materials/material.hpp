@@ -26,44 +26,45 @@ public:
 
   static std::shared_ptr<Material> create(std::shared_ptr<Program> prog);
 
-  std::shared_ptr<Program> program;
-  PipelineState pipeline;
+  void useProgram() const;
+  void applyUniformsAndResources();
 
-  std::unordered_map<std::string, UniformValue> uniforms;
+  [[nodiscard]] const PipelineState& pipeline() const;
+  void setDepthTest(bool enabled);
+  void setDepthWrite(bool enabled);
+  void setDepthFunc(DepthFunc func);
+  void setBlend(bool enabled);
+  void setCullFace(CullFace face);
 
-  void setUniform(const std::string& name, int value) {
-    uniforms[name] = value;
-  }
-  void setUniform(const std::string& name, float value) {
-    uniforms[name] = value;
-  }
-  void setUniform(const std::string& name, const glm::vec2& value) {
-    uniforms[name] = value;
-  }
-  void setUniform(const std::string& name, const glm::vec3& value) {
-    uniforms[name] = value;
-  }
-  void setUniform(const std::string& name, const glm::vec4& value) {
-    uniforms[name] = value;
-  }
-  void setUniform(const std::string& name, const glm::mat3& value) {
-    uniforms[name] = value;
-  }
-  void setUniform(const std::string& name, const glm::mat2& value) {
-    uniforms[name] = value;
-  }
-  void setUniform(const std::string& name, const glm::mat4& value) {
-    uniforms[name] = value;
-  }
+  void setUniform(const std::string& name, int value);
+  void setUniform(const std::string& name, float value);
+  void setUniform(const std::string& name, const glm::vec2& value);
+  void setUniform(const std::string& name, const glm::vec3& value);
+  void setUniform(const std::string& name, const glm::vec4& value);
+  void setUniform(const std::string& name, const glm::mat3& value);
+  void setUniform(const std::string& name, const glm::mat2& value);
+  void setUniform(const std::string& name, const glm::mat4& value);
 
-  void applyUniforms() const;
+  void addDefine(const std::string& def);
+  void removeDefine(const std::string& def);
+  void setDefines(std::vector<std::string> defs);
+  void linkUniformBlock(const std::string& name, unsigned binding) const;
+  void linkStorageBlock(const std::string& name, unsigned binding) const;
 
   virtual std::shared_ptr<Material> clone() const;
   template <class T> std::shared_ptr<T> cloneAs() const {
     return std::dynamic_pointer_cast<T>(this->clone());
   }
 
+protected:
+  void applyUniforms() const;
+  virtual void applyResources() {};
+
 private:
+  PipelineState pipeline_;
+  std::shared_ptr<Program> program_;
+  std::unordered_map<std::string, UniformValue> uniforms_;
+
   static void applyUniform(Program& prog, const std::string& name, const UniformValue& uniform);
 };
 
