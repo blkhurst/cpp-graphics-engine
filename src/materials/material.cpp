@@ -29,6 +29,9 @@ void Material::applyUniformsAndResources() {
   applyResources();
 }
 
+std::shared_ptr<Program> Material::program() const {
+  return program_;
+}
 const PipelineState& Material::pipeline() const {
   return pipeline_;
 }

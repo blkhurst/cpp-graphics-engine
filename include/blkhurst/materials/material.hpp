@@ -29,6 +29,7 @@ public:
   void useProgram() const;
   void applyUniformsAndResources();
 
+  [[nodiscard]] std::shared_ptr<Program> program() const;
   [[nodiscard]] const PipelineState& pipeline() const;
   void setDepthTest(bool enabled);
   void setDepthWrite(bool enabled);

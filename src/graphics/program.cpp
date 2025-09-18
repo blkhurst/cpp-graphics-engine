@@ -59,6 +59,7 @@ void Program::addDefine(const std::string& define) {
   if (std::find(desc_.defines.begin(), desc_.defines.end(), define) == desc_.defines.end()) {
     desc_.defines.push_back(define);
     needsUpdate_ = true;
+    spdlog::trace("Program({}) addDefine({})", id_, define);
   }
 }
 
@@ -67,14 +68,18 @@ void Program::removeDefine(const std::string& define) {
   if (found != desc_.defines.end()) {
     desc_.defines.erase(found, desc_.defines.end());
     needsUpdate_ = true;
+    spdlog::trace("Program({}) removeDefine({})", id_, define);
   }
 }
 
 void Program::setDefines(std::vector<std::string> defines) {
   std::sort(defines.begin(), defines.end());
   defines.erase(std::unique(defines.begin(), defines.end()), defines.end());
-  desc_.defines = std::move(defines);
-  needsUpdate_ = true;
+  if (defines != desc_.defines) {
+    desc_.defines = std::move(defines);
+    needsUpdate_ = true;
+    spdlog::trace("Program({}) setDefines(...)", id_);
+  }
 }
 
 // Cache response of "glGetUniformLocation" (expensive)
