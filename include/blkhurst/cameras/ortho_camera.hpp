@@ -9,8 +9,8 @@ struct OrthoDefaults {
   static constexpr float kRight = 1.0F;
   static constexpr float kBottom = -1.0F;
   static constexpr float kTop = 1.0F;
-  static constexpr float kNearZ = -1.0F;
-  static constexpr float kFarZ = 1.0F;
+  static constexpr float kNearZ = 0.01F;
+  static constexpr float kFarZ = 100.0F;
 };
 
 class OrthoCamera : public Camera {
