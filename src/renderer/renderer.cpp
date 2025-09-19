@@ -58,9 +58,9 @@ void Renderer::setAutoClear(bool enabled) {
   autoClear_ = enabled;
 }
 
-void Renderer::setClearColor(glm::vec3 rgb) {
-  clearColor_ = rgb;
-  glClearColor(rgb[0], rgb[1], rgb[2], 1);
+void Renderer::setClearColor(glm::vec4 rgba) {
+  clearColor_ = rgba;
+  glClearColor(rgba[0], rgba[1], rgba[2], rgba[3]);
 }
 
 // NOLINTNEXTLINE(readability-convert-member-functions-to-static)
@@ -132,15 +132,14 @@ void Renderer::resetState() {
 void Renderer::renderMesh(const Mesh& mesh, const Camera& camera) {
   const auto geometry = mesh.geometry();
   const auto material = mesh.material();
-  const auto program = material ? material->program : nullptr;
-  if (!geometry || !material || !program) {
-    spdlog::warn("Renderer: Mesh missing Geometry/Material/Program");
+  if (!geometry || !material) {
+    spdlog::warn("Renderer: Mesh missing Geometry/Material");
     return;
   }
 
   // Apply PipelineState and use shader Program.
-  applyPipeline(material->pipeline, mesh.wireframe());
-  program->use();
+  applyPipeline(material->pipeline(), mesh.wireframe());
+  material->useProgram();
 
   // Per-draw Uniforms
   applyPerDrawUniforms(mesh, camera);
@@ -195,23 +194,22 @@ void Renderer::applyPerFrameUniforms(const Camera& camera) {
 
 void Renderer::applyPerDrawUniforms(const Mesh& mesh, const Camera& camera) const {
   auto material = mesh.material();
-  auto program = material->program;
 
   // Per-frame Uniforms
   // TODO: Moveto applyPerFrameUniforms with UBO
-  program->setUniform("uTime", frameUniforms_.uTime);
-  program->setUniform("uDelta", frameUniforms_.uDelta);
-  program->setUniform("uMouse", frameUniforms_.uMouse);
-  program->setUniform("uResolution", frameUniforms_.uResolution);
-  program->setUniform("uView", frameUniforms_.uView);
-  program->setUniform("uProjection", frameUniforms_.uProjection);
-  program->setUniform("uCameraPos", frameUniforms_.uCameraPos);
+  material->setUniform("uTime", frameUniforms_.uTime);
+  material->setUniform("uDelta", frameUniforms_.uDelta);
+  material->setUniform("uMouse", frameUniforms_.uMouse);
+  material->setUniform("uResolution", frameUniforms_.uResolution);
+  material->setUniform("uView", frameUniforms_.uView);
+  material->setUniform("uProjection", frameUniforms_.uProjection);
+  material->setUniform("uCameraPos", frameUniforms_.uCameraPos);
 
   // Per-draw Uniforms
-  material->program->setUniform("uModel", mesh.worldMatrix());
+  material->setUniform("uModel", mesh.worldMatrix());
 
-  // User Uniforms
-  material->applyUniforms();
+  // Apply Uniforms & Resources
+  material->applyUniformsAndResources();
 }
 
 void Renderer::drawGeometry(const Geometry& geom, int instanceCount) {

@@ -113,7 +113,7 @@ public:
     if (currentCam != nullptr) {
       frameUniforms.uView = currentCam->viewMatrix();
       frameUniforms.uProjection = currentCam->projectionMatrix();
-      frameUniforms.uCameraPos = glm::vec4{currentCam->position(), 0.0};
+      frameUniforms.uCameraPos = currentCam->position();
     }
     return frameUniforms;
   }

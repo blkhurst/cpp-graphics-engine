@@ -26,7 +26,7 @@ public:
   void render(Object3D& root, Camera& camera);
 
   void setAutoClear(bool enabled = true);
-  void setClearColor(glm::vec3 rgb);
+  void setClearColor(glm::vec4 rgba);
   void clear(bool color = true, bool depth = true, bool stencil = true);
   void clearColor();
   void clearDepth();
@@ -47,7 +47,7 @@ private:
   bool autoClear_ = true;
   bool scissorTestEnabled_ = false;
 
-  glm::vec3 clearColor_ = defaults::window::clearColor;
+  glm::vec4 clearColor_ = defaults::window::clearColor;
 
   glm::ivec2 framebufferSize_ = {0, 0}; // Window Backbuffer
 
