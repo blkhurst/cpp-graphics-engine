@@ -3,43 +3,31 @@
 #include <glad/gl.h>
 #include <spdlog/spdlog.h>
 
-namespace {
-inline int calcMipLevels(int width, int height, bool enable) {
-  if (!enable) {
-    return 1;
-  }
-  const int max = std::max(width, height);
-  return static_cast<int>(std::floor(std::log2(std::max(1, max)))) + 1;
-}
-} // namespace
-
 namespace blkhurst {
-
-Texture::Texture() {
-  glCreateTextures(GL_TEXTURE_2D, 1, &id_);
-  spdlog::trace("Texture({}) constructed (empty)", id_);
-}
 
 Texture::Texture(int width, int height, const TextureDesc& desc)
     : width_(width),
       height_(height),
       mipLevels_(calcMipLevels(width, height, desc.generateMipmaps)),
-      format_(desc.format),
       desc_(desc) {
   glCreateTextures(GL_TEXTURE_2D, 1, &id_);
 
-  const unsigned internal = toGLInternal(format_);
+  const unsigned internal = toGLInternal(desc.format);
   glTextureStorage2D(id_, mipLevels_, internal, width_, height_);
 
   setFiltering(desc.minFilter, desc.magFilter);
   setWrap(desc.wrapS, desc.wrapT);
 
   spdlog::trace("Texture({}) {}x{} levels={} fmt={}", id_, width_, height_, mipLevels_,
-                static_cast<int>(format_));
+                static_cast<int>(desc_.format));
 }
 
 Texture::~Texture() {
-  destroy_();
+  if (id_ != 0U) {
+    glDeleteTextures(1, &id_);
+    spdlog::trace("Texture({}) destroyed", id_);
+    id_ = 0U;
+  }
 }
 
 std::shared_ptr<Texture> Texture::create(int width, int height, const TextureDesc& desc) {
@@ -62,17 +50,17 @@ void Texture::bindUnit(int unit) const {
 
 void Texture::setPixels(const void* pixels, int level) {
   if (id_ == 0U || width_ == 0 || height_ == 0) {
-    spdlog::error("Texture::image called on uninitialised texture");
+    spdlog::error("Texture::setPixels called on uninitialised texture");
     return;
   }
   if (level < 0 || level >= mipLevels_) {
-    spdlog::warn("Texture::image level({}) out of range [0, {})", level, mipLevels_);
+    spdlog::warn("Texture::setPixels level({}) out of range [0, {})", level, mipLevels_);
     return;
   }
 
   unsigned srcFormat = 0;
   unsigned srcType = 0;
-  pixelFormatAndType(format_, srcFormat, srcType);
+  pixelFormatAndType(desc_.format, srcFormat, srcType);
 
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
   glTextureSubImage2D(id_, level, 0, 0, width_, height_, srcFormat, srcType, pixels);
@@ -94,19 +82,36 @@ int Texture::height() const {
   return height_;
 }
 
-TextureFormat Texture::format() const {
-  return format_;
+int Texture::mipLevels() const {
+  return mipLevels_;
 }
 
-void Texture::destroy_() {
+TextureDesc Texture::desc() const {
+  return desc_;
+}
+
+// NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
+void Texture::adoptGLTexture(unsigned newId, int width, int height, int mipLevels,
+                             const TextureDesc& desc) {
   if (id_ != 0U) {
     glDeleteTextures(1, &id_);
-    spdlog::trace("Texture({}) destroyed", id_);
-    id_ = 0U;
   }
+  id_ = newId;
+  width_ = width;
+  height_ = height;
+  mipLevels_ = mipLevels;
+  desc_ = desc;
 }
 
 /* -------------- Gl Helpers -------------- */
+
+int Texture::calcMipLevels(int width, int height, bool enable) {
+  if (!enable) {
+    return 1;
+  }
+  const int max = std::max(width, height);
+  return static_cast<int>(std::floor(std::log2(std::max(1, max)))) + 1;
+}
 
 GLenum Texture::toGLInternal(TextureFormat format) {
   using F = TextureFormat;

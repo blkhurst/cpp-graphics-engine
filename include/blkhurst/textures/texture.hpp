@@ -31,7 +31,6 @@ struct TextureDesc {
 
 class Texture {
 public:
-  Texture();
   Texture(int width, int height, const TextureDesc& desc);
   virtual ~Texture();
 
@@ -53,22 +52,26 @@ public:
   [[nodiscard]] unsigned id() const;
   [[nodiscard]] int width() const;
   [[nodiscard]] int height() const;
-  [[nodiscard]] TextureFormat format() const;
+  [[nodiscard]] int mipLevels() const;
+  [[nodiscard]] TextureDesc desc() const;
+
+protected:
+  Texture() = default;
+  void adoptGLTexture(unsigned newId, int width, int height, int mipLevels,
+                      const TextureDesc& desc);
+
+  static int calcMipLevels(int width, int height, bool enable);
+  static unsigned toGLInternal(TextureFormat format);
+  static unsigned toGLFilter(TextureFilter filter, bool isMin);
+  static unsigned toGLWrap(TextureWrap wrap);
+  static void pixelFormatAndType(TextureFormat format, unsigned& outFormat, unsigned& outType);
 
 private:
   unsigned id_ = 0U;
   int width_ = 0;
   int height_ = 0;
   int mipLevels_ = 1;
-  TextureFormat format_ = TextureFormat::RGBA8;
   TextureDesc desc_{};
-
-  void destroy_();
-
-  static unsigned toGLInternal(TextureFormat format);
-  static unsigned toGLFilter(TextureFilter filter, bool isMin);
-  static unsigned toGLWrap(TextureWrap wrap);
-  static void pixelFormatAndType(TextureFormat format, unsigned& outFormat, unsigned& outType);
 };
 
 } // namespace blkhurst
