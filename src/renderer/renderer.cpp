@@ -1,11 +1,22 @@
+#include <blkhurst/geometry/box_geometry.hpp>
 #include <blkhurst/materials/material.hpp>
+#include <blkhurst/materials/skybox_material.hpp>
 #include <blkhurst/renderer/renderer.hpp>
+#include <blkhurst/scene/scene.hpp>
 
 #include <glad/gl.h>
 #include <spdlog/spdlog.h>
 #include <vector>
 
 namespace blkhurst {
+
+Renderer::Renderer() {
+  auto backgroundGeom = BoxGeometry::create({.width = 2.0F, .height = 2.0F, .depth = 2.0F});
+  auto backgroundMat = SkyBoxMaterial::create();
+  skyboxMesh_ = Mesh::create(backgroundGeom, backgroundMat);
+
+  spdlog::trace("Renderer constructed");
+}
 
 void Renderer::setFrameUniforms(const FrameUniforms& frameUniforms) {
   frameUniforms_ = frameUniforms;
@@ -48,6 +59,10 @@ void Renderer::render(Object3D& root, Camera& camera) {
       // ...
     }
   });
+
+  if (auto* scene = dynamic_cast<Scene*>(&root)) {
+    renderBackground(*scene, camera);
+  }
 
   for (auto* mesh : meshList) {
     renderMesh(*mesh, camera);
@@ -232,6 +247,39 @@ void Renderer::drawGeometry(const Geometry& geom, int instanceCount) {
       glDrawArrays(primitive, range.start, range.count);
     }
   }
+}
+
+void Renderer::renderBackground(Scene& scene, Camera& camera) {
+  const auto& sceneBackground = scene.background();
+  // const auto& sceneEnvironment = scene.environment();
+
+  if (!skyboxMesh_) {
+    return;
+  }
+
+  auto* skyboxMaterial = dynamic_cast<SkyBoxMaterial*>(skyboxMesh_->material().get());
+  if (skyboxMaterial == nullptr) {
+    spdlog::warn("Renderer::renderBackground SkyBoxMaterial is null");
+    return;
+  }
+
+  if (sceneBackground.type == BackgroundType::Color) {
+    setClearColor(sceneBackground.color);
+    clearColor();
+    return;
+  }
+
+  switch (sceneBackground.type) {
+  case BackgroundType::Cube:
+    skyboxMaterial->setCubeMap(sceneBackground.cubemap);
+    // skyboxMaterial->setCubeMapRotation(sceneEnvironment.rotation);
+    skyboxMaterial->setIntensity(sceneBackground.intensity);
+    break;
+  default:
+    return;
+  }
+
+  renderMesh(*skyboxMesh_, camera);
 }
 
 // ------- Helpers -------

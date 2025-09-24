@@ -25,8 +25,8 @@ void Material::useProgram() const {
   program_->use();
 }
 void Material::applyUniformsAndResources() {
-  applyUniforms();
   applyResources();
+  applyUniforms();
 }
 
 std::shared_ptr<Program> Material::program() const {
@@ -105,6 +105,14 @@ void Material::linkStorageBlock(const std::string& name, unsigned binding) const
 void Material::applyUniforms() const {
   for (const auto& [name, val] : uniforms_) {
     applyUniform(*program_, name, val);
+  }
+}
+
+void Material::bindTextureUnit(const std::shared_ptr<Texture>& tex, const std::string& uniformName,
+                               int slot) {
+  if (tex) {
+    setUniform(uniformName, slot);
+    tex->bindUnit(slot);
   }
 }
 

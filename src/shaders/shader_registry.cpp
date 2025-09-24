@@ -2,6 +2,7 @@
 #include <spdlog/spdlog.h>
 
 #include <blkhurst/shaders/builtin/basic.glsl.hpp>
+#include <blkhurst/shaders/builtin/skybox.glsl.hpp>
 
 namespace blkhurst {
 
@@ -35,9 +36,9 @@ std::unordered_map<std::string, std::string>& ShaderRegistry::map_() {
 }
 
 void ShaderRegistry::registerBuiltinShaders() {
-  // BasicMaterial
-  ShaderRegistry::registerSource("basicVert", shaders::kBasicVert);
-  ShaderRegistry::registerSource("basicFrag", shaders::kBasicFrag);
+  // SkyBoxMaterial
+  ShaderRegistry::registerSource("skybox_vert", shaders::skybox_vert);
+  ShaderRegistry::registerSource("skybox_frag", shaders::skybox_frag);
 }
 
 } // namespace blkhurst

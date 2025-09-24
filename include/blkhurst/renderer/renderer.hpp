@@ -13,7 +13,7 @@ namespace blkhurst {
 
 class Renderer {
 public:
-  Renderer() = default;
+  Renderer();
   ~Renderer() = default;
 
   Renderer(const Renderer&) = delete;
@@ -56,6 +56,9 @@ private:
   void applyPerFrameUniforms(const Camera& camera);
   void applyPerDrawUniforms(const Mesh& mesh, const Camera& camera) const;
   static void drawGeometry(const Geometry& geom, int instanceCount);
+
+  std::unique_ptr<Mesh> skyboxMesh_;
+  void renderBackground(Scene& scene, Camera& camera);
 
   // Helpers
   static unsigned toGlPrimitive(PrimitiveMode mode);

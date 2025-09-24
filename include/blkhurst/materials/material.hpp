@@ -2,6 +2,7 @@
 
 #include <blkhurst/graphics/program.hpp>
 #include <blkhurst/materials/pipeline_state.hpp>
+#include <blkhurst/textures/texture.hpp>
 
 #include <glm/glm.hpp>
 #include <memory>
@@ -60,6 +61,9 @@ public:
 protected:
   void applyUniforms() const;
   virtual void applyResources() {};
+
+  void bindTextureUnit(const std::shared_ptr<Texture>& tex, const std::string& uniformName,
+                       int slot);
 
 private:
   PipelineState pipeline_;

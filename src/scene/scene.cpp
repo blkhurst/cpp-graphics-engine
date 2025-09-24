@@ -1,3 +1,4 @@
+#include "blkhurst/textures/cube_texture.hpp"
 #include <blkhurst/scene/scene.hpp>
 
 #include <spdlog/spdlog.h>
@@ -13,9 +14,53 @@ Scene::~Scene() {
   spdlog::trace("Scene({}) destroyed", uuid());
 }
 
-glm::vec4 Scene::background() const {
+const SceneBackground& Scene::background() const {
   return background_;
 }
+
+void Scene::setBackground(const glm::vec4& color) {
+  background_.type = BackgroundType::Color;
+  background_.color = color;
+  spdlog::trace("Scene({}) setBackground [{:.2f}, {:.2f}, {:.2f}, {:.2f}]", uuid(), color[0],
+                color[1], color[2], color[3]);
+}
+
+void Scene::setBackground(std::shared_ptr<CubeTexture> cubemap) {
+  background_.type = BackgroundType::Cube;
+  background_.cubemap = std::move(cubemap);
+  if (!background_.cubemap) {
+    spdlog::warn("Scene({}) setBackground called with null CubeTexture", uuid());
+    return;
+  }
+  spdlog::trace("Scene({}) setBackground CubeTexture({})", uuid(), background_.cubemap->id());
+}
+
+void Scene::setBackgroundIntensity(float intensity) {
+  background_.intensity = intensity;
+  spdlog::trace("Scene({}) setBackgroundIntensity({})", uuid(), intensity);
+}
+
+// const SceneEnvironment& Scene::environment() const {
+//   return environment_;
+// }
+
+// void Scene::setEnvironment(std::shared_ptr<Texture> equirect, bool setBackground) {
+//   auto hdr = std::move(equirect);
+//   // environment_.cubemap = CubeTexture::fromEquirectangular(equirect);
+//   // 1) Convert from Equirectangular to Cubemap
+//   // 2) Generate PMREM
+//   // 3) Set as environment/background
+// }
+
+// void Scene::setEnvironmentIntensity(float intensity) {
+//   environment_.intensity = intensity;
+//   spdlog::trace("Scene({}) setEnvironmentIntensity({})", uuid(), intensity);
+// }
+
+// void Scene::setEnvironmentRotation(const glm::mat3& rotation) {
+//   environment_.rotation = rotation;
+//   spdlog::trace("Scene({}) setEnvironmentRotation", uuid());
+// }
 
 Camera* Scene::activeCamera() const {
   return activeCamera_.get();
@@ -29,11 +74,12 @@ const std::vector<std::shared_ptr<UiEntry>>& Scene::uiEntries() const {
   return uiEntries_;
 }
 
-void Scene::setBackground(const glm::vec4& backgroundVariant) {
-  background_ = backgroundVariant;
-  spdlog::trace("Scene({}) setBackground [{:.3f}, {:.3f}, {:.3f}, {:.3f}]", uuid(), background_[0],
-                background_[1], background_[2], background_[3]);
-}
+// void Scene::setBackground(const glm::vec4& backgroundVariant) {
+//   background_ = backgroundVariant;
+//   spdlog::trace("Scene({}) setBackground [{:.3f}, {:.3f}, {:.3f}, {:.3f}]", uuid(),
+//   background_[0],
+//                 background_[1], background_[2], background_[3]);
+// }
 
 void Scene::setActiveCamera(std::shared_ptr<Camera> camera) {
   if (!camera) {
