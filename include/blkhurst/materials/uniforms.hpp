@@ -64,7 +64,9 @@ constexpr const char* UseEmissiveMap = "USE_EMISSIVEMAP";
 constexpr const char* UseDisplacementMap = "USE_DISPLACEMENTMAP";
 //
 constexpr const char* EnvModeReflection = "ENV_MODE_REFLECTION";
-constexpr const char* flatShading = "FLAT_SHADING";
+constexpr const char* UseFlatShading = "FLAT_SHADING";
+constexpr const char* UseVertexColor = "USE_VERTEX_COLOR";
+constexpr const char* UseInstanceColor = "USE_INSTANCE_COLOR";
 } // namespace defines
 
 } // namespace blkhurst

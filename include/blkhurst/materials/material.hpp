@@ -47,8 +47,7 @@ public:
   void setUniform(const std::string& name, const glm::mat2& value);
   void setUniform(const std::string& name, const glm::mat4& value);
 
-  void addDefine(const std::string& def);
-  void removeDefine(const std::string& def);
+  void setDefine(const std::string& def, bool enabled);
   void setDefines(std::vector<std::string> defs);
   void linkUniformBlock(const std::string& name, unsigned binding) const;
   void linkStorageBlock(const std::string& name, unsigned binding) const;

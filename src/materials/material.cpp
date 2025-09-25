@@ -76,14 +76,9 @@ void Material::setUniform(const std::string& name, const glm::mat4& value) {
   uniforms_[name] = value;
 }
 
-void Material::addDefine(const std::string& def) {
+void Material::setDefine(const std::string& def, bool enabled) {
   if (program_) {
-    program_->addDefine(def);
-  }
-}
-void Material::removeDefine(const std::string& def) {
-  if (program_) {
-    program_->removeDefine(def);
+    enabled ? program_->addDefine(def) : program_->removeDefine(def);
   }
 }
 void Material::setDefines(std::vector<std::string> defs) {
