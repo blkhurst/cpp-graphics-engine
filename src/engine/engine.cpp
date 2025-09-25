@@ -11,7 +11,8 @@
 #include <blkhurst/events/events.hpp>
 #include <blkhurst/input/input.hpp>
 #include <blkhurst/renderer/renderer.hpp>
-#include <blkhurst/renderer/uniforms.hpp>
+#include <blkhurst/renderer/uniform_blocks.hpp>
+#include <blkhurst/shaders/shader_registry.hpp>
 #include <blkhurst/util/assets.hpp>
 
 #include <spdlog/spdlog.h>
@@ -172,6 +173,9 @@ Engine::Engine(const EngineConfig& config) {
   Logger logger_(config.loggerConfig.level);
   assets::setInstallRoot(config.assetsConfig.installRoot);
   assets::setSearchPaths(config.assetsConfig.searchPaths);
+
+  // Register Builtin Shaders
+  ShaderRegistry::registerBuiltinShaders();
 
   // Initialise Engine
   spdlog::stopwatch stopWatch;

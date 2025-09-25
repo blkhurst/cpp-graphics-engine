@@ -7,7 +7,7 @@
 #include <blkhurst/objects/mesh.hpp>
 #include <blkhurst/objects/object3d.hpp>
 #include <blkhurst/renderer/render_target.hpp>
-#include <blkhurst/renderer/uniforms.hpp>
+#include <blkhurst/renderer/uniform_blocks.hpp>
 
 namespace blkhurst {
 

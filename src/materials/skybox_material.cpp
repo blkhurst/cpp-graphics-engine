@@ -1,5 +1,4 @@
 #include <blkhurst/materials/skybox_material.hpp>
-#include <blkhurst/materials/slots.hpp>
 #include <glm/glm.hpp>
 
 namespace blkhurst {
