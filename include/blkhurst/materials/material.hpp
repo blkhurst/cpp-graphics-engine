@@ -53,11 +53,6 @@ public:
   void linkUniformBlock(const std::string& name, unsigned binding) const;
   void linkStorageBlock(const std::string& name, unsigned binding) const;
 
-  virtual std::shared_ptr<Material> clone() const;
-  template <class T> std::shared_ptr<T> cloneAs() const {
-    return std::dynamic_pointer_cast<T>(this->clone());
-  }
-
 protected:
   void applyUniforms() const;
   virtual void applyResources() {};

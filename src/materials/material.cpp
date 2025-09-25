@@ -116,14 +116,6 @@ void Material::bindTextureUnit(const std::shared_ptr<Texture>& tex, const std::s
   }
 }
 
-// Share Program, Copy Uniforms
-std::shared_ptr<Material> Material::clone() const {
-  auto newMaterial = std::make_shared<Material>(program_);
-  newMaterial->pipeline_ = pipeline_;
-  newMaterial->uniforms_ = uniforms_;
-  return newMaterial;
-}
-
 void Material::applyUniform(Program& prog, const std::string& name, const UniformValue& uniform) {
   std::visit([&](const auto& value) { prog.setUniform(name, value); }, uniform);
 }

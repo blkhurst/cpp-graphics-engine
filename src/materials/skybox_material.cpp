@@ -31,12 +31,6 @@ void SkyBoxMaterial::setFlipCubeMap(bool enabled) {
 void SkyBoxMaterial::setIntensity(float intensity) {
   intensity_ = intensity;
 }
-std::shared_ptr<Material> SkyBoxMaterial::clone() const {
-  return std::make_shared<SkyBoxMaterial>(SkyBoxMaterialDesc{.cubeMap = cubeMap_,
-                                                             .rotation = cubeMapRotation_,
-                                                             .flipCubeMap = flipCubeMap_,
-                                                             .intensity = intensity_});
-}
 
 void SkyBoxMaterial::applyResources() {
   setUniform("uCubeMapRotation", cubeMapRotation_);

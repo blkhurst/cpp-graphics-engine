@@ -36,8 +36,6 @@ public:
   void setFlipCubeMap(bool enabled);
   void setIntensity(float intensity);
 
-  std::shared_ptr<Material> clone() const override;
-
 protected:
   void applyResources() override;
 
