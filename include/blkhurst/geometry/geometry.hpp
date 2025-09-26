@@ -18,13 +18,14 @@ struct DrawRange {
   int count = 0;
 };
 
+// Tangent Unused, TBN calculated via dFdx/dfdy
 enum class Attrib : std::uint8_t {
   Position = 0,
-  Uv = 1,
-  Normal = 2,
-  Tangent = 3,
-  Bitangent = 4,
-  Color = 5
+  Color = 1,
+  Uv = 2,
+  Normal = 3,
+  InstanceColor = 4,
+  InstanceMatrix = 5,
 };
 
 class Geometry {

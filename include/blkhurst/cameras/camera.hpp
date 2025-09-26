@@ -23,6 +23,7 @@ public:
   }
 
   glm::mat4 viewMatrix() const;
+  virtual bool isOrthographic() const;
   virtual const glm::mat4& projectionMatrix() const = 0;
 };
 

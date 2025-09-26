@@ -1,6 +1,7 @@
 #pragma once
 
 #include <blkhurst/materials/material.hpp>
+#include <blkhurst/materials/uv_transform.hpp>
 #include <blkhurst/textures/cube_texture.hpp>
 #include <blkhurst/textures/texture.hpp>
 
@@ -15,6 +16,7 @@ struct BasicMaterialDesc {
   glm::vec4 color{1.0F, 1.0F, 1.0F, 1.0F};
   std::shared_ptr<Texture> colorMap;
   std::shared_ptr<Texture> alphaMap;
+  std::shared_ptr<Texture> normalMap;
   std::shared_ptr<CubeTexture> envMap;
   EnvMode envMode = EnvMode::Reflection;
   float reflectivity = 1.0F;
@@ -37,6 +39,9 @@ public:
   void setColorMap(std::shared_ptr<Texture> texture);
   void setAlphaMap(std::shared_ptr<Texture> texture);
 
+  void setNormalMap(std::shared_ptr<Texture> texture);
+  void setNormalScale(float scale);
+
   void setEnvMap(std::shared_ptr<CubeTexture> texture);
   void setEnvMode(EnvMode mode);
 
@@ -45,6 +50,11 @@ public:
 
   void setReflectivity(float reflectivity);
   void setRefractionRatio(float refractionRatio);
+
+  void setUvRepeat(float uRepeat, float vRepeat);
+  void setUvOffset(const glm::vec2& offset);
+  void setUvRotation(float radians);
+  void setUvCenter(const glm::vec2& center);
 
 protected:
   void applyResources() override;
@@ -55,6 +65,9 @@ private:
   std::shared_ptr<Texture> map_;
   std::shared_ptr<Texture> alphaMap_;
 
+  std::shared_ptr<Texture> normalMap_;
+  float normalScale_ = 1.0F;
+
   std::shared_ptr<CubeTexture> envMap_;
   EnvMode envMode_;
 
@@ -63,6 +76,8 @@ private:
 
   float reflectivity_;
   float refractionRatio_;
+
+  UvTransform uvTransform_;
 };
 
 } // namespace blkhurst

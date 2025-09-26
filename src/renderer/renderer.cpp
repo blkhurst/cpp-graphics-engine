@@ -219,6 +219,7 @@ void Renderer::applyPerDrawUniforms(const Mesh& mesh, const Camera& camera) cons
   material->setUniform("uView", frameUniforms_.uView);
   material->setUniform("uProjection", frameUniforms_.uProjection);
   material->setUniform("uCameraPos", frameUniforms_.uCameraPos);
+  material->setUniform("uIsOrthographic", frameUniforms_.uIsOrthographic);
 
   // Per-draw Uniforms
   material->setUniform("uModel", mesh.worldMatrix());

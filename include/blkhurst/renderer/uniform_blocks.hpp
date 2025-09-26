@@ -27,7 +27,7 @@ struct alignas(kCpuAlignment) FrameUniforms {
   glm::mat4 uProjection; // 16
 
   glm::vec3 uCameraPos; // 12
-  float pad2_;          // 4
+  int uIsOrthographic;  // 4
 };
 
 struct alignas(kCpuAlignment) DrawUniforms {

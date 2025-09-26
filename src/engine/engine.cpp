@@ -114,7 +114,8 @@ public:
     if (currentCam != nullptr) {
       frameUniforms.uView = currentCam->viewMatrix();
       frameUniforms.uProjection = currentCam->projectionMatrix();
-      frameUniforms.uCameraPos = currentCam->position();
+      frameUniforms.uCameraPos = currentCam->worldPosition();
+      frameUniforms.uIsOrthographic = currentCam->isOrthographic() ? 1 : 0;
     }
     return frameUniforms;
   }

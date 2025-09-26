@@ -17,6 +17,7 @@ constexpr const char* Model = "uModel";
 //
 constexpr const char* Color = "uColor";
 constexpr const char* NormalScale = "uNormalScale";
+constexpr const char* UvTransform = "uUvTransform";
 // Environment
 constexpr const char* Reflectivity = "uReflectivity";
 constexpr const char* RefractionRatio = "uRefractionRatio";
@@ -62,6 +63,8 @@ constexpr const char* UseRoughnessMap = "USE_ROUGHNESSMAP";
 constexpr const char* UseAoMap = "USE_AOMAP";
 constexpr const char* UseEmissiveMap = "USE_EMISSIVEMAP";
 constexpr const char* UseDisplacementMap = "USE_DISPLACEMENTMAP";
+//
+constexpr const char* UseUvTransform = "USE_UV_TRANSFORM";
 //
 constexpr const char* EnvModeReflection = "ENV_MODE_REFLECTION";
 constexpr const char* UseFlatShading = "FLAT_SHADING";

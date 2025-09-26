@@ -28,6 +28,7 @@ public:
   static std::shared_ptr<OrthoCamera> create(float left, float right, float bottom, float top,
                                              float nearZ, float farZ);
 
+  bool isOrthographic() const override;
   const glm::mat4& projectionMatrix() const override;
 
   void setBounds(float left, float right, float bottom, float top);

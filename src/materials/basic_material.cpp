@@ -9,6 +9,7 @@ BasicMaterial::BasicMaterial(const BasicMaterialDesc& desc)
       color_(desc.color),
       map_(desc.colorMap),
       alphaMap_(desc.alphaMap),
+      normalMap_(desc.normalMap),
       envMap_(desc.envMap),
       envMode_(desc.envMode),
       reflectivity_(desc.reflectivity),
@@ -18,6 +19,7 @@ BasicMaterial::BasicMaterial(const BasicMaterialDesc& desc)
   setColor(desc.color);
   setColorMap(desc.colorMap);
   setAlphaMap(desc.alphaMap);
+  setNormalMap(desc.normalMap);
   setEnvMap(desc.envMap);
   setEnvMode(desc.envMode);
   setReflectivity(desc.reflectivity);
@@ -43,6 +45,15 @@ void BasicMaterial::setColorMap(std::shared_ptr<Texture> texture) {
 void BasicMaterial::setAlphaMap(std::shared_ptr<Texture> texture) {
   alphaMap_ = std::move(texture);
   setDefine(defines::UseAlphaMap, static_cast<bool>(alphaMap_));
+}
+
+void BasicMaterial::setNormalMap(std::shared_ptr<Texture> texture) {
+  normalMap_ = std::move(texture);
+  setDefine(defines::UseNormalMap, static_cast<bool>(normalMap_));
+}
+
+void BasicMaterial::setNormalScale(float scale) {
+  normalScale_ = scale;
 }
 
 void BasicMaterial::setEnvMap(std::shared_ptr<CubeTexture> texture) {
@@ -73,13 +84,36 @@ void BasicMaterial::setRefractionRatio(float refractionRatio) {
   refractionRatio_ = refractionRatio;
 }
 
+void BasicMaterial::setUvRepeat(float uRepeat, float vRepeat) {
+  uvTransform_.setRepeat(uRepeat, vRepeat);
+  setDefine(defines::UseUvTransform, !uvTransform_.isDefault());
+}
+
+void BasicMaterial::setUvOffset(const glm::vec2& offset) {
+  uvTransform_.setOffset(offset);
+  setDefine(defines::UseUvTransform, !uvTransform_.isDefault());
+}
+
+void BasicMaterial::setUvRotation(float radians) {
+  uvTransform_.setRotation(radians);
+  setDefine(defines::UseUvTransform, !uvTransform_.isDefault());
+}
+
+void BasicMaterial::setUvCenter(const glm::vec2& center) {
+  uvTransform_.setCenter(center);
+  setDefine(defines::UseUvTransform, !uvTransform_.isDefault());
+}
+
 void BasicMaterial::applyResources() {
   setUniform(uniforms::Color, color_);
   setUniform(uniforms::Reflectivity, reflectivity_);
   setUniform(uniforms::RefractionRatio, refractionRatio_);
+  setUniform(uniforms::UvTransform, uvTransform_.matrix());
+  setUniform(uniforms::NormalScale, normalScale_);
 
   bindTextureUnit(map_, samplers::ColorMap, slots::ColorMap);
   bindTextureUnit(alphaMap_, samplers::AlphaMap, slots::AlphaMap);
+  bindTextureUnit(normalMap_, samplers::NormalMap, slots::NormalMap);
   bindTextureUnit(envMap_, samplers::EnvMap, slots::EnvMap);
 }
 

@@ -34,6 +34,10 @@ std::shared_ptr<OrthoCamera> OrthoCamera::create(float left, float right, float 
   return std::make_shared<OrthoCamera>(left, right, bottom, top, nearZ, farZ);
 }
 
+bool OrthoCamera::isOrthographic() const {
+  return true;
+}
+
 const glm::mat4& OrthoCamera::projectionMatrix() const {
   if (projNeedsUpdate_) {
     proj_ = glm::ortho(left_, right_, bottom_, top_, nearZ_, farZ_);

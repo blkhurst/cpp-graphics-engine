@@ -3,6 +3,12 @@
 
 #include <blkhurst/shaders/builtin/basic.glsl.hpp>
 #include <blkhurst/shaders/builtin/skybox.glsl.hpp>
+#include <blkhurst/shaders/chunks/color_fragment.glsl.hpp>
+#include <blkhurst/shaders/chunks/envmap_fragment.glsl.hpp>
+#include <blkhurst/shaders/chunks/io_fragment.glsl.hpp>
+#include <blkhurst/shaders/chunks/io_vertex.glsl.hpp>
+#include <blkhurst/shaders/chunks/normal_fragment.glsl.hpp>
+#include <blkhurst/shaders/chunks/uniform_common.hpp>
 
 namespace blkhurst {
 
@@ -36,9 +42,20 @@ std::unordered_map<std::string, std::string>& ShaderRegistry::map_() {
 }
 
 void ShaderRegistry::registerBuiltinShaders() {
+  ShaderRegistry::registerSource("io_vertex", shaders::io_vertex);
+  ShaderRegistry::registerSource("io_fragment", shaders::io_fragment);
+  ShaderRegistry::registerSource("uniforms_common", shaders::uniforms_common);
+  ShaderRegistry::registerSource("normal_fragment", shaders::normal_fragment);
+  ShaderRegistry::registerSource("color_fragment", shaders::color_fragment);
+  ShaderRegistry::registerSource("envmap_fragment", shaders::envmap_fragment);
+
   // SkyBoxMaterial
   ShaderRegistry::registerSource("skybox_vert", shaders::skybox_vert);
   ShaderRegistry::registerSource("skybox_frag", shaders::skybox_frag);
+
+  // BasicMaterial
+  ShaderRegistry::registerSource("basic_vert", shaders::basic_vert);
+  ShaderRegistry::registerSource("basic_frag", shaders::basic_frag);
 }
 
 } // namespace blkhurst

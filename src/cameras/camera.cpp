@@ -5,6 +5,10 @@
 
 namespace blkhurst {
 
+bool Camera::isOrthographic() const {
+  return false;
+}
+
 glm::mat4 Camera::viewMatrix() const {
   return glm::inverse(worldMatrix());
 }

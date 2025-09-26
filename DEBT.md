@@ -46,6 +46,8 @@
 
 - [ ] Allow `setAttribute` to take `BufferAttribute` or `InterleavedBufferAttribute`.
 - [ ] Use `std::unordered_map<Attrib, BufferAttribute>` and add utility `calcDrawCount`.
+- [ ] Swap `Attrib::` to `std::string` and use `glGetAttribLocation`
+- [ ] Add `hasAttribute` so materials can check they have uvs/normals etc before enabling defines.
 
 ## UI
 

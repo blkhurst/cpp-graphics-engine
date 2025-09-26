@@ -95,10 +95,6 @@ std::shared_ptr<Geometry> Geometry::from(const MeshData& meshData) {
   geometry->setAttribute(Attrib::Uv, meshData.uvs, 2);
   geometry->setAttribute(Attrib::Normal, meshData.normals, 3);
 
-  if (!meshData.tangents.empty()) {
-    geometry->setAttribute(Attrib::Tangent, meshData.tangents, 3);
-  }
-
   return geometry;
 }
 } // namespace blkhurst
