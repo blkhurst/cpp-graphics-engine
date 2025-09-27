@@ -22,14 +22,14 @@ inline constexpr glm::ivec2 pos = {100, 100};
 inline constexpr glm::ivec2 size = {1600, 800};
 inline constexpr int msaaSamples = 4;
 inline constexpr bool vSync = true;
-inline constexpr glm::vec4 clearColor = {0.07F, 0.13F, 0.17F, 1.0F};
+inline constexpr glm::vec4 clearColor = {0.1F, 0.1F, 0.1F, 1.0F};
 } // namespace window
 
 namespace ui {
 inline constexpr const char* title = "Blkhurst";
 
 inline constexpr float fontSize = 14.0F;
-inline constexpr const char* fontPath = "fonts/Inter.ttc";
+inline constexpr const char* fontPath = "";
 
 inline constexpr float scale = 1.0F;
 inline constexpr float minWindowWidth = 225.0F;

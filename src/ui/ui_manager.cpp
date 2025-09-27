@@ -1,4 +1,5 @@
 #include "ui/ui_manager.hpp"
+#include "ui/fonts/inter/inter_variable_ttf.hpp"
 #include <blkhurst/events/events.hpp>
 #include <blkhurst/util/assets.hpp>
 
@@ -44,9 +45,7 @@ void UiManager::initialiseImGui(const WindowManager& windowManager) {
   ImGui_ImplOpenGL3_Init(getGlVersionString().c_str());
 
   // Font
-  if (!config_.fontPath.empty()) {
-    setImGuiFont(config_.fontPath);
-  }
+  loadImGuiFont(config_.fontPath);
 
   // Style
   if (config_.useDefaultStyle) {
@@ -67,17 +66,23 @@ std::string UiManager::getGlVersionString() const {
   return "#version " + std::to_string(glVersion.major) + std::to_string(glVersion.minor) + "0";
 }
 
-void UiManager::setImGuiFont(const std::string& fontPath) const {
+void UiManager::loadImGuiFont(const std::string& fontPath) const {
   ImGuiIO& inputOutput = ImGui::GetIO();
   inputOutput.IniFilename = nullptr; // No imgui.ini
 
-  auto foundPath = assets::find(fontPath);
-  if (!foundPath) {
-    inputOutput.Fonts->AddFontDefault();
-    return;
+  // Custom Font
+  if (!fontPath.empty()) {
+    auto foundPath = assets::find(fontPath);
+    if (foundPath) {
+      inputOutput.Fonts->AddFontFromFileTTF(foundPath->c_str(), config_.fontSize);
+      return;
+    }
   }
 
-  inputOutput.Fonts->AddFontFromFileTTF(foundPath->c_str(), config_.fontSize);
+  // Default Font
+  // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-array-to-pointer-decay)
+  inputOutput.Fonts->AddFontFromMemoryCompressedBase85TTF(InterVariableTTF_compressed_data_base85,
+                                                          config_.fontSize);
 }
 
 void UiManager::beginFrame() const {

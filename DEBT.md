@@ -64,7 +64,7 @@
 ## Assets
 
 - [ ] Extend `assetsConfig` with `envVar`, `useCwd`, `useExeDir`, `verbose`.
-- [ ] Embed font and load using `AddFontFromMemoryTTF`.
+- [x] Embed font and load using `AddFontFromMemoryCompressedBase85TTF`.
 
 ## Engine/Renderer
 

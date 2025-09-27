@@ -36,7 +36,7 @@ private:
 
   void initialiseImGui(const WindowManager& windowManager);
   [[nodiscard]] std::string getGlVersionString() const;
-  void setImGuiFont(const std::string& fontPath) const;
+  void loadImGuiFont(const std::string& fontPath) const;
 
   void drawStatsHeader(const RootState& state);
   void drawScenesHeader(const RootState& state);
