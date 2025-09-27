@@ -8,14 +8,11 @@
 namespace blkhurst {
 
 struct RenderTargetDesc {
-  int width = 1;
-  int height = 1;
+  int colorAttachmentCount = 1;
+  TextureDesc colorDesc{.generateMipmaps = false};
+  TextureDesc depthDesc{.format = TextureFormat::Depth24, .generateMipmaps = false};
 
-  int colorAttachments = 1;
-  TextureFormat colorFormat = TextureFormat::RGBA8;
-
-  bool hasDepth = true;
-  TextureFormat depthFormat = TextureFormat::D24S8;
+  bool depthAttachment = true;
   // TODO: samples (MSAA)
 };
 
@@ -32,28 +29,26 @@ public:
 
   static std::shared_ptr<RenderTarget> create(int width, int height, const RenderTargetDesc& desc);
 
-  void bind() const;
-  static void bindDefault();
   void setSize(int width, int height);
 
-  [[nodiscard]] unsigned fbo() const;
+  [[nodiscard]] unsigned id() const;
   [[nodiscard]] int width() const;
   [[nodiscard]] int height() const;
 
-  [[nodiscard]] const std::vector<std::shared_ptr<Texture>>& colorAttachments() const;
-  [[nodiscard]] std::shared_ptr<Texture> depthAttachment() const;
+  [[nodiscard]] std::shared_ptr<Texture> texture() const;
+  [[nodiscard]] std::shared_ptr<Texture> depthTexture() const;
+  [[nodiscard]] const std::vector<std::shared_ptr<Texture>>& textures() const;
 
 private:
-  unsigned fbo_ = 0U;
-  int width_ = 0;
-  int height_ = 0;
+  unsigned framebufferId_ = 0U;
+  int width_;
+  int height_;
 
-  RenderTargetDesc desc_{};
-  std::vector<std::shared_ptr<Texture>> color_;
-  std::shared_ptr<Texture> depth_;
+  RenderTargetDesc desc_;
+  std::vector<std::shared_ptr<Texture>> textures_;
+  std::shared_ptr<Texture> depthTexture_;
 
   void rebuildAttachments_();
-  void destroy_();
 };
 
 } // namespace blkhurst

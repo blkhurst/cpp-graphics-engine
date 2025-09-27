@@ -12,10 +12,15 @@ enum class TextureFormat : std::uint8_t {
   R8,
   R16F,
   R32F,
-  D24S8,
-  D32F,
   SRGB8,
-  SRGB8A8
+  SRGB8_ALPHA8,
+
+  Depth16,
+  Depth24,
+  Depth32F,
+
+  Depth24Stencil8,
+  Depth32FStencil8,
 };
 enum class TextureFilter : std::uint8_t { Nearest, Linear, LinearMipmapLinear };
 enum class TextureWrap : std::uint8_t { ClampToEdge, Repeat, MirroredRepeat };
@@ -54,6 +59,10 @@ public:
   [[nodiscard]] int height() const;
   [[nodiscard]] int mipLevels() const;
   [[nodiscard]] TextureDesc desc() const;
+
+  static bool isColorFormat(TextureFormat format);
+  static bool isDepthFormat(TextureFormat format);
+  static bool isDepthStencilFormat(TextureFormat format);
 
 protected:
   Texture() = default;

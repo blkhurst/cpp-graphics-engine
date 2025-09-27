@@ -10,35 +10,21 @@ RenderTarget::RenderTarget(int width, int height, const RenderTargetDesc& desc)
     : width_(width),
       height_(height),
       desc_(desc) {
-  glCreateFramebuffers(1, &fbo_);
+  glCreateFramebuffers(1, &framebufferId_);
   rebuildAttachments_();
 }
 
 RenderTarget::~RenderTarget() {
-  destroy_();
+  if (framebufferId_ != 0U) {
+    glDeleteFramebuffers(1, &framebufferId_);
+    spdlog::trace("RenderTarget({}) destroyed", framebufferId_);
+    framebufferId_ = 0U;
+  }
 }
 
 std::shared_ptr<RenderTarget> RenderTarget::create(int width, int height,
                                                    const RenderTargetDesc& desc) {
   return std::make_shared<RenderTarget>(width, height, desc);
-}
-
-void RenderTarget::destroy_() {
-  if (fbo_ != 0U) {
-    glDeleteFramebuffers(1, &fbo_);
-    spdlog::trace("RenderTarget({}) destroyed", fbo_);
-    fbo_ = 0U;
-  }
-}
-
-void RenderTarget::bind() const {
-  glBindFramebuffer(GL_FRAMEBUFFER, fbo_);
-  glViewport(0, 0, width_, height_);
-}
-
-void RenderTarget::bindDefault() {
-  glBindFramebuffer(GL_FRAMEBUFFER, 0);
-  //? Renderer should resize viewport
 }
 
 void RenderTarget::setSize(int width, int height) {
@@ -52,8 +38,8 @@ void RenderTarget::setSize(int width, int height) {
   rebuildAttachments_();
 }
 
-unsigned RenderTarget::fbo() const {
-  return fbo_;
+unsigned RenderTarget::id() const {
+  return framebufferId_;
 }
 
 int RenderTarget::width() const {
@@ -64,59 +50,74 @@ int RenderTarget::height() const {
   return height_;
 }
 
-const std::vector<std::shared_ptr<Texture>>& RenderTarget::colorAttachments() const {
-  return color_;
+std::shared_ptr<Texture> RenderTarget::texture() const {
+  if (textures_.empty()) {
+    spdlog::warn("RenderTarget({}) has no color attachments", framebufferId_);
+    return nullptr;
+  }
+  return textures_[0];
 }
 
-std::shared_ptr<Texture> RenderTarget::depthAttachment() const {
-  return depth_;
+std::shared_ptr<Texture> RenderTarget::depthTexture() const {
+  return depthTexture_;
+}
+
+const std::vector<std::shared_ptr<Texture>>& RenderTarget::textures() const {
+  return textures_;
 }
 
 void RenderTarget::rebuildAttachments_() {
-  // Create color attachments
-  color_.clear();
-  color_.reserve(desc_.colorAttachments);
-  for (int i = 0; i < desc_.colorAttachments; ++i) {
-    TextureDesc texDesc;
-    texDesc.format = desc_.colorFormat;
-    texDesc.generateMipmaps = false;
-    auto tex = Texture::create(width_, height_, texDesc);
-    glNamedFramebufferTexture(fbo_, GL_COLOR_ATTACHMENT0 + i, tex->id(), 0);
-    color_.push_back(std::move(tex));
+  if (framebufferId_ == 0) {
+    glCreateFramebuffers(1, &framebufferId_);
   }
 
-  // Create depth attachment if requested
-  depth_.reset();
-  if (desc_.hasDepth) {
-    TextureDesc depthDesc;
-    depthDesc.format = desc_.depthFormat;
-    depthDesc.generateMipmaps = false;
-    auto dtex = Texture::create(width_, height_, depthDesc);
-    const GLenum attach = (desc_.depthFormat == TextureFormat::D24S8) ? GL_DEPTH_STENCIL_ATTACHMENT
-                                                                      : GL_DEPTH_ATTACHMENT;
-    glNamedFramebufferTexture(fbo_, attach, dtex->id(), 0);
-    depth_ = std::move(dtex);
+  // Create color attachments
+  textures_.clear();
+  textures_.reserve(desc_.colorAttachmentCount);
+  for (int i = 0; i < desc_.colorAttachmentCount; ++i) {
+    auto texture = Texture::create(width_, height_, desc_.colorDesc);
+    glNamedFramebufferTexture(framebufferId_, GL_COLOR_ATTACHMENT0 + i, texture->id(), 0);
+    textures_.push_back(std::move(texture));
   }
 
   // Set draw buffers
-  if (!color_.empty()) {
+  if (!textures_.empty()) {
     std::vector<GLenum> buffers;
-    buffers.reserve(color_.size());
-    for (int i = 0; i < static_cast<int>(color_.size()); ++i) {
+    buffers.reserve(textures_.size());
+    for (int i = 0; i < static_cast<int>(textures_.size()); ++i) {
       buffers.push_back(GL_COLOR_ATTACHMENT0 + i);
     }
-    glNamedFramebufferDrawBuffers(fbo_, static_cast<int>(buffers.size()), buffers.data());
+    glNamedFramebufferDrawBuffers(framebufferId_, static_cast<int>(buffers.size()), buffers.data());
   } else {
-    glNamedFramebufferDrawBuffer(fbo_, GL_NONE);
+    glNamedFramebufferDrawBuffer(framebufferId_, GL_NONE);
+    glNamedFramebufferReadBuffer(framebufferId_, GL_NONE);
+  }
+
+  // Create depth attachment
+  depthTexture_.reset();
+  if (desc_.depthAttachment) {
+    auto depthTexture = Texture::create(width_, height_, desc_.depthDesc);
+
+    GLenum attachment = GL_DEPTH_ATTACHMENT;
+    if (Texture::isDepthStencilFormat(desc_.depthDesc.format)) {
+      attachment = GL_DEPTH_STENCIL_ATTACHMENT;
+    } else if (Texture::isDepthFormat(desc_.depthDesc.format)) {
+      attachment = GL_DEPTH_ATTACHMENT;
+    } else {
+      spdlog::error("RenderTarget depthDesc.format is not a depth format");
+    }
+
+    glNamedFramebufferTexture(framebufferId_, attachment, depthTexture->id(), 0);
+    depthTexture_ = std::move(depthTexture);
   }
 
   // Check status
-  const auto status = glCheckNamedFramebufferStatus(fbo_, GL_FRAMEBUFFER);
+  const auto status = glCheckNamedFramebufferStatus(framebufferId_, GL_FRAMEBUFFER);
   if (status != GL_FRAMEBUFFER_COMPLETE) {
     spdlog::error("RenderTarget FBO incomplete after rebuild (0x{:X})", status);
   } else {
-    spdlog::trace("RenderTarget({}) {}x{} created: colors={} depth={}", fbo_, width_, height_,
-                  color_.size(), depth_ ? "yes" : "no");
+    spdlog::trace("RenderTarget({}) {}x{} created: colors={} depth={}", framebufferId_, width_,
+                  height_, textures_.size(), depthTexture_ ? "yes" : "no");
   }
 }
 

@@ -90,6 +90,17 @@ TextureDesc Texture::desc() const {
   return desc_;
 }
 
+bool Texture::isColorFormat(TextureFormat format) {
+  return !(isDepthFormat(format) || isDepthStencilFormat(format));
+}
+bool Texture::isDepthFormat(TextureFormat format) {
+  return format == TextureFormat::Depth16 || format == TextureFormat::Depth24 ||
+         format == TextureFormat::Depth32F;
+}
+bool Texture::isDepthStencilFormat(TextureFormat format) {
+  return format == TextureFormat::Depth24Stencil8 || format == TextureFormat::Depth32FStencil8;
+}
+
 // NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
 void Texture::adoptGLTexture(unsigned newId, int width, int height, int mipLevels,
                              const TextureDesc& desc) {
@@ -114,28 +125,35 @@ int Texture::calcMipLevels(int width, int height, bool enable) {
 }
 
 GLenum Texture::toGLInternal(TextureFormat format) {
-  using F = TextureFormat;
   switch (format) {
-  case F::RGBA8:
+  case TextureFormat::RGBA8:
     return GL_RGBA8;
-  case F::RGBA16F:
+  case TextureFormat::RGBA16F:
     return GL_RGBA16F;
-  case F::RGBA32F:
+  case TextureFormat::RGBA32F:
     return GL_RGBA32F;
-  case F::R8:
+  case TextureFormat::R8:
     return GL_R8;
-  case F::R16F:
+  case TextureFormat::R16F:
     return GL_R16F;
-  case F::R32F:
+  case TextureFormat::R32F:
     return GL_R32F;
-  case F::D24S8:
-    return GL_DEPTH24_STENCIL8;
-  case F::D32F:
-    return GL_DEPTH_COMPONENT32F;
-  case F::SRGB8:
+  case TextureFormat::SRGB8:
     return GL_SRGB8;
-  case F::SRGB8A8:
+  case TextureFormat::SRGB8_ALPHA8:
     return GL_SRGB8_ALPHA8;
+
+  case TextureFormat::Depth16:
+    return GL_DEPTH_COMPONENT16;
+  case TextureFormat::Depth24:
+    return GL_DEPTH_COMPONENT24;
+  case TextureFormat::Depth32F:
+    return GL_DEPTH_COMPONENT32F;
+
+  case TextureFormat::Depth24Stencil8:
+    return GL_DEPTH24_STENCIL8;
+  case TextureFormat::Depth32FStencil8:
+    return GL_DEPTH32F_STENCIL8;
   }
   return GL_RGBA8;
 }
@@ -168,45 +186,63 @@ GLenum Texture::toGLWrap(TextureWrap wrap) {
 
 // NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
 void Texture::pixelFormatAndType(TextureFormat format, GLenum& outFormat, GLenum& outType) {
-  using F = TextureFormat;
   switch (format) {
-  case F::RGBA8:
+  case TextureFormat::RGBA8:
     outFormat = GL_RGBA;
     outType = GL_UNSIGNED_BYTE;
     break;
-  case F::RGBA16F:
+  case TextureFormat::RGBA16F:
     outFormat = GL_RGBA;
     outType = GL_HALF_FLOAT;
     break;
-  case F::RGBA32F:
+  case TextureFormat::RGBA32F:
     outFormat = GL_RGBA;
     outType = GL_FLOAT;
     break;
-  case F::R8:
+  case TextureFormat::R8:
     outFormat = GL_RED;
     outType = GL_UNSIGNED_BYTE;
     break;
-  case F::R16F:
+  case TextureFormat::R16F:
     outFormat = GL_RED;
     outType = GL_HALF_FLOAT;
     break;
-  case F::R32F:
+  case TextureFormat::R32F:
     outFormat = GL_RED;
     outType = GL_FLOAT;
     break;
-  case F::D24S8:
-    outFormat = GL_DEPTH_STENCIL;
-    outType = GL_UNSIGNED_INT_24_8;
-    break;
-  case F::D32F:
-    outFormat = GL_DEPTH_COMPONENT;
-    outType = GL_FLOAT;
-    break;
-  case F::SRGB8:
+  case TextureFormat::SRGB8:
     outFormat = GL_RGB;
     outType = GL_UNSIGNED_BYTE;
     break;
-  case F::SRGB8A8:
+  case TextureFormat::SRGB8_ALPHA8:
+    outFormat = GL_RGBA;
+    outType = GL_UNSIGNED_BYTE;
+    break;
+
+  case TextureFormat::Depth16:
+    outFormat = GL_DEPTH_COMPONENT;
+    outType = GL_UNSIGNED_SHORT;
+    break;
+  case TextureFormat::Depth24:
+    outFormat = GL_DEPTH_COMPONENT;
+    outType = GL_UNSIGNED_INT;
+    break;
+  case TextureFormat::Depth32F:
+    outFormat = GL_DEPTH_COMPONENT;
+    outType = GL_FLOAT;
+    break;
+
+  case TextureFormat::Depth24Stencil8:
+    outFormat = GL_DEPTH_STENCIL;
+    outType = GL_UNSIGNED_INT_24_8;
+    break;
+  case TextureFormat::Depth32FStencil8:
+    outFormat = GL_DEPTH_STENCIL;
+    outType = GL_FLOAT_32_UNSIGNED_INT_24_8_REV;
+    break;
+
+  default:
     outFormat = GL_RGBA;
     outType = GL_UNSIGNED_BYTE;
     break;

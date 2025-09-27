@@ -27,14 +27,15 @@ void Renderer::setRenderTarget(const RenderTarget* target) {
     return;
   }
 
-  if (target == nullptr || target->fbo() == 0U) {
-    RenderTarget::bindDefault();
+  if (target == nullptr) {
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
     setViewport(0, 0, framebufferSize_[0], framebufferSize_[1]);
     currentTarget_ = target;
     return;
   }
 
-  target->bind(); // Sets viewport internally
+  glBindFramebuffer(GL_FRAMEBUFFER, target->id());
+  glViewport(0, 0, target->width(), target->height());
   currentTarget_ = target;
 }
 
