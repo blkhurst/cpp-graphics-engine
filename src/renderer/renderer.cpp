@@ -1,6 +1,7 @@
 #include <blkhurst/geometry/box_geometry.hpp>
 #include <blkhurst/materials/material.hpp>
 #include <blkhurst/materials/skybox_material.hpp>
+#include <blkhurst/renderer/cube_render_target.hpp>
 #include <blkhurst/renderer/renderer.hpp>
 #include <blkhurst/scene/scene.hpp>
 
@@ -15,7 +16,7 @@ Renderer::Renderer() {
   auto backgroundMat = SkyBoxMaterial::create();
   skyboxMesh_ = Mesh::create(backgroundGeom, backgroundMat);
 
-  spdlog::trace("Renderer constructed");
+  spdlog::debug("Renderer constructed");
 }
 
 void Renderer::setFrameUniforms(const FrameUniforms& frameUniforms) {
@@ -23,20 +24,44 @@ void Renderer::setFrameUniforms(const FrameUniforms& frameUniforms) {
 }
 
 void Renderer::setRenderTarget(const RenderTarget* target) {
-  if (target == currentTarget_) {
-    return;
-  }
-
-  if (target == nullptr) {
+  bool bindDefaultFramebuffer = (target == nullptr);
+  if (bindDefaultFramebuffer) {
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     setViewport(0, 0, framebufferSize_[0], framebufferSize_[1]);
-    currentTarget_ = target;
     return;
   }
 
   glBindFramebuffer(GL_FRAMEBUFFER, target->id());
-  glViewport(0, 0, target->width(), target->height());
-  currentTarget_ = target;
+  setViewport(0, 0, target->width(), target->height());
+}
+
+// NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
+void Renderer::setRenderTarget(const CubeRenderTarget* target, int face, int mip) {
+  bool bindDefaultFramebuffer = (target == nullptr);
+  if (bindDefaultFramebuffer) {
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    setViewport(0, 0, framebufferSize_[0], framebufferSize_[1]);
+    return;
+  }
+
+  const unsigned framebufferId = target->id();
+  glBindFramebuffer(GL_FRAMEBUFFER, framebufferId);
+
+  // Attach Color face/mip
+  const unsigned textureId = target->texture()->id();
+  glNamedFramebufferTextureLayer(framebufferId, GL_COLOR_ATTACHMENT0, textureId, mip, face);
+
+  // Attach Depth face/mip
+  if (auto depthTexture = target->depthTexture()) {
+    const auto format = depthTexture->desc().format;
+    const GLenum attachment =
+        Texture::isDepthStencilFormat(format) ? GL_DEPTH_STENCIL_ATTACHMENT : GL_DEPTH_ATTACHMENT;
+    glNamedFramebufferTextureLayer(framebufferId, attachment, depthTexture->id(), mip, face);
+  }
+
+  // Viewport for this mip level
+  const int size = std::max(1, target->size() >> mip);
+  setViewport(0, 0, size, size);
 }
 
 void Renderer::render(Object3D& root, Camera& camera) {
@@ -133,8 +158,6 @@ void Renderer::setScissorTest(bool enabled) {
 }
 
 void Renderer::resetState() {
-  currentTarget_ = nullptr;
-
   autoClear_ = true;
   clearColor_ = defaults::window::clearColor;
   setClearColor(clearColor_);

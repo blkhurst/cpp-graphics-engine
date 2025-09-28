@@ -7,10 +7,29 @@
 
 namespace blkhurst {
 
+// Mirrors TextureDesc
+struct ColorAttachmentDesc {
+  TextureFormat format = TextureFormat::RGBA16F;
+  TextureFilter minFilter = TextureFilter::Linear;
+  TextureFilter magFilter = TextureFilter::Linear;
+  TextureWrap wrapS = TextureWrap::ClampToEdge;
+  TextureWrap wrapT = TextureWrap::ClampToEdge;
+  bool generateMipmaps = false;
+};
+
+struct DepthAttachmentDesc {
+  TextureFormat format = TextureFormat::Depth32F;
+  TextureFilter minFilter = TextureFilter::Nearest;
+  TextureFilter magFilter = TextureFilter::Nearest;
+  TextureWrap wrapS = TextureWrap::ClampToEdge;
+  TextureWrap wrapT = TextureWrap::ClampToEdge;
+  bool generateMipmaps = false;
+};
+
 struct RenderTargetDesc {
   int colorAttachmentCount = 1;
-  TextureDesc colorDesc{.generateMipmaps = false};
-  TextureDesc depthDesc{.format = TextureFormat::Depth24, .generateMipmaps = false};
+  ColorAttachmentDesc colorDesc;
+  DepthAttachmentDesc depthDesc;
 
   bool depthAttachment = true;
   // TODO: samples (MSAA)

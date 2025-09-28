@@ -2,6 +2,7 @@
 #include <spdlog/spdlog.h>
 
 #include <blkhurst/shaders/builtin/basic.glsl.hpp>
+#include <blkhurst/shaders/builtin/equirect.glsl.hpp>
 #include <blkhurst/shaders/builtin/skybox.glsl.hpp>
 #include <blkhurst/shaders/chunks/color_fragment.glsl.hpp>
 #include <blkhurst/shaders/chunks/envmap_fragment.glsl.hpp>
@@ -56,6 +57,10 @@ void ShaderRegistry::registerBuiltinShaders() {
   // BasicMaterial
   ShaderRegistry::registerSource("basic_vert", shaders::basic_vert);
   ShaderRegistry::registerSource("basic_frag", shaders::basic_frag);
+
+  // EquirectMaterial
+  ShaderRegistry::registerSource("equirect_vert", shaders::equirect_vert);
+  ShaderRegistry::registerSource("equirect_frag", shaders::equirect_frag);
 }
 
 } // namespace blkhurst

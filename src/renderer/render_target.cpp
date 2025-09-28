@@ -75,7 +75,15 @@ void RenderTarget::rebuildAttachments_() {
   textures_.clear();
   textures_.reserve(desc_.colorAttachmentCount);
   for (int i = 0; i < desc_.colorAttachmentCount; ++i) {
-    auto texture = Texture::create(width_, height_, desc_.colorDesc);
+    TextureDesc colorDesc{
+        .format = desc_.colorDesc.format,
+        .minFilter = desc_.colorDesc.minFilter,
+        .magFilter = desc_.colorDesc.magFilter,
+        .wrapS = desc_.colorDesc.wrapS,
+        .wrapT = desc_.colorDesc.wrapT,
+        .generateMipmaps = desc_.colorDesc.generateMipmaps,
+    };
+    auto texture = Texture::create(width_, height_, colorDesc);
     glNamedFramebufferTexture(framebufferId_, GL_COLOR_ATTACHMENT0 + i, texture->id(), 0);
     textures_.push_back(std::move(texture));
   }
@@ -96,7 +104,15 @@ void RenderTarget::rebuildAttachments_() {
   // Create depth attachment
   depthTexture_.reset();
   if (desc_.depthAttachment) {
-    auto depthTexture = Texture::create(width_, height_, desc_.depthDesc);
+    TextureDesc depthDesc{
+        .format = desc_.depthDesc.format,
+        .minFilter = desc_.depthDesc.minFilter,
+        .magFilter = desc_.depthDesc.magFilter,
+        .wrapS = desc_.depthDesc.wrapS,
+        .wrapT = desc_.depthDesc.wrapT,
+        .generateMipmaps = desc_.depthDesc.generateMipmaps,
+    };
+    auto depthTexture = Texture::create(width_, height_, depthDesc);
 
     GLenum attachment = GL_DEPTH_ATTACHMENT;
     if (Texture::isDepthStencilFormat(desc_.depthDesc.format)) {

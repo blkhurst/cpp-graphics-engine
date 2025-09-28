@@ -54,6 +54,8 @@ public:
   void bindUnit(int unit) const;
   void setPixels(const void* pixels, int level = 0);
 
+  void generateMipmaps() const;
+
   [[nodiscard]] unsigned id() const;
   [[nodiscard]] int width() const;
   [[nodiscard]] int height() const;

@@ -6,6 +6,7 @@
 #include <blkhurst/materials/pipeline_state.hpp>
 #include <blkhurst/objects/mesh.hpp>
 #include <blkhurst/objects/object3d.hpp>
+#include <blkhurst/renderer/cube_render_target.hpp>
 #include <blkhurst/renderer/render_target.hpp>
 #include <blkhurst/renderer/uniform_blocks.hpp>
 
@@ -23,6 +24,7 @@ public:
 
   void setFrameUniforms(const FrameUniforms& frameUniforms); // Used by Engine
   void setRenderTarget(const RenderTarget* target);
+  void setRenderTarget(const CubeRenderTarget* target, int face, int mip = 0);
   void render(Object3D& root, Camera& camera);
 
   void setAutoClear(bool enabled = true);
@@ -42,7 +44,6 @@ public:
 
 private:
   FrameUniforms frameUniforms_{};
-  const RenderTarget* currentTarget_ = nullptr;
 
   bool autoClear_ = true;
   bool scissorTestEnabled_ = false;

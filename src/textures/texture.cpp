@@ -66,8 +66,12 @@ void Texture::setPixels(const void* pixels, int level) {
   glTextureSubImage2D(id_, level, 0, 0, width_, height_, srcFormat, srcType, pixels);
 
   if (desc_.generateMipmaps && level == 0) {
-    glGenerateTextureMipmap(id_);
+    generateMipmaps();
   }
+}
+
+void Texture::generateMipmaps() const {
+  glGenerateTextureMipmap(id_);
 }
 
 unsigned Texture::id() const {
