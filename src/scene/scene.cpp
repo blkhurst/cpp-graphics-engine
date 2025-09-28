@@ -21,6 +21,8 @@ const SceneBackground& Scene::background() const {
 void Scene::setBackground(const glm::vec4& color) {
   background_.type = BackgroundType::Color;
   background_.color = color;
+  background_.texture.reset();
+  background_.cubemap.reset();
   spdlog::trace("Scene({}) setBackground [{:.2f}, {:.2f}, {:.2f}, {:.2f}]", uuid(), color[0],
                 color[1], color[2], color[3]);
 }
@@ -28,11 +30,23 @@ void Scene::setBackground(const glm::vec4& color) {
 void Scene::setBackground(std::shared_ptr<CubeTexture> cubemap) {
   background_.type = BackgroundType::Cube;
   background_.cubemap = std::move(cubemap);
+  background_.texture.reset();
   if (!background_.cubemap) {
     spdlog::warn("Scene({}) setBackground called with null CubeTexture", uuid());
     return;
   }
   spdlog::trace("Scene({}) setBackground CubeTexture({})", uuid(), background_.cubemap->id());
+}
+
+void Scene::setBackground(std::shared_ptr<Texture> equirect) {
+  background_.type = BackgroundType::Equirect;
+  background_.texture = std::move(equirect);
+  background_.cubemap.reset();
+  if (!background_.texture) {
+    spdlog::warn("Scene({}) setBackground called with null Texture", uuid());
+    return;
+  }
+  spdlog::trace("Scene({}) setBackground Texture({})", uuid(), background_.texture->id());
 }
 
 void Scene::setBackgroundIntensity(float intensity) {

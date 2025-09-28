@@ -62,7 +62,9 @@ CubeRenderTarget::fromEquirect(Renderer& renderer, const std::shared_ptr<Texture
   // Set CubeRenderTarget Size
   const int equirectWidth = equirect->width();
   const int equirectHeight = equirect->height();
-  const int faceSize = std::min(equirectWidth / 4, equirectHeight / 2);
+  int faceSize = std::min(equirectWidth / 4, equirectHeight / 2);
+  const int minFaceSize = 16;
+  faceSize = std::max(faceSize, minFaceSize);
 
   auto cubeRenderTarget = CubeRenderTarget::create(faceSize, desc);
 

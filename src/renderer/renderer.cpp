@@ -294,17 +294,18 @@ void Renderer::renderBackground(Scene& scene, Camera& camera) {
     return;
   }
 
-  switch (sceneBackground.type) {
-  case BackgroundType::Cube:
+  if (sceneBackground.type == BackgroundType::Equirect) {
+    auto cubeRenderTarget = CubeRenderTarget::fromEquirect(*this, sceneBackground.texture);
+    scene.setBackground(cubeRenderTarget->texture());
+  }
+
+  if (sceneBackground.type == BackgroundType::Cube) {
     skyboxMaterial->setCubeMap(sceneBackground.cubemap);
     // skyboxMaterial->setCubeMapRotation(sceneEnvironment.rotation);
     skyboxMaterial->setIntensity(sceneBackground.intensity);
-    break;
-  default:
-    return;
-  }
 
-  renderMesh(*skyboxMesh_, camera);
+    renderMesh(*skyboxMesh_, camera);
+  }
 }
 
 // ------- Helpers -------

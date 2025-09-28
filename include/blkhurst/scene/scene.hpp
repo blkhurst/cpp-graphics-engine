@@ -14,12 +14,15 @@
 
 namespace blkhurst {
 
-enum class BackgroundType { Color, /*Texture,*/ Cube };
+enum class BackgroundType { Color, /*Texture,*/ Cube, Equirect };
 
 struct SceneBackground {
   BackgroundType type = BackgroundType::Color;
   glm::vec4 color{defaults::window::clearColor};
+
+  std::shared_ptr<Texture> texture;
   std::shared_ptr<CubeTexture> cubemap;
+
   float intensity = 1.0F;
 };
 
@@ -49,8 +52,10 @@ public:
   [[nodiscard]] const SceneBackground& background() const;
   void setBackground(const glm::vec4& color);
   void setBackground(std::shared_ptr<CubeTexture> cubemap);
+  void setBackground(std::shared_ptr<Texture> equirect);
   void setBackgroundIntensity(float intensity);
 
+  // Sets environment for PBR children only
   // [[nodiscard]] const SceneEnvironment& environment() const;
   // void setEnvironment(std::shared_ptr<Texture> equirect, bool setBackground = true);
   // void setEnvironmentIntensity(float intensity);
