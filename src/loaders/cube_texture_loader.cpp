@@ -1,57 +1,89 @@
 #include <blkhurst/loaders/cube_texture_loader.hpp>
+#include <blkhurst/loaders/texture_loader.hpp>
 #include <blkhurst/util/assets.hpp>
-
-#include <array>
-#include <optional>
 #include <spdlog/spdlog.h>
-#include <stb_image.h>
+#include <vector>
 
 namespace blkhurst {
+
+static constexpr int kOutputChannels = 4;
 
 std::shared_ptr<CubeTexture>
 CubeTextureLoader::load(const std::array<std::string, kCubeFaceCount>& paths,
                         const CubeTextureLoaderDesc& desc) {
-  // Resolve files
-  std::array<std::string, kCubeFaceCount> resolved{};
-  for (int i = 0; i < kCubeFaceCount; ++i) {
-    auto found = assets::find(paths.at(i));
+  // Resolve asset paths
+  std::vector<std::string> resolvedPaths{};
+  resolvedPaths.reserve(kCubeFaceCount);
+  for (auto path : paths) {
+    auto found = assets::find(path);
     if (!found) {
-      spdlog::error("CubeTextureLoader asset not found {}", paths.at(i));
+      spdlog::error("CubeTextureLoader asset not found ({})", path);
       return makeFallback_();
     }
-    resolved.at(i) = *found;
+    resolvedPaths.push_back(*found);
   }
 
-  // Decode each image
-  CubeTextureLoaderDesc decodeDesc;
-  decodeDesc.flipY = false; // Cubemaps should not be flipped
-  decodeDesc.desiredChannels = desc.desiredChannels;
-
-  std::array<std::optional<LoadedImage>, kCubeFaceCount> faces{};
-  for (std::size_t i = 0; i < kCubeFaceCount; ++i) {
-    faces.at(i) = decodeImage(resolved.at(i), decodeDesc);
-    if (!faces.at(i).has_value()) {
-      spdlog::error("CubeTextureLoader decode failed for face {} ('{}')", i, resolved.at(i));
+  // Read Face Pixels
+  std::vector<LoadedPixels> faces{};
+  faces.reserve(kCubeFaceCount);
+  for (auto path : resolvedPaths) {
+    LoadedPixels pixels = TextureLoader::readPixels(path, desc.flipY, kOutputChannels);
+    if (!pixels.valid()) {
+      spdlog::error("CubeTextureLoader failed to read ({})", path);
+      for (auto& face : faces) {
+        face.free();
+      }
       return makeFallback_();
+    }
+    faces.push_back(pixels);
+  }
+
+  // Validate dimensions & HDR consistency
+  if (!validateFaces_(faces)) {
+    for (auto& face : faces) {
+      face.free();
+    }
+    return makeFallback_();
+  }
+
+  const int size = faces[0].width;
+  const bool isHdr = faces[0].isFloat;
+
+  // Pick Format
+  TextureFormat outputFormat = desc.srgb ? TextureFormat::SRGB8_ALPHA8 : TextureFormat::RGBA8;
+  if (isHdr) {
+    outputFormat = TextureFormat::RGBA32F; // Float
+  }
+
+  // Create CubeTexture
+  TextureDesc textureDesc{};
+  textureDesc.format = outputFormat;
+  textureDesc.minFilter = desc.minFilter;
+  textureDesc.magFilter = desc.magFilter;
+  textureDesc.wrapS = desc.wrapS;
+  textureDesc.wrapT = desc.wrapT;
+  // textureDesc.wrapR = TextureWrap::ClampToEdge;
+  textureDesc.generateMipmaps = desc.generateMipmaps;
+
+  auto cubeTexture = CubeTexture::create(size, textureDesc);
+
+  // Set CubeTexture Face Data
+  for (int face = 0; face < kCubeFaceCount; ++face) {
+    if (faces.at(face).isFloat) {
+      cubeTexture->setFacePixels(face, faces.at(face).floats, /*level*/ 0);
+    } else {
+      cubeTexture->setFacePixels(face, faces.at(face).bytes, /*level*/ 0);
     }
   }
 
-  const int width = faces.at(0)->width;
-  const int height = faces.at(0)->height;
-  const int channels = faces.at(0)->channels;
-
-  // Create cubemap and upload
-  TextureDesc texDesc = desc.textureDesc;
-  texDesc.format = (channels <= 1) ? TextureFormat::R8 : TextureFormat::RGBA8; // TODO: Support SRGB
-
-  auto cube = CubeTexture::create(width, texDesc);
-  for (std::size_t face = 0; face < kCubeFaceCount; ++face) {
-    // order: +X, -X, +Y, -Y, +Z, -Z
-    cube->setFacePixels(static_cast<int>(face), faces.at(face)->pixels.get(), 0);
+  // Free Pixels
+  for (auto& face : faces) {
+    face.free();
   }
 
-  spdlog::debug("CubeTextureLoader loaded cubemap ({}x{}, ch={})", width, height, channels);
-  return cube;
+  spdlog::debug("CubeTextureLoader loaded cubemap (size={} ch={} hdr={} srgb={})", size,
+                kOutputChannels, isHdr, desc.srgb);
+  return cubeTexture;
 }
 
 std::shared_ptr<CubeTexture> CubeTextureLoader::makeFallback_() {
@@ -67,6 +99,7 @@ std::shared_ptr<CubeTexture> CubeTextureLoader::makeFallback_() {
   desc.magFilter = TextureFilter::Nearest;
   desc.wrapS = TextureWrap::ClampToEdge;
   desc.wrapT = TextureWrap::ClampToEdge;
+  // desc.wrapR = TextureWrap::ClampToEdge;
   desc.generateMipmaps = false;
 
   auto cube = CubeTexture::create(kSize, desc);
@@ -78,37 +111,37 @@ std::shared_ptr<CubeTexture> CubeTextureLoader::makeFallback_() {
   return cube;
 }
 
-std::optional<CubeTextureLoader::LoadedImage>
-CubeTextureLoader::decodeImage(const std::string& path, const CubeTextureLoaderDesc& desc) {
-  stbi_set_flip_vertically_on_load(desc.flipY ? 1 : 0);
+bool CubeTextureLoader::validateFaces_(const std::vector<LoadedPixels>& faces) {
+  const int width0 = faces[0].width;
+  const int height0 = faces[0].height;
+  const bool isFloat0 = faces[0].isFloat;
 
-  // desired channels for stb: 0 = keep file channels, otherwise clamp [1..4]
-  const int stbDesired = (desc.desiredChannels == 0) ? 0 : std::clamp(desc.desiredChannels, 1, 4);
-
-  int width = 0;
-  int height = 0;
-  int fileChannels = 0;
-  auto* raw = stbi_load(path.c_str(), &width, &height, &fileChannels, stbDesired);
-  if (raw == nullptr || width <= 0 || height <= 0) {
-    spdlog::error("CubeTextureLoader::decodeImage failed ('{}')", path);
-    return std::nullopt;
+  if (width0 <= 0 || height0 <= 0) {
+    spdlog::error("CubeTextureLoader: invalid face size {}x{}", width0, height0);
+    return false;
+  }
+  if (width0 != height0) {
+    spdlog::warn("CubeTextureLoader: non-square faces ({}x{}). Cubemaps require square faces.",
+                 width0, height0);
   }
 
-  const int effectiveChannels = (stbDesired == 0) ? std::max(1, fileChannels) : stbDesired;
-
-  // RAII Deleter
-  auto deleter = +[](void* pixelData) {
-    if (pixelData != nullptr) {
-      stbi_image_free(pixelData);
+  for (std::size_t i = 1; i < kCubeFaceCount; ++i) {
+    if (faces.at(i).width != width0 || faces.at(i).height != height0) {
+      spdlog::error("CubeTextureLoader: face {} size mismatch ({}x{} vs {}x{})", i,
+                    faces.at(i).width, faces.at(i).height, width0, height0);
+      return false;
     }
-  };
-
-  LoadedImage out;
-  out.pixels = std::unique_ptr<unsigned char, void (*)(void*)>(raw, deleter);
-  out.width = width;
-  out.height = height;
-  out.channels = effectiveChannels;
-  return out;
+    if (faces.at(i).isFloat != isFloat0) {
+      spdlog::error("CubeTextureLoader: face {} HDR/LDR mismatch", i);
+      return false;
+    }
+    if (faces.at(i).channels != kOutputChannels) {
+      spdlog::error("CubeTextureLoader: face {} channel mismatch (got {}, expected {})", i,
+                    faces.at(i).channels, kOutputChannels);
+      return false;
+    }
+  }
+  return true;
 }
 
 } // namespace blkhurst
