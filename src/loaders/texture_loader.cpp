@@ -9,44 +9,100 @@
 
 namespace blkhurst {
 
+[[nodiscard]] bool LoadedPixels::valid() const {
+  return ((bytes != nullptr) || (floats != nullptr)) && width > 0 && height > 0 && channels > 0;
+}
+
+void LoadedPixels::free() {
+  if (bytes != nullptr) {
+    stbi_image_free(bytes);
+    bytes = nullptr;
+  }
+  if (floats != nullptr) {
+    stbi_image_free(floats);
+    floats = nullptr;
+  }
+}
+
+LoadedPixels TextureLoader::readPixels(const std::string& absPath, bool flipY,
+                                       int desiredChannels) {
+  LoadedPixels out{};
+
+  stbi_set_flip_vertically_on_load(flipY ? 1 : 0);
+
+  int width = 0;
+  int height = 0;
+  int nChannels = 0;
+  const bool isHdr = stbi_is_hdr(absPath.c_str()) != 0;
+
+  if (isHdr) {
+    out.floats = stbi_loadf(absPath.c_str(), &width, &height, &nChannels, desiredChannels);
+    out.isFloat = true;
+  } else {
+    out.bytes = stbi_load(absPath.c_str(), &width, &height, &nChannels, desiredChannels);
+    out.isFloat = false;
+  }
+
+  if ((out.floats == nullptr && out.bytes == nullptr) || width <= 0 || height <= 0) {
+    out.width = out.height = out.channels = 0;
+    return out;
+  }
+
+  out.width = width;
+  out.height = height;
+  out.channels = (desiredChannels > 0) ? desiredChannels : nChannels;
+  return out;
+}
+
 std::shared_ptr<Texture> TextureLoader::load(const std::string& path,
                                              const TextureLoaderDesc& desc) {
-  // Find Asset
+  // Resolve asset path
   auto resolvedPath = assets::find(path);
   if (!resolvedPath) {
     spdlog::error("TextureLoader asset not found ({})", path);
     return makeFallback_();
   }
 
-  // Flip Y
-  stbi_set_flip_vertically_on_load(desc.flipY ? 1 : 0);
+  // Always output 4 channels (RGBA)
+  const int outputChannels = 4; // TODO: Support auto channels/formats when bandwidth is a concern
 
-  // Load with STB
-  int width = 0;
-  int height = 0;
-  int nChannels = 0;
-  const int nDesiredChannels = pickChannels_(/*file*/ 0, desc.desiredChannels);
-  auto* pixelData = stbi_load(resolvedPath->c_str(), &width, &height, &nChannels, nDesiredChannels);
-  if ((pixelData == nullptr) || width <= 0 || height <= 0) {
+  // Read Pixels
+  LoadedPixels pixels = readPixels(*resolvedPath, desc.flipY, outputChannels);
+  if (!pixels.valid()) {
     spdlog::error("TextureLoader failed to load ({})", *resolvedPath);
-    if (pixelData != nullptr) {
-      stbi_image_free(pixelData);
-    }
+    pixels.free();
     return makeFallback_();
   }
 
-  const int channels = (desc.desiredChannels == 0) ? std::max(1, nChannels) : nDesiredChannels;
+  // Pick Format
+  TextureFormat outputFormat = desc.srgb ? TextureFormat::SRGB8_ALPHA8 : TextureFormat::RGBA8;
+  if (pixels.isFloat) {
+    outputFormat = TextureFormat::RGBA32F; // Float
+  }
 
   // Create Texture
-  auto outDesc = desc.textureDesc;
-  // TODO: if (desc.srgb) {
-  outDesc.format = (channels <= 1) ? TextureFormat::R8 : TextureFormat::RGBA8;
-  auto texture = Texture::create(width, height, outDesc);
-  texture->setPixels(pixelData, 0);
+  TextureDesc textureDesc{};
+  textureDesc.format = outputFormat;
+  textureDesc.minFilter = desc.minFilter;
+  textureDesc.magFilter = desc.magFilter;
+  textureDesc.wrapS = desc.wrapS;
+  textureDesc.wrapT = desc.wrapT;
+  textureDesc.generateMipmaps = desc.generateMipmaps;
 
-  // Free STB & Return
-  stbi_image_free(pixelData);
-  spdlog::debug("TextureLoader loaded '{}' ({}x{}, ch={})", *resolvedPath, width, height, channels);
+  auto texture = Texture::create(pixels.width, pixels.height, textureDesc);
+
+  // Set Texture Data
+  if (pixels.isFloat) {
+    texture->setPixels(static_cast<const void*>(pixels.floats), /*level*/ 0);
+  } else {
+    texture->setPixels(static_cast<const void*>(pixels.bytes), /*level*/ 0);
+  }
+
+  // Free pixels
+  pixels.free();
+
+  spdlog::debug("TextureLoader loaded '{}' ({}x{}, ch={}, hdr={}, srgb={})", *resolvedPath,
+                texture->width(), texture->height(), pixels.channels, pixels.isFloat, desc.srgb);
   return texture;
 }
 
@@ -65,14 +121,6 @@ std::shared_ptr<Texture> TextureLoader::makeFallback_() {
   texture->setPixels(pixels.data(), 0);
   spdlog::warn("TextureLoader using fallback texture");
   return texture;
-}
-
-// NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
-int TextureLoader::pickChannels_(int fileChannels, int desiredChannels) {
-  if (desiredChannels == 0) {
-    return std::max(1, fileChannels);
-  }
-  return std::clamp(desiredChannels, 1, 4);
 }
 
 } // namespace blkhurst
