@@ -8,8 +8,8 @@ class UvTransform {
 public:
   UvTransform() = default;
 
-  void setRepeat(float uRepeat, float vRepeat) {
-    repeat_ = {uRepeat, vRepeat};
+  void setRepeat(glm::vec2 repeat) {
+    repeat_ = repeat;
     needsUpdate_ = true;
   }
   void setOffset(glm::vec2 offset) {
@@ -43,7 +43,7 @@ private:
   float rotation_{0.0F};
 
   glm::mat3 matrix_{1.0F};
-  bool needsUpdate_{false};
+  bool needsUpdate_{true};
 
   void rebuild_() {
     const float cosTheta = std::cos(rotation_);
@@ -51,9 +51,9 @@ private:
 
     const glm::mat3 scaleMat{repeat_[0], 0, 0, 0, repeat_[1], 0, 0, 0, 1};
     const glm::mat3 rotationMat{cosTheta, sinTheta, 0, -sinTheta, cosTheta, 0, 0, 0, 1};
-    const glm::mat3 translationMat{1, 0, offset_[0], 0, 1, offset_[1], 0, 0, 1};
-    const glm::mat3 centerNegMat{1, 0, -center_[0], 0, 1, -center_[1], 0, 0, 1};
-    const glm::mat3 centerMat{1, 0, center_[0], 0, 1, center_[1], 0, 0, 1};
+    const glm::mat3 translationMat{1, 0, 0, 0, 1, 0, offset_[0], offset_[1], 1};
+    const glm::mat3 centerNegMat{1, 0, 0, 0, 1, 0, -center_[0], -center_[1], 1};
+    const glm::mat3 centerMat{1, 0, 0, 0, 1, 0, center_[0], center_[1], 1};
 
     matrix_ = translationMat * centerMat * rotationMat * scaleMat * centerNegMat;
   }

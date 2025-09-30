@@ -84,8 +84,8 @@ void BasicMaterial::setRefractionRatio(float refractionRatio) {
   refractionRatio_ = refractionRatio;
 }
 
-void BasicMaterial::setUvRepeat(float uRepeat, float vRepeat) {
-  uvTransform_.setRepeat(uRepeat, vRepeat);
+void BasicMaterial::setUvRepeat(const glm::vec2& repeat) {
+  uvTransform_.setRepeat(repeat);
   setDefine(defines::UseUvTransform, !uvTransform_.isDefault());
 }
 

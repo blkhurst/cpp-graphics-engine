@@ -51,7 +51,7 @@ public:
   void setReflectivity(float reflectivity);
   void setRefractionRatio(float refractionRatio);
 
-  void setUvRepeat(float uRepeat, float vRepeat);
+  void setUvRepeat(const glm::vec2& repeat);
   void setUvOffset(const glm::vec2& offset);
   void setUvRotation(float radians);
   void setUvCenter(const glm::vec2& center);
