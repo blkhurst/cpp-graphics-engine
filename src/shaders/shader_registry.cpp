@@ -5,10 +5,12 @@
 #include <blkhurst/shaders/builtin/equirect.glsl.hpp>
 #include <blkhurst/shaders/builtin/skybox.glsl.hpp>
 #include <blkhurst/shaders/chunks/color_fragment.glsl.hpp>
+#include <blkhurst/shaders/chunks/colorspace_fragment.glsl.hpp>
 #include <blkhurst/shaders/chunks/envmap_fragment.glsl.hpp>
 #include <blkhurst/shaders/chunks/io_fragment.glsl.hpp>
 #include <blkhurst/shaders/chunks/io_vertex.glsl.hpp>
 #include <blkhurst/shaders/chunks/normal_fragment.glsl.hpp>
+#include <blkhurst/shaders/chunks/tonemapping_fragment.glsl.hpp>
 #include <blkhurst/shaders/chunks/uniform_common.hpp>
 
 namespace blkhurst {
@@ -49,6 +51,8 @@ void ShaderRegistry::registerBuiltinShaders() {
   ShaderRegistry::registerSource("normal_fragment", shaders::normal_fragment);
   ShaderRegistry::registerSource("color_fragment", shaders::color_fragment);
   ShaderRegistry::registerSource("envmap_fragment", shaders::envmap_fragment);
+  ShaderRegistry::registerSource("tonemapping_fragment", shaders::tonemapping_fragment);
+  ShaderRegistry::registerSource("colorspace_fragment", shaders::colorspace_fragment);
 
   // SkyBoxMaterial
   ShaderRegistry::registerSource("skybox_vert", shaders::skybox_vert);

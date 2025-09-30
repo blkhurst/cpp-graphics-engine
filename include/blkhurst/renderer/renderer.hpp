@@ -12,6 +12,9 @@
 
 namespace blkhurst {
 
+enum class ToneMappingMode : int { None = 0, Linear = 1, Neutral = 2, ACES = 3 };
+enum class OutputColorSpace : int { Linear = 0, SRGB = 1 };
+
 class Renderer {
 public:
   Renderer();
@@ -38,6 +41,10 @@ public:
   void setViewport(int xpos, int ypos, int width, int height);
   void setScissor(int xpos, int ypos, int width, int height);
   void setScissorTest(bool enabled);
+
+  void setToneMappingExposure(float exposure);
+  void setToneMappingMode(ToneMappingMode mode);
+  void setOutputColorSpace(OutputColorSpace space);
   // TODO: setAnimationLoop, copyFrameBufferToTexture
 
   void resetState();
@@ -51,6 +58,10 @@ private:
   glm::vec4 clearColor_ = defaults::window::clearColor;
 
   glm::ivec2 framebufferSize_ = {0, 0}; // Window Backbuffer
+
+  float toneMappingExposure_ = 1.0F;
+  ToneMappingMode toneMappingMode_ = ToneMappingMode::None;
+  OutputColorSpace outputColorSpace_ = OutputColorSpace::SRGB;
 
   void renderMesh(const Mesh& mesh, const Camera& camera);
   static void applyPipeline(const PipelineState& state, bool wireframe);

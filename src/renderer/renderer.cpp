@@ -157,6 +157,18 @@ void Renderer::setScissorTest(bool enabled) {
   }
 }
 
+void Renderer::setToneMappingExposure(float exposure) {
+  toneMappingExposure_ = exposure;
+}
+
+void Renderer::setToneMappingMode(ToneMappingMode mode) {
+  toneMappingMode_ = mode;
+}
+
+void Renderer::setOutputColorSpace(OutputColorSpace space) {
+  outputColorSpace_ = space;
+}
+
 void Renderer::resetState() {
   autoClear_ = true;
   clearColor_ = defaults::window::clearColor;
@@ -244,6 +256,9 @@ void Renderer::applyPerDrawUniforms(const Mesh& mesh, const Camera& camera) cons
   material->setUniform("uProjection", frameUniforms_.uProjection);
   material->setUniform("uCameraPos", frameUniforms_.uCameraPos);
   material->setUniform("uIsOrthographic", frameUniforms_.uIsOrthographic);
+  material->setUniform("uToneMappingExposure", toneMappingExposure_);
+  material->setUniform("uToneMappingMode", static_cast<int>(toneMappingMode_));
+  material->setUniform("uOutputColorSpace", static_cast<int>(outputColorSpace_));
 
   // Per-draw Uniforms
   material->setUniform("uModel", mesh.worldMatrix());

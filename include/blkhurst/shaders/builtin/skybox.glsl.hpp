@@ -26,6 +26,9 @@ void main() {
 
 inline const std::string skybox_frag = R"GLSL(
 
+#include "tonemapping_fragment"
+#include "colorspace_fragment"
+
 out vec4 FragColor;
 
 in vec3 vPosition;
@@ -41,7 +44,8 @@ void main() {
   vec4 sampleColor = texture(uCubeMap, sampleDirection);
   sampleColor.rgb *= uIntensity;
 
-  FragColor = sampleColor;
+  vec4 toneMapped = toneMapping(sampleColor);
+  FragColor = linearToOutput(toneMapped);
 }
 
 )GLSL";

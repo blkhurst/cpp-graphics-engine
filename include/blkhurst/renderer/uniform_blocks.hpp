@@ -28,6 +28,12 @@ struct alignas(kCpuAlignment) FrameUniforms {
 
   glm::vec3 uCameraPos; // 12
   int uIsOrthographic;  // 4
+
+  // Renderer Settings
+  float uToneMappingExposure; // 4
+  int uToneMappingMode;       // 4
+  int uOutputColorSpace;      // 4
+  float pad2_;                // 4
 };
 
 struct alignas(kCpuAlignment) DrawUniforms {
