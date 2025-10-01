@@ -52,8 +52,7 @@ std::shared_ptr<CubeTexture> CubeRenderTarget::depthTexture() const {
 }
 
 std::shared_ptr<CubeRenderTarget>
-CubeRenderTarget::fromEquirect(Renderer& renderer, const std::shared_ptr<Texture>& equirect,
-                               const CubeRenderTargetDesc& desc) {
+CubeRenderTarget::fromEquirect(Renderer& renderer, const std::shared_ptr<Texture>& equirect) {
   if (!equirect) {
     spdlog::error("CubeRenderTarget::fromEquirect called with null texture");
     return nullptr;
@@ -66,7 +65,16 @@ CubeRenderTarget::fromEquirect(Renderer& renderer, const std::shared_ptr<Texture
   const int minFaceSize = 16;
   faceSize = std::max(faceSize, minFaceSize);
 
-  auto cubeRenderTarget = CubeRenderTarget::create(faceSize, desc);
+  // Essential generateMipmaps/LinearMipmapLinear are enabled; IBL can sample correct LODs.
+  // Float for HDR; Linear prevents double sRGB conversion
+  CubeRenderTargetDesc crtDesc;
+  crtDesc.colorDesc.format = TextureFormat::RGBA16F; // TODO: Float16/Float32 Toggle
+  crtDesc.colorDesc.minFilter = TextureFilter::LinearMipmapLinear;
+  crtDesc.colorDesc.magFilter = TextureFilter::Linear;
+  crtDesc.colorDesc.wrapS = TextureWrap::ClampToEdge;
+  crtDesc.colorDesc.wrapT = TextureWrap::ClampToEdge;
+  crtDesc.colorDesc.generateMipmaps = true;
+  auto cubeRenderTarget = CubeRenderTarget::create(faceSize, crtDesc);
 
   // Fullscreen Quad
   auto camera = OrthoCamera::create(); // Unused by EquirectMaterial
@@ -82,18 +90,16 @@ CubeRenderTarget::fromEquirect(Renderer& renderer, const std::shared_ptr<Texture
     renderer.render(*equirectMesh, *camera);
   }
 
-  // Build mipmaps if needed
-  if (desc.colorDesc.generateMipmaps) {
-    if (auto cubeTexture = cubeRenderTarget->texture()) {
-      cubeTexture->generateMipmaps();
-    }
+  // Build mipmaps
+  if (auto cubeTexture = cubeRenderTarget->texture()) {
+    cubeTexture->generateMipmaps();
   }
 
   // TODO: Restore previous render target
   renderer.setRenderTarget(nullptr);
 
   spdlog::debug("CubeRenderTarget::fromEquirect created {}x{} (mips={}, depth={})", faceSize,
-                faceSize, desc.colorDesc.generateMipmaps, desc.depthAttachment);
+                faceSize, crtDesc.colorDesc.generateMipmaps, crtDesc.depthAttachment);
 
   return cubeRenderTarget;
 }

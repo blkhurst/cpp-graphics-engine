@@ -34,8 +34,7 @@ public:
   [[nodiscard]] std::shared_ptr<CubeTexture> depthTexture() const;
 
   static std::shared_ptr<CubeRenderTarget> fromEquirect(Renderer& renderer,
-                                                        const std::shared_ptr<Texture>& equirect,
-                                                        const CubeRenderTargetDesc& desc = {});
+                                                        const std::shared_ptr<Texture>& equirect);
 
   void setSize(int size);
 

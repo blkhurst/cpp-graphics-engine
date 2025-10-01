@@ -48,7 +48,8 @@ void main() {
   vec3 direction = faceToDirection(uFace, vUv);
   vec2 sampleUV = equirectUv(direction);
 
-  FragColor = texture(uEquirectT, sampleUV);
+  // Ensure we convert using LOD 0 for full resolution
+  FragColor = textureLod(uEquirectT, sampleUV, 0.0);
 }
 
 )GLSL";
