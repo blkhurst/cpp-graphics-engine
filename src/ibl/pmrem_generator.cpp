@@ -80,7 +80,7 @@ PMREMGenerator::integrateDiffuse(Renderer& renderer, const std::shared_ptr<CubeT
   // Fullscreen Quad
   auto camera = OrthoCamera::create();
   auto planeGeometry = PlaneGeometry::create({2.0F, 2.0F});
-  auto irradianceMaterial = IrradianceMaterial::create(src);
+  auto irradianceMaterial = IrradianceMaterial::create(src, src->width());
   auto fullscreen = Mesh::create(planeGeometry, irradianceMaterial);
 
   // Render Each Face

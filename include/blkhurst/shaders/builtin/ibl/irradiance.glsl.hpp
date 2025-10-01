@@ -10,9 +10,15 @@ inline const std::string irradiance_frag = R"GLSL(
 #include "uniforms_common"
 
 uniform int uFace;
+uniform int uFaceSize;
 uniform samplerCube uEnvMap;
 
 void main() {
+  // Mips are used to soften intense pin-point light sources and prevent bright dots/artifacts.
+  // Use a constant mip level to prevent different levels per texel (which produces seams at the poles).
+  float maxMip = floor(log2(float(uFaceSize))); // Same as Texture::calcMipLevels
+  float mipLod = max(0.0, maxMip - 3.0); // Arbitrary, but -3 seems to prevent artifacts in most cases
+
   // Calculate all incoming radiance of the environment. The result of this radiance
   // is the radiance of light coming from -Normal direction, which is what
   // we use in the PBR shader to sample irradiance.
@@ -34,7 +40,7 @@ void main() {
       // tangent space to world
       vec3 sampleVec = tangentSample.x * right + tangentSample.y * up + tangentSample.z * N;
 
-      irradiance += texture(uEnvMap, sampleVec).rgb * cos(theta) * sin(theta);
+      irradiance += textureLod(uEnvMap, sampleVec, mipLod).rgb * cos(theta) * sin(theta);
       nrSamples++;
     }
   }
