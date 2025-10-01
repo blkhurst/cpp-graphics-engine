@@ -5,7 +5,7 @@
 namespace blkhurst {
 
 EquirectMaterial::EquirectMaterial(const EquirectMaterialDesc& desc)
-    : Material(Program::createFromRegistry({.vert = "equirect_vert", .frag = "equirect_frag"})),
+    : Material(Program::createFromRegistry({.vert = "fullscreen_vert", .frag = "equirect_frag"})),
       equirectTexture_(desc.equirectTexture) {
 }
 

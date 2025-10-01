@@ -3,13 +3,18 @@
 
 #include <blkhurst/shaders/builtin/basic.glsl.hpp>
 #include <blkhurst/shaders/builtin/equirect.glsl.hpp>
+#include <blkhurst/shaders/builtin/fullscreen.glsl.hpp>
+#include <blkhurst/shaders/builtin/ibl/brdf_lut.glsl.hpp>
+#include <blkhurst/shaders/builtin/ibl/irradiance.glsl.hpp>
 #include <blkhurst/shaders/builtin/skybox.glsl.hpp>
 #include <blkhurst/shaders/chunks/color_fragment.glsl.hpp>
 #include <blkhurst/shaders/chunks/colorspace_fragment.glsl.hpp>
+#include <blkhurst/shaders/chunks/common.glsl.hpp>
 #include <blkhurst/shaders/chunks/envmap_fragment.glsl.hpp>
 #include <blkhurst/shaders/chunks/io_fragment.glsl.hpp>
 #include <blkhurst/shaders/chunks/io_vertex.glsl.hpp>
 #include <blkhurst/shaders/chunks/normal_fragment.glsl.hpp>
+#include <blkhurst/shaders/chunks/pbr_common.glsl.hpp>
 #include <blkhurst/shaders/chunks/tonemapping_fragment.glsl.hpp>
 #include <blkhurst/shaders/chunks/uniform_common.hpp>
 
@@ -53,6 +58,7 @@ void ShaderRegistry::registerBuiltinShaders() {
   ShaderRegistry::registerSource("envmap_fragment", shaders::envmap_fragment);
   ShaderRegistry::registerSource("tonemapping_fragment", shaders::tonemapping_fragment);
   ShaderRegistry::registerSource("colorspace_fragment", shaders::colorspace_fragment);
+  ShaderRegistry::registerSource("common", shaders::common);
 
   // SkyBoxMaterial
   ShaderRegistry::registerSource("skybox_vert", shaders::skybox_vert);
@@ -63,8 +69,15 @@ void ShaderRegistry::registerBuiltinShaders() {
   ShaderRegistry::registerSource("basic_frag", shaders::basic_frag);
 
   // EquirectMaterial
-  ShaderRegistry::registerSource("equirect_vert", shaders::equirect_vert);
   ShaderRegistry::registerSource("equirect_frag", shaders::equirect_frag);
+
+  // Fullscreen
+  ShaderRegistry::registerSource("fullscreen_vert", shaders::fullscreen_vert);
+
+  // IBL
+  ShaderRegistry::registerSource("pbr_common", shaders::pbr_common);
+  ShaderRegistry::registerSource("brdf_lut_frag", shaders::brdf_lut_frag);
+  ShaderRegistry::registerSource("irradiance_frag", shaders::irradiance_frag);
 }
 
 } // namespace blkhurst
