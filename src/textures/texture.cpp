@@ -134,18 +134,34 @@ void Texture::adoptGLTexture(unsigned newId, int width, int height, int mipLevel
 
 GLenum Texture::toGLInternal(TextureFormat format) {
   switch (format) {
-  case TextureFormat::RGBA8:
-    return GL_RGBA8;
-  case TextureFormat::RGBA16F:
-    return GL_RGBA16F;
-  case TextureFormat::RGBA32F:
-    return GL_RGBA32F;
   case TextureFormat::R8:
     return GL_R8;
   case TextureFormat::R16F:
     return GL_R16F;
   case TextureFormat::R32F:
     return GL_R32F;
+
+  case TextureFormat::RG8:
+    return GL_RG8;
+  case TextureFormat::RG16F:
+    return GL_RG16F;
+  case TextureFormat::RG32F:
+    return GL_RG32F;
+
+  case TextureFormat::RGB8:
+    return GL_RGB8;
+  case TextureFormat::RGB16F:
+    return GL_RGB16F;
+  case TextureFormat::RGB32F:
+    return GL_RGB32F;
+
+  case TextureFormat::RGBA8:
+    return GL_RGBA8;
+  case TextureFormat::RGBA16F:
+    return GL_RGBA16F;
+  case TextureFormat::RGBA32F:
+    return GL_RGBA32F;
+
   case TextureFormat::SRGB8:
     return GL_SRGB8;
   case TextureFormat::SRGB8_ALPHA8:
@@ -195,18 +211,6 @@ GLenum Texture::toGLWrap(TextureWrap wrap) {
 // NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
 void Texture::pixelFormatAndType(TextureFormat format, GLenum& outFormat, GLenum& outType) {
   switch (format) {
-  case TextureFormat::RGBA8:
-    outFormat = GL_RGBA;
-    outType = GL_UNSIGNED_BYTE;
-    break;
-  case TextureFormat::RGBA16F:
-    outFormat = GL_RGBA;
-    outType = GL_HALF_FLOAT;
-    break;
-  case TextureFormat::RGBA32F:
-    outFormat = GL_RGBA;
-    outType = GL_FLOAT;
-    break;
   case TextureFormat::R8:
     outFormat = GL_RED;
     outType = GL_UNSIGNED_BYTE;
@@ -219,6 +223,46 @@ void Texture::pixelFormatAndType(TextureFormat format, GLenum& outFormat, GLenum
     outFormat = GL_RED;
     outType = GL_FLOAT;
     break;
+
+  case TextureFormat::RG8:
+    outFormat = GL_RG;
+    outType = GL_UNSIGNED_BYTE;
+    break;
+  case TextureFormat::RG16F:
+    outFormat = GL_RG;
+    outType = GL_HALF_FLOAT;
+    break;
+  case TextureFormat::RG32F:
+    outFormat = GL_RG;
+    outType = GL_FLOAT;
+    break;
+
+  case TextureFormat::RGB8:
+    outFormat = GL_RGB;
+    outType = GL_UNSIGNED_BYTE;
+    break;
+  case TextureFormat::RGB16F:
+    outFormat = GL_RGB;
+    outType = GL_HALF_FLOAT;
+    break;
+  case TextureFormat::RGB32F:
+    outFormat = GL_RGB;
+    outType = GL_FLOAT;
+    break;
+
+  case TextureFormat::RGBA8:
+    outFormat = GL_RGBA;
+    outType = GL_UNSIGNED_BYTE;
+    break;
+  case TextureFormat::RGBA16F:
+    outFormat = GL_RGBA;
+    outType = GL_HALF_FLOAT;
+    break;
+  case TextureFormat::RGBA32F:
+    outFormat = GL_RGBA;
+    outType = GL_FLOAT;
+    break;
+
   case TextureFormat::SRGB8:
     outFormat = GL_RGB;
     outType = GL_UNSIGNED_BYTE;

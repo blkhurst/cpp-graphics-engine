@@ -47,7 +47,7 @@ std::shared_ptr<Texture> PMREMGenerator::generateBRDFLUT(Renderer& renderer, int
   // RenderTarget
   RenderTargetDesc desc{};
   desc.colorAttachmentCount = 1;
-  desc.colorDesc.format = TextureFormat::RGBA16F; // TODO: Use RG16F/RG32F instead
+  desc.colorDesc.format = TextureFormat::RG32F; // Requires only RG channels
   desc.colorDesc.minFilter = TextureFilter::Linear;
   desc.colorDesc.magFilter = TextureFilter::Linear;
   desc.colorDesc.wrapS = TextureWrap::ClampToEdge;

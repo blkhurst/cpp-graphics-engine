@@ -50,8 +50,7 @@ void main() {
   float NdotV = vUv.x;
   float rough = vUv.y;
   vec2 integratedBRDF = IntegrateBRDF(NdotV, rough);
-  FragColor = vec4(integratedBRDF, 0.0, 1.0);
-  // FragColor = integratedBRDF; // TODO: Use RG16F/RG32F instead
+  FragColor = vec4(integratedBRDF, 0.0, 1.0); // RG written, BA ignored by RG32F
 }
 
 )GLSL";

@@ -6,12 +6,22 @@
 namespace blkhurst {
 
 enum class TextureFormat : std::uint8_t {
-  RGBA8,
-  RGBA16F,
-  RGBA32F,
   R8,
   R16F,
   R32F,
+
+  RG8,
+  RG16F,
+  RG32F,
+
+  RGB8,
+  RGB16F,
+  RGB32F,
+
+  RGBA8,
+  RGBA16F,
+  RGBA32F,
+
   SRGB8,
   SRGB8_ALPHA8,
 
