@@ -6,6 +6,7 @@
 #include <blkhurst/shaders/builtin/fullscreen.glsl.hpp>
 #include <blkhurst/shaders/builtin/ibl/brdf_lut.glsl.hpp>
 #include <blkhurst/shaders/builtin/ibl/irradiance.glsl.hpp>
+#include <blkhurst/shaders/builtin/ibl/prefilter_ggx.glsl.hpp>
 #include <blkhurst/shaders/builtin/skybox.glsl.hpp>
 #include <blkhurst/shaders/chunks/color_fragment.glsl.hpp>
 #include <blkhurst/shaders/chunks/colorspace_fragment.glsl.hpp>
@@ -78,6 +79,7 @@ void ShaderRegistry::registerBuiltinShaders() {
   ShaderRegistry::registerSource("pbr_common", shaders::pbr_common);
   ShaderRegistry::registerSource("brdf_lut_frag", shaders::brdf_lut_frag);
   ShaderRegistry::registerSource("irradiance_frag", shaders::irradiance_frag);
+  ShaderRegistry::registerSource("prefilter_ggx_frag", shaders::prefilter_ggx_frag);
 }
 
 } // namespace blkhurst

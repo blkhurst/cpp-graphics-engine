@@ -8,7 +8,7 @@ namespace blkhurst {
 Texture::Texture(int width, int height, const TextureDesc& desc)
     : width_(width),
       height_(height),
-      mipLevels_(calcMipLevels(width, height, desc.generateMipmaps)),
+      mipLevels_(desc.generateMipmaps ? calcMipLevels(width, height) : 1),
       desc_(desc) {
   glCreateTextures(GL_TEXTURE_2D, 1, &id_);
 
@@ -94,6 +94,18 @@ TextureDesc Texture::desc() const {
   return desc_;
 }
 
+// NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
+void Texture::setMipmapRange(int baseLevel, int maxLevel) const {
+  glTextureParameteri(id_, GL_TEXTURE_BASE_LEVEL, baseLevel);
+  glTextureParameteri(id_, GL_TEXTURE_MAX_LEVEL, maxLevel);
+}
+
+int Texture::calcMipLevels(int width, int height) {
+  // E.g. 256x256 = 9 levels [0..8]
+  const int max = std::max(width, height);
+  return static_cast<int>(std::floor(std::log2(std::max(1, max)))) + 1;
+}
+
 bool Texture::isColorFormat(TextureFormat format) {
   return !(isDepthFormat(format) || isDepthStencilFormat(format));
 }
@@ -119,14 +131,6 @@ void Texture::adoptGLTexture(unsigned newId, int width, int height, int mipLevel
 }
 
 /* -------------- Gl Helpers -------------- */
-
-int Texture::calcMipLevels(int width, int height, bool enable) {
-  if (!enable) {
-    return 1;
-  }
-  const int max = std::max(width, height);
-  return static_cast<int>(std::floor(std::log2(std::max(1, max)))) + 1;
-}
 
 GLenum Texture::toGLInternal(TextureFormat format) {
   switch (format) {

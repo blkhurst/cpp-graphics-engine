@@ -1,5 +1,6 @@
 #include "ibl/brdf_lut_material.hpp"
 #include "ibl/irradiance_material.hpp"
+#include "ibl/prefilter_ggx_material.hpp"
 #include <blkhurst/cameras/ortho_camera.hpp>
 #include <blkhurst/geometry/plane_geometry.hpp>
 #include <blkhurst/ibl/pmrem_generator.hpp>
@@ -9,31 +10,36 @@
 
 namespace blkhurst {
 
-PMREMResult PMREMGenerator::fromEquirect(Renderer& renderer,
-                                         const std::shared_ptr<Texture>& equirect,
-                                         const PMREMDesc& desc) {
-  if (!equirect) {
-    spdlog::error("PMREMGenerator::fromEquirect null equirect");
+PMREMGenerator::PMREMGenerator(Renderer* renderer, const PMREMDesc& desc)
+    : renderer_(renderer),
+      desc_(desc) {
+}
+
+PMREMResult PMREMGenerator::fromEquirect(const std::shared_ptr<Texture>& equirect) {
+  if (!equirect || (renderer_ == nullptr)) {
+    spdlog::error("PMREMGenerator::fromEquirect null equirect or renderer");
     return {};
   }
 
-  auto cubemap = CubeRenderTarget::fromEquirect(renderer, equirect)->texture();
-  return fromCubemap(renderer, cubemap, desc);
+  auto cubemap = CubeRenderTarget::fromEquirect(*renderer_, equirect)->texture();
+  return fromCubemap(cubemap);
 }
 
-PMREMResult PMREMGenerator::fromCubemap(Renderer& renderer,
-                                        const std::shared_ptr<CubeTexture>& cubemap,
-                                        const PMREMDesc& desc) {
-  if (!cubemap) {
-    spdlog::error("PMREMGenerator::fromCubemap null cubemap");
+PMREMResult PMREMGenerator::fromCubemap(const std::shared_ptr<CubeTexture>& cubemap) {
+  if (!cubemap || (renderer_ == nullptr)) {
+    spdlog::error("PMREMGenerator::fromCubemap null cubemap or renderer");
     return {};
+  }
+
+  if (!brdfLUT_) { // Cache BRDF LUT
+    brdfLUT_ = generateBRDFLUT(*renderer_, desc_.brdfSize);
   }
 
   PMREMResult out{};
-  out.brdfLUT = generateBRDFLUT(renderer, desc.brdfSize);
-  out.irradiance = integrateDiffuse(renderer, cubemap, desc.irradianceSize);
-  // out.prefilteredSpecular =
-  //     prefilterSpecular(renderer, cubemap, desc.radianceSize, desc.ggxSamples);
+  out.brdfLUT = brdfLUT_;
+  out.irradianceMap = integrateDiffuse(*renderer_, cubemap, desc_.irradianceSize);
+  out.prefilterMap = prefilterSpecular(*renderer_, cubemap, desc_.radianceSize, desc_.ggxSamples,
+                                       desc_.prefilterLodBias);
   return out;
 }
 
@@ -90,6 +96,57 @@ PMREMGenerator::integrateDiffuse(Renderer& renderer, const std::shared_ptr<CubeT
     renderer.setRenderTarget(cubeRenderTarget.get(), face, /*mip*/ 0);
     renderer.render(*fullscreen, *camera);
   }
+
+  // Return Texture
+  renderer.setRenderTarget(nullptr);
+  return cubeRenderTarget->texture();
+}
+
+std::shared_ptr<CubeTexture>
+PMREMGenerator::prefilterSpecular(Renderer& renderer, const std::shared_ptr<CubeTexture>& src,
+                                  int size, int ggxSamples, float lodBias) {
+  // CubeRenderTarget With Mipmaps (We then render each mip manually)
+  CubeRenderTargetDesc desc{};
+  desc.colorDesc.format = TextureFormat::RGBA16F; // TODO: Float16/Float32 Toggle
+  desc.colorDesc.minFilter = TextureFilter::LinearMipmapLinear;
+  desc.colorDesc.magFilter = TextureFilter::Linear;
+  desc.colorDesc.wrapS = TextureWrap::ClampToEdge;
+  desc.colorDesc.wrapT = TextureWrap::ClampToEdge;
+  desc.colorDesc.generateMipmaps = true;
+  desc.depthAttachment = false;
+  auto cubeRenderTarget = CubeRenderTarget::create(size, desc);
+
+  // Fullscreen Quad
+  auto camera = OrthoCamera::create();
+  auto planeGeometry = PlaneGeometry::create({2.0F, 2.0F});
+  auto prefilterMaterial = PrefilterGGXMaterial::create(src, {.lodBias = lodBias});
+  auto fullscreen = Mesh::create(planeGeometry, prefilterMaterial);
+
+  // Calculate mip levels.
+  // ThreeJS uses a 2D atlas and generates several mips >= 16x16 (MIN_LOD=4).
+  // Since we are using mipmaps directly, we ignore mips < 16x16.
+  // This prevents morphing of IBL reflections at high roughness.
+  const int MIN_LOD = 4;
+  const int mipCount = std::max(1, Texture::calcMipLevels(size, size) - MIN_LOD);
+  const int maxMip = mipCount - 1; // E.g. 256x256 has 9 mips [0..8]
+
+  // Render Each Mip Level
+  for (int mip = 0; mip <= maxMip; ++mip) {
+    float roughness = (float)mip / (float)maxMip;
+    prefilterMaterial->setRoughness(roughness);
+    prefilterMaterial->setGgxSamples(ggxSamples);
+
+    // Render Each Face
+    const int faceCount = 6;
+    for (int face = 0; face < faceCount; ++face) {
+      prefilterMaterial->setFace(face);
+      renderer.setRenderTarget(cubeRenderTarget.get(), face, mip);
+      renderer.render(*fullscreen, *camera);
+    }
+  }
+
+  // Set mip range to avoid sampling incomplete mips
+  cubeRenderTarget->texture()->setMipmapRange(0, maxMip);
 
   // Return Texture
   renderer.setRenderTarget(nullptr);

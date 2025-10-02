@@ -62,6 +62,9 @@ public:
   [[nodiscard]] int mipLevels() const;
   [[nodiscard]] TextureDesc desc() const;
 
+  void setMipmapRange(int baseLevel, int maxLevel) const;
+  static int calcMipLevels(int width, int height);
+
   static bool isColorFormat(TextureFormat format);
   static bool isDepthFormat(TextureFormat format);
   static bool isDepthStencilFormat(TextureFormat format);
@@ -71,7 +74,6 @@ protected:
   void adoptGLTexture(unsigned newId, int width, int height, int mipLevels,
                       const TextureDesc& desc);
 
-  static int calcMipLevels(int width, int height, bool enable);
   static unsigned toGLInternal(TextureFormat format);
   static unsigned toGLFilter(TextureFilter filter, bool isMin);
   static unsigned toGLWrap(TextureWrap wrap);

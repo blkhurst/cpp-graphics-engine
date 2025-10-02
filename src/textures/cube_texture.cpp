@@ -13,7 +13,7 @@ CubeTexture::CubeTexture(int size, const TextureDesc& desc) {
 
   // Allocate storage for 6 faces
   const GLenum internal = toGLInternal(desc.format);
-  const int levels = calcMipLevels(size, size, desc.generateMipmaps);
+  const int levels = desc.generateMipmaps ? calcMipLevels(size, size) : 1;
 
   glTextureStorage2D(texId, levels, internal, size, size);
 

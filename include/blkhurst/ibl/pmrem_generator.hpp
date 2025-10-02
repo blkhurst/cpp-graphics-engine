@@ -8,31 +8,40 @@ namespace blkhurst {
 
 class Renderer;
 
+static constexpr int kDefaultIrradianceSize = 64;       // 16-64
+static constexpr int kDefaultRadianceSize = 256;        // 128-512
+static constexpr int kDefaultBrdfSize = 256;            // 256-512
+static constexpr float kDefaultPrefilterLodBias = 2.0F; // 0-4
+static constexpr int kDefaultGgxSamples = 1024;
+
 struct PMREMResult {
   std::shared_ptr<Texture> brdfLUT;
-  std::shared_ptr<CubeTexture> irradiance;
-  std::shared_ptr<CubeTexture> prefilteredSpecular;
+  std::shared_ptr<CubeTexture> irradianceMap;
+  std::shared_ptr<CubeTexture> prefilterMap;
 };
 
 struct PMREMDesc {
-  int irradianceSize = kDefaultIrradianceSize; // 16–64 is typical
-  int radianceSize = kDefaultRadianceSize;     // power of two
-  int brdfSize = kDefaultBrdfSize;             // 256 or 512
-  int ggxSamples = kDefaultGgxSamples;         // importance samples per pixel for GGX prefilter
+  // Texture Sizes
+  int irradianceSize = kDefaultIrradianceSize;
+  int radianceSize = kDefaultRadianceSize;
+  int brdfSize = kDefaultBrdfSize;
 
-private:
-  static constexpr int kDefaultIrradianceSize = 32;
-  static constexpr int kDefaultRadianceSize = 256;
-  static constexpr int kDefaultBrdfSize = 256;
-  static constexpr int kDefaultGgxSamples = 1024;
+  // Prefilter Options
+  int ggxSamples = kDefaultGgxSamples;
+  /// LOD bias to apply when prefiltering. ~[0..4] Increase to reduce bright artifacts.
+  float prefilterLodBias = kDefaultPrefilterLodBias;
 };
 
-struct PMREMGenerator {
-  static PMREMResult fromEquirect(Renderer& renderer, const std::shared_ptr<Texture>& equirect,
-                                  const PMREMDesc& desc = {});
+class PMREMGenerator {
+public:
+  PMREMGenerator(Renderer* renderer, const PMREMDesc& desc = {});
+  PMREMResult fromEquirect(const std::shared_ptr<Texture>& equirect);
+  PMREMResult fromCubemap(const std::shared_ptr<CubeTexture>& cubemap);
 
-  static PMREMResult fromCubemap(Renderer& renderer, const std::shared_ptr<CubeTexture>& cubemap,
-                                 const PMREMDesc& desc = {});
+private:
+  Renderer* renderer_;
+  PMREMDesc desc_;
+  std::shared_ptr<Texture> brdfLUT_;
 
   static std::shared_ptr<Texture> generateBRDFLUT(Renderer& renderer, int size);
 
@@ -41,7 +50,7 @@ struct PMREMGenerator {
 
   static std::shared_ptr<CubeTexture> prefilterSpecular(Renderer& renderer,
                                                         const std::shared_ptr<CubeTexture>& src,
-                                                        int size, int sampleCount);
+                                                        int size, int ggxSamples, float lodBias);
 };
 
 } // namespace blkhurst
