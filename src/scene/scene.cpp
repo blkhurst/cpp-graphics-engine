@@ -28,25 +28,29 @@ void Scene::setBackground(const glm::vec4& color) {
 }
 
 void Scene::setBackground(std::shared_ptr<CubeTexture> cubemap) {
+  // Clear Background
+  if (cubemap == nullptr) {
+    this->setBackground(background_.color);
+    spdlog::debug("Scene({}) Background cleared", uuid());
+    return;
+  }
   background_.type = BackgroundType::Cube;
   background_.cubemap = std::move(cubemap);
   background_.texture.reset();
-  if (!background_.cubemap) {
-    spdlog::warn("Scene({}) setBackground called with null CubeTexture", uuid());
-    return;
-  }
-  spdlog::trace("Scene({}) setBackground CubeTexture({})", uuid(), background_.cubemap->id());
+  spdlog::debug("Scene({}) setBackground CubeTexture({})", uuid(), background_.cubemap->id());
 }
 
 void Scene::setBackground(std::shared_ptr<Texture> equirect) {
+  // Clear Background
+  if (equirect == nullptr) {
+    this->setBackground(background_.color);
+    spdlog::debug("Scene({}) Background cleared", uuid());
+    return;
+  }
   background_.type = BackgroundType::Equirect;
   background_.texture = std::move(equirect);
   background_.cubemap.reset();
-  if (!background_.texture) {
-    spdlog::warn("Scene({}) setBackground called with null Texture", uuid());
-    return;
-  }
-  spdlog::trace("Scene({}) setBackground Texture({})", uuid(), background_.texture->id());
+  spdlog::debug("Scene({}) setBackground Texture({})", uuid(), background_.texture->id());
 }
 
 void Scene::setBackgroundIntensity(float intensity) {
@@ -54,27 +58,39 @@ void Scene::setBackgroundIntensity(float intensity) {
   spdlog::trace("Scene({}) setBackgroundIntensity({})", uuid(), intensity);
 }
 
-// const SceneEnvironment& Scene::environment() const {
-//   return environment_;
-// }
+SceneEnvironment& Scene::environment() {
+  return environment_;
+}
 
-// void Scene::setEnvironment(std::shared_ptr<Texture> equirect, bool setBackground) {
-//   auto hdr = std::move(equirect);
-//   // environment_.cubemap = CubeTexture::fromEquirectangular(equirect);
-//   // 1) Convert from Equirectangular to Cubemap
-//   // 2) Generate PMREM
-//   // 3) Set as environment/background
-// }
+void Scene::setEnvironment(std::shared_ptr<Texture> equirect, bool setBackground) {
+  // Clear environment
+  if (equirect == nullptr) {
+    environment_.equirect.reset();
+    environment_.brdfLUT.reset();
+    environment_.irradianceMap.reset();
+    environment_.prefilterMap.reset();
+    environment_.needsUpdate = false;
+    if (setBackground) {
+      this->setBackground(background_.color);
+    }
+    spdlog::debug("Scene({}) Environment cleared", uuid());
+    return;
+  }
+  environment_.equirect = std::move(equirect);
+  environment_.setBackground = setBackground;
+  environment_.needsUpdate = true;
+  spdlog::debug("Scene({}) setEnvironment Texture({})", uuid(), environment_.equirect->id());
+}
 
-// void Scene::setEnvironmentIntensity(float intensity) {
-//   environment_.intensity = intensity;
-//   spdlog::trace("Scene({}) setEnvironmentIntensity({})", uuid(), intensity);
-// }
+void Scene::setEnvironmentIntensity(float intensity) {
+  environment_.intensity = intensity;
+  spdlog::trace("Scene({}) setEnvironmentIntensity({})", uuid(), intensity);
+}
 
-// void Scene::setEnvironmentRotation(const glm::mat3& rotation) {
-//   environment_.rotation = rotation;
-//   spdlog::trace("Scene({}) setEnvironmentRotation", uuid());
-// }
+void Scene::setEnvironmentRotation(const glm::mat3& rotation) {
+  environment_.rotation = rotation;
+  spdlog::trace("Scene({}) setEnvironmentRotation", uuid());
+}
 
 Camera* Scene::activeCamera() const {
   return activeCamera_.get();

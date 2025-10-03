@@ -26,11 +26,19 @@ struct SceneBackground {
   float intensity = 1.0F;
 };
 
-// struct SceneEnvironment {
-//   std::shared_ptr<CubeTexture> cubemap; // PMREM
-//   glm::mat3 rotation{1.0F};
-//   float intensity = 1.0F;
-// };
+struct SceneEnvironment {
+  // Outputs
+  std::shared_ptr<Texture> brdfLUT;
+  std::shared_ptr<CubeTexture> irradianceMap;
+  std::shared_ptr<CubeTexture> prefilterMap;
+  // Inputs
+  std::shared_ptr<Texture> equirect;
+  glm::mat3 rotation{1.0F};
+  float intensity = 1.0F;
+
+  bool setBackground = true;
+  bool needsUpdate = false;
+};
 
 class Scene : public Object3D {
 public:
@@ -55,11 +63,11 @@ public:
   void setBackground(std::shared_ptr<Texture> equirect);
   void setBackgroundIntensity(float intensity);
 
-  // Sets environment for PBR children only
-  // [[nodiscard]] const SceneEnvironment& environment() const;
-  // void setEnvironment(std::shared_ptr<Texture> equirect, bool setBackground = true);
-  // void setEnvironmentIntensity(float intensity);
-  // void setEnvironmentRotation(const glm::mat3& rotation);
+  // Currently supports PBR children only
+  [[nodiscard]] SceneEnvironment& environment();
+  void setEnvironment(std::shared_ptr<Texture> equirect, bool setBackground = true);
+  void setEnvironmentIntensity(float intensity);
+  void setEnvironmentRotation(const glm::mat3& rotation);
 
   [[nodiscard]] Camera* activeCamera() const;
   [[nodiscard]] Controller* activeController() const;
@@ -71,7 +79,7 @@ public:
 
 private:
   SceneBackground background_{};
-  // SceneEnvironment environment_{};
+  SceneEnvironment environment_{};
 
   std::shared_ptr<Camera> activeCamera_ = std::make_shared<OrthoCamera>();
   std::shared_ptr<Controller> activeController_ = nullptr;

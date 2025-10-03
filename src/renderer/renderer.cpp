@@ -87,6 +87,7 @@ void Renderer::render(Object3D& root, Camera& camera) {
   });
 
   if (auto* scene = dynamic_cast<Scene*>(&root)) {
+    setEnvironment(*scene);
     renderBackground(*scene, camera);
   }
 
@@ -264,7 +265,8 @@ void Renderer::applyPerDrawUniforms(const Mesh& mesh, const Camera& camera) cons
   material->setUniform("uModel", mesh.worldMatrix());
 
   // Apply Uniforms & Resources
-  material->applyUniformsAndResources();
+  material->applyEnvironment(environmentBundle_);
+  material->applyUniformsAndResources(); // Apply last - flushes pending setUniform calls
 }
 
 void Renderer::drawGeometry(const Geometry& geom, int instanceCount) {
@@ -291,7 +293,7 @@ void Renderer::drawGeometry(const Geometry& geom, int instanceCount) {
 
 void Renderer::renderBackground(Scene& scene, Camera& camera) {
   const auto& sceneBackground = scene.background();
-  // const auto& sceneEnvironment = scene.environment();
+  const auto& sceneEnvironment = scene.environment();
 
   if (!skyboxMesh_) {
     return;
@@ -316,11 +318,41 @@ void Renderer::renderBackground(Scene& scene, Camera& camera) {
 
   if (sceneBackground.type == BackgroundType::Cube) {
     skyboxMaterial->setCubeMap(sceneBackground.cubemap);
-    // skyboxMaterial->setCubeMapRotation(sceneEnvironment.rotation);
+    skyboxMaterial->setCubeMapRotation(sceneEnvironment.rotation); // Controlled via envRotation
     skyboxMaterial->setIntensity(sceneBackground.intensity);
 
     renderMesh(*skyboxMesh_, camera);
   }
+}
+
+void Renderer::setEnvironment(Scene& scene) {
+  const auto& sceneBackground = scene.background();
+  auto& sceneEnvironment = scene.environment();
+
+  if (sceneEnvironment.needsUpdate) {
+    // Convert Equirect to Cubemap
+    auto cubemap = CubeRenderTarget::fromEquirect(*this, sceneEnvironment.equirect)->texture();
+
+    // Generate PMREM
+    auto pmremResult = pmremGenerator_.fromCubemap(cubemap);
+    sceneEnvironment.brdfLUT = pmremResult.brdfLUT;
+    sceneEnvironment.irradianceMap = pmremResult.irradianceMap;
+    sceneEnvironment.prefilterMap = pmremResult.prefilterMap;
+    sceneEnvironment.needsUpdate = false;
+
+    // Set Background
+    if (sceneEnvironment.setBackground) {
+      scene.setBackground(cubemap);
+    }
+  }
+
+  // Update EnvironmentBundle
+  environmentBundle_.environmentMap = sceneBackground.cubemap;
+  environmentBundle_.brdfLUT = sceneEnvironment.brdfLUT;
+  environmentBundle_.irradianceMap = sceneEnvironment.irradianceMap;
+  environmentBundle_.prefilterMap = sceneEnvironment.prefilterMap;
+  environmentBundle_.rotation = sceneEnvironment.rotation;
+  environmentBundle_.intensity = sceneEnvironment.intensity;
 }
 
 // ------- Helpers -------

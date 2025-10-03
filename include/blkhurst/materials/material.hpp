@@ -2,6 +2,7 @@
 
 #include <blkhurst/graphics/program.hpp>
 #include <blkhurst/materials/pipeline_state.hpp>
+#include <blkhurst/renderer/environment_bundle.hpp>
 #include <blkhurst/textures/texture.hpp>
 
 #include <glm/glm.hpp>
@@ -29,6 +30,8 @@ public:
 
   void useProgram() const;
   void applyUniformsAndResources();
+  virtual void applyEnvironment(const EnvironmentBundle& env) {
+  }
 
   [[nodiscard]] std::shared_ptr<Program> program() const;
   [[nodiscard]] const PipelineState& pipeline() const;

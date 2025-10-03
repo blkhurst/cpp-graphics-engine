@@ -3,10 +3,12 @@
 #include <blkhurst/cameras/camera.hpp>
 #include <blkhurst/engine/config/defaults.hpp>
 #include <blkhurst/geometry/geometry.hpp>
+#include <blkhurst/ibl/pmrem_generator.hpp>
 #include <blkhurst/materials/pipeline_state.hpp>
 #include <blkhurst/objects/mesh.hpp>
 #include <blkhurst/objects/object3d.hpp>
 #include <blkhurst/renderer/cube_render_target.hpp>
+#include <blkhurst/renderer/environment_bundle.hpp>
 #include <blkhurst/renderer/render_target.hpp>
 #include <blkhurst/renderer/uniform_blocks.hpp>
 
@@ -71,6 +73,10 @@ private:
 
   std::unique_ptr<Mesh> skyboxMesh_;
   void renderBackground(Scene& scene, Camera& camera);
+
+  PMREMGenerator pmremGenerator_{this};
+  EnvironmentBundle environmentBundle_{};
+  void setEnvironment(Scene& scene);
 
   // Helpers
   static unsigned toGlPrimitive(PrimitiveMode mode);
