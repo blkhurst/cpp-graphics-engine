@@ -25,12 +25,7 @@ inline const std::string basic_frag = R"GLSL(
 #include "colorspace_fragment"
 
 void main() {
-  mat3 tbn;
-  vec3 worldNormal;
-  vec3 viewNormal;
-  computeGeometryNormal(worldNormal);
-  computeTBN(worldNormal, tbn);
-  computeNormal(worldNormal, viewNormal, tbn);
+  vec3 worldNormal = computeWorldNormal();
 
   vec4 base = computeColor();
   vec4 env = computeEnv(worldNormal);
