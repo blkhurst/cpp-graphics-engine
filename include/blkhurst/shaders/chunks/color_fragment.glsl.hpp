@@ -8,14 +8,14 @@ inline const std::string color_fragment = R"GLSL(
 // *Depends on:
 // io_fragment
 //  in vec2 vUv;
-//  in vec4 vColor;
+//  in vec3 vColor;
 
-uniform vec4 uColor;
+uniform vec3 uColor;
 uniform sampler2D uColorMap;
 uniform sampler2D uAlphaMap;
 
-vec4 computeColor() {
-  vec4 color = uColor;
+vec3 computeColor() {
+  vec3 color = uColor;
 
 #ifdef USE_VERTEX_COLOR
   color *= vColor;
@@ -26,16 +26,40 @@ vec4 computeColor() {
 #endif
 
 #ifdef USE_COLORMAP
-  vec4 texColor = texture(uColorMap, vUv);
-  color *= texColor;
-#endif
-
-#ifdef USE_ALPHAMAP
-  float alpha = texture(uAlphaMap, vUv).r;
-  color.a *= alpha;
+  vec3 colorMap = texture(uColorMap, vUv).rgb;
+  color *= colorMap;
 #endif
 
   return color;
+}
+
+// *Depends on:
+//  io_fragment
+//    in vec2 vUv;
+//  color_fragment
+//    uniform sampler2D uColorMap;
+
+uniform float uOpacity;
+uniform float uAlphaTest;
+
+float computeAlpha() {
+  float alpha = uOpacity;
+
+#ifdef USE_COLORMAP
+  float colorMap = texture(uColorMap, vUv).a;
+  alpha *= colorMap;
+#endif
+
+#ifdef USE_ALPHAMAP
+  float alphaMap = texture(uAlphaMap, vUv).r;
+  alpha *= alphaMap;
+#endif
+
+  if (uAlphaTest >= 0.0 && alpha < uAlphaTest) {
+    discard;
+  }
+
+  return alpha;
 }
 
 )GLSL";

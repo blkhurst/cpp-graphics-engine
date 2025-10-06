@@ -13,16 +13,25 @@ namespace blkhurst {
 enum class EnvMode : int { Reflection = 0, Refraction = 1 };
 
 struct BasicMaterialDesc {
-  glm::vec4 color{1.0F, 1.0F, 1.0F, 1.0F};
+  glm::vec3 color{1.0F, 1.0F, 1.0F};
+  float opacity = 1.0F;
+  float alphaTest = -1.0F;
+
   std::shared_ptr<Texture> colorMap;
   std::shared_ptr<Texture> alphaMap;
+
   std::shared_ptr<Texture> normalMap;
+  float normalScale = 1.0F;
+
   std::shared_ptr<CubeTexture> envMap;
   EnvMode envMode = EnvMode::Reflection;
   float reflectivity = 1.0F;
   float refractionRatio = 0.98F;
+
   bool flatShading = false;
   bool vertexColors = false;
+
+  UvTransform uvTransform_;
 };
 
 class BasicMaterial : public Material {
@@ -34,7 +43,8 @@ public:
   }
 
   void setColor(const glm::vec3& rgb);
-  void setColor(const glm::vec4& rgba);
+  void setOpacity(float alpha);
+  void setAlphaTest(float threshold);
 
   void setColorMap(std::shared_ptr<Texture> texture);
   void setAlphaMap(std::shared_ptr<Texture> texture);
@@ -51,6 +61,7 @@ public:
   void setReflectivity(float reflectivity);
   void setRefractionRatio(float refractionRatio);
 
+  void setUvTransform(const UvTransform& uvTransform);
   void setUvRepeat(const glm::vec2& repeat);
   void setUvOffset(const glm::vec2& offset);
   void setUvRotation(float radians);
@@ -60,24 +71,7 @@ protected:
   void applyResources() override;
 
 private:
-  glm::vec4 color_;
-
-  std::shared_ptr<Texture> map_;
-  std::shared_ptr<Texture> alphaMap_;
-
-  std::shared_ptr<Texture> normalMap_;
-  float normalScale_ = 1.0F;
-
-  std::shared_ptr<CubeTexture> envMap_;
-  EnvMode envMode_;
-
-  bool flatShading_;
-  bool vertexColors_;
-
-  float reflectivity_;
-  float refractionRatio_;
-
-  UvTransform uvTransform_;
+  BasicMaterialDesc desc_;
 };
 
 } // namespace blkhurst

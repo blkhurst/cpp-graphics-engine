@@ -16,6 +16,8 @@ constexpr const char* CameraPos = "uCameraPos";
 constexpr const char* Model = "uModel";
 //
 constexpr const char* Color = "uColor";
+constexpr const char* Opacity = "uOpacity";
+constexpr const char* AlphaTest = "uAlphaTest";
 constexpr const char* NormalScale = "uNormalScale";
 constexpr const char* UvTransform = "uUvTransform";
 // Environment

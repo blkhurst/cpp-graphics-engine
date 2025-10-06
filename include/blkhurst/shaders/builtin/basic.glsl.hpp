@@ -27,12 +27,13 @@ inline const std::string basic_frag = R"GLSL(
 void main() {
   vec3 worldNormal = computeWorldNormal();
 
-  vec4 base = computeColor();
+  vec3 base = computeColor();
+  float alpha = computeAlpha();
   vec4 env = computeEnv(worldNormal);
 
-  vec4 accumulated = vec4(base.rgb * env.rgb, base.a);
+  vec4 color = vec4(base * env.rgb, alpha);
 
-  vec4 toneMapped = toneMapping(accumulated);
+  vec4 toneMapped = toneMapping(color);
   FragColor = linearToOutput(toneMapped);
 }
 

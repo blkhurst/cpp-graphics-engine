@@ -9,11 +9,11 @@ inline const std::string io_fragment = R"GLSL(
 layout(location = 0) out vec4 FragColor;
 
 in vec2 vUv;
-in vec4 vColor;
+in vec3 vColor;
 in vec3 vWorldNormal;
 in vec3 vWorldPosition;
 in vec3 vViewPosition;
-in vec4 vInstanceColor;
+in vec3 vInstanceColor;
 
 )GLSL";
 

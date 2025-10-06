@@ -7,19 +7,19 @@ inline const std::string io_vertex = R"GLSL(
 
 // Attributes
 layout(location = 0) in vec3 aPosition;
-layout(location = 1) in vec4 aColor;
+layout(location = 1) in vec3 aColor;
 layout(location = 2) in vec2 aUv;
 layout(location = 3) in vec3 aNormal;
-layout(location = 4) in vec4 aInstanceColor;
+layout(location = 4) in vec3 aInstanceColor;
 layout(location = 5) in mat4 aInstanceMatrix; // Uses 5,6,7,8
 
 // Out
 out vec2 vUv;
-out vec4 vColor;
+out vec3 vColor;
 out vec3 vWorldNormal;
 out vec3 vWorldPosition;
 out vec3 vViewPosition;
-out vec4 vInstanceColor;
+out vec3 vInstanceColor;
 
 uniform mat3 uUvTransform;
 
