@@ -7,11 +7,13 @@
 #include <blkhurst/shaders/builtin/ibl/brdf_lut.glsl.hpp>
 #include <blkhurst/shaders/builtin/ibl/irradiance.glsl.hpp>
 #include <blkhurst/shaders/builtin/ibl/prefilter_ggx.glsl.hpp>
+#include <blkhurst/shaders/builtin/pbr.glsl.hpp>
 #include <blkhurst/shaders/builtin/skybox.glsl.hpp>
 #include <blkhurst/shaders/chunks/color_fragment.glsl.hpp>
 #include <blkhurst/shaders/chunks/colorspace_fragment.glsl.hpp>
 #include <blkhurst/shaders/chunks/common.glsl.hpp>
 #include <blkhurst/shaders/chunks/envmap_fragment.glsl.hpp>
+#include <blkhurst/shaders/chunks/ibl_fragment.glsl.hpp>
 #include <blkhurst/shaders/chunks/io_fragment.glsl.hpp>
 #include <blkhurst/shaders/chunks/io_vertex.glsl.hpp>
 #include <blkhurst/shaders/chunks/normal_fragment.glsl.hpp>
@@ -80,6 +82,11 @@ void ShaderRegistry::registerBuiltinShaders() {
   ShaderRegistry::registerSource("brdf_lut_frag", shaders::brdf_lut_frag);
   ShaderRegistry::registerSource("irradiance_frag", shaders::irradiance_frag);
   ShaderRegistry::registerSource("prefilter_ggx_frag", shaders::prefilter_ggx_frag);
+  ShaderRegistry::registerSource("ibl_fragment", shaders::ibl_fragment);
+
+  // PBRMaterial
+  ShaderRegistry::registerSource("pbr_vert", shaders::pbr_vert);
+  ShaderRegistry::registerSource("pbr_frag", shaders::pbr_frag);
 }
 
 } // namespace blkhurst

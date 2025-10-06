@@ -16,6 +16,7 @@ void main() {
 
 inline const std::string basic_frag = R"GLSL(
 
+#include "common"
 #include "io_fragment"
 #include "uniforms_common"
 #include "normal_fragment"

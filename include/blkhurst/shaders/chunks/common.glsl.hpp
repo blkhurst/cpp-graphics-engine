@@ -26,6 +26,13 @@ vec3 faceToDirection(int face, vec2 uv) {
   else                return normalize(vec3(-centeredUv.x, -centeredUv.y, -1.0)); // -Z
 }
 
+// Sampling from inside the cube mirrors faces, flip X to fix.
+// Not for intermediate stages (IBL), only for final environment sampling.
+vec3 getCubeSampleDir(in vec3 dir, in mat3 rotation) {
+  float flipEnvMap = -1.0; // TODO: Flip via uniform?
+  return normalize(rotation * vec3(flipEnvMap * dir.x, dir.yz));
+}
+
 #endif // COMMON_GLSL
 
 )GLSL";

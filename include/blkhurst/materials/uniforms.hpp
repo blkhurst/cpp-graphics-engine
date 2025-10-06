@@ -19,28 +19,42 @@ constexpr const char* Color = "uColor";
 constexpr const char* Opacity = "uOpacity";
 constexpr const char* AlphaTest = "uAlphaTest";
 constexpr const char* NormalScale = "uNormalScale";
+constexpr const char* Metalness = "uMetalness";
+constexpr const char* Roughness = "uRoughness";
+constexpr const char* AoIntensity = "uAoIntensity";
+constexpr const char* EmissiveColor = "uEmissiveColor";
+constexpr const char* EmissiveIntensity = "uEmissiveIntensity";
 constexpr const char* UvTransform = "uUvTransform";
 // Environment
-constexpr const char* Reflectivity = "uReflectivity";
-constexpr const char* RefractionRatio = "uRefractionRatio";
+constexpr const char* EnvRotation = "uEnvRotation";
+constexpr const char* EnvIntensity = "uEnvIntensity";
+constexpr const char* Reflectivity = "uReflectivity";       // BasicMaterial/Phong
+constexpr const char* RefractionRatio = "uRefractionRatio"; // BasicMaterial/Phong
 } // namespace uniforms
 
 namespace slots {
 constexpr int EnvMap = 0;
-constexpr int ShadowMap = 1;
-constexpr int ColorMap = 2;
-constexpr int AlphaMap = 3;
-constexpr int NormalMap = 4;
-constexpr int SpecularMap = 5;
-constexpr int MetalnessMap = 6;
-constexpr int RoughnessMap = 7;
-constexpr int AoMap = 8;
-constexpr int EmissiveMap = 9;
-constexpr int DisplacementMap = 10;
+constexpr int BrdfLUT = 1;
+constexpr int IrradianceMap = 2;
+constexpr int PrefilterMap = 3;
+constexpr int ShadowMap = 4;
+constexpr int ColorMap = 5;
+constexpr int AlphaMap = 6;
+constexpr int NormalMap = 7;
+constexpr int SpecularMap = 8;
+constexpr int MetalnessMap = 9;
+constexpr int RoughnessMap = 10;
+constexpr int AoMap = 11;
+constexpr int EmissiveMap = 12;
+constexpr int DisplacementMap = 13;
+// 16 guaranteed, often 32+
 } // namespace slots
 
 namespace samplers {
-constexpr const char* EnvMap = "uEnvMap"; // Add Irradiance/Prefiltered/BRDF/LTC
+constexpr const char* EnvMap = "uEnvMap";
+constexpr const char* BrdfLUT = "uBrdfLUT";
+constexpr const char* IrradianceMap = "uIrradianceMap";
+constexpr const char* PrefilterMap = "uPrefilterMap"; // Add LTC
 constexpr const char* ShadowMap = "uShadowMap";
 constexpr const char* ColorMap = "uColorMap";
 constexpr const char* AlphaMap = "uAlphaMap";

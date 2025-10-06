@@ -6,18 +6,17 @@ namespace blkhurst::shaders {
 inline const std::string envmap_fragment = R"GLSL(
 
 // *Depends on:
-// io_fragment
-//  in vec3 vWorldNormal;
-//  in vec3 vWorldPosition;
-// uniforms_common
-//  uniform vec3 uCameraPos;
+//  common
+//    getCubeSampleDir
+//  io_fragment
+//    in vec3 vWorldNormal;
+//    in vec3 vWorldPosition;
+//  uniforms_common
+//    uniform vec3 uCameraPos;
 
 uniform samplerCube uEnvMap;
 uniform float uReflectivity;
 uniform float uRefractionRatio;
-
-// TODO: Flip via uniform
-const float flipEnvMap = -1.0;
 
 vec4 computeEnv(in vec3 worldNormal) {
 #ifndef USE_ENVMAP
@@ -36,7 +35,7 @@ vec4 computeEnv(in vec3 worldNormal) {
 
   // TODO: Environment Map Rotation Uniform
   mat3 envMapRotation = mat3(1.0);
-  reflectVec = envMapRotation * vec3(flipEnvMap * reflectVec.x, reflectVec.yz);
+  reflectVec = getCubeSampleDir(reflectVec, envMapRotation);
 
   vec4 env = texture(uEnvMap, reflectVec);
   return mix(vec4(1.0), env, uReflectivity);

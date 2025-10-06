@@ -40,6 +40,7 @@ uniform float uFlipCubeMap;
 
 void main() {
   vec3 direction = normalize(vPosition);
+  // vec3 sampleDirection = getCubeSampleDir(direction, uCubeMapRotation);
   vec3 sampleDirection = uCubeMapRotation * vec3(uFlipCubeMap * direction.x, direction.yz);
   vec4 sampleColor = texture(uCubeMap, sampleDirection);
   sampleColor.rgb *= uIntensity;
