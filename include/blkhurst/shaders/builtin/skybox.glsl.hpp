@@ -9,8 +9,7 @@ layout(location = 0) in vec3 aPosition;
 
 out vec3 vPosition;
 
-uniform mat4 uView;
-uniform mat4 uProjection;
+#include "uniforms_common"
 
 void main() {
   vPosition = aPosition;
@@ -26,6 +25,7 @@ void main() {
 
 inline const std::string skybox_frag = R"GLSL(
 
+#include "uniforms_common"
 #include "tonemapping_fragment"
 #include "colorspace_fragment"
 

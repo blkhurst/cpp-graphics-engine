@@ -3,15 +3,14 @@
 namespace blkhurst {
 
 namespace uniforms {
-// FrameUniforms
-// TODO: Move FrameUniforms/DrawUniforms into renderer/uniform_blocks.hpp
-constexpr const char* Time = "uTime";
-constexpr const char* Delta = "uDelta";
-constexpr const char* Mouse = "uMouse";
-constexpr const char* Resolution = "uResolution";
-constexpr const char* View = "uView";
-constexpr const char* Projection = "uProjection";
-constexpr const char* CameraPos = "uCameraPos";
+// FrameUniforms (see uniform_blocks.hpp)
+// constexpr const char* Time = "uTime";
+// constexpr const char* Delta = "uDelta";
+// constexpr const char* Mouse = "uMouse";
+// constexpr const char* Resolution = "uResolution";
+// constexpr const char* View = "uView";
+// constexpr const char* Projection = "uProjection";
+// constexpr const char* CameraPos = "uCameraPos";
 // DrawUniforms
 constexpr const char* Model = "uModel";
 //

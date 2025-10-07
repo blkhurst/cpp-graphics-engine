@@ -5,8 +5,10 @@ namespace blkhurst::shaders {
 
 inline const std::string tonemapping_fragment = R"GLSL(
 
-uniform int uToneMappingMode;
-uniform float uToneMappingExposure;
+// *Depends on 
+//  uniforms_common
+//    uniform int uToneMappingMode
+//    uniform float uToneMappingExposure
 
 // ToneMapping Enum
 const int kToneMappingMode_None = 0;

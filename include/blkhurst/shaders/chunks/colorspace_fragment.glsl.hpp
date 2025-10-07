@@ -5,7 +5,9 @@ namespace blkhurst::shaders {
 
 inline const std::string colorspace_fragment = R"GLSL(
 
-uniform int uOutputColorSpace;
+// *Depends on 
+//  uniforms_common
+//    uniform int uOutputColorSpace
 
 // OutputColorSpace Enum
 const int kOutputColorSpace_Linear = 0;

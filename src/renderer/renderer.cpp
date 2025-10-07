@@ -69,7 +69,7 @@ void Renderer::render(Object3D& root, Camera& camera) {
     clear();
   }
 
-  applyPerFrameUniforms(camera);
+  applyPerFrameUniforms();
 
   // Build Node List
   std::vector<Mesh*> meshList;
@@ -194,7 +194,7 @@ void Renderer::renderMesh(const Mesh& mesh, const Camera& camera) {
   material->useProgram();
 
   // Per-draw Uniforms
-  applyPerDrawUniforms(mesh, camera);
+  applyPerDrawUniforms(mesh, *material);
 
   // Bind VertexArray & Draw
   geometry->vertexArray().bind();
@@ -240,33 +240,22 @@ void Renderer::applyPipeline(const PipelineState& state, bool wireframe) {
   }
 }
 
-void Renderer::applyPerFrameUniforms(const Camera& camera) {
-  // TODO: Update/bind UBO/SSBO if needsUpdate. Possible "global" textures (shadow, env, etc).
+void Renderer::applyPerFrameUniforms() {
+  frameUniforms_.uToneMappingExposure = toneMappingExposure_;
+  frameUniforms_.uToneMappingMode = static_cast<int>(toneMappingMode_);
+  frameUniforms_.uOutputColorSpace = static_cast<int>(outputColorSpace_);
+
+  frameUbo_.update(frameUniforms_);
+  frameUbo_.bind(); // TODO: May need to bind per-draw if user overrides
 }
 
-void Renderer::applyPerDrawUniforms(const Mesh& mesh, const Camera& camera) const {
-  auto material = mesh.material();
-
-  // Per-frame Uniforms
-  // TODO: Moveto applyPerFrameUniforms with UBO
-  material->setUniform("uTime", frameUniforms_.uTime);
-  material->setUniform("uDelta", frameUniforms_.uDelta);
-  material->setUniform("uMouse", frameUniforms_.uMouse);
-  material->setUniform("uResolution", frameUniforms_.uResolution);
-  material->setUniform("uView", frameUniforms_.uView);
-  material->setUniform("uProjection", frameUniforms_.uProjection);
-  material->setUniform("uCameraPos", frameUniforms_.uCameraPos);
-  material->setUniform("uIsOrthographic", frameUniforms_.uIsOrthographic);
-  material->setUniform("uToneMappingExposure", toneMappingExposure_);
-  material->setUniform("uToneMappingMode", static_cast<int>(toneMappingMode_));
-  material->setUniform("uOutputColorSpace", static_cast<int>(outputColorSpace_));
-
+void Renderer::applyPerDrawUniforms(const Mesh& mesh, Material& material) const {
   // Per-draw Uniforms
-  material->setUniform("uModel", mesh.worldMatrix());
+  material.setUniform("uModel", mesh.worldMatrix());
 
   // Apply Uniforms & Resources
-  material->applyEnvironment(environmentBundle_);
-  material->applyUniformsAndResources(); // Apply last - flushes pending setUniform calls
+  material.applyEnvironment(environmentBundle_);
+  material.applyUniformsAndResources(); // Apply last - flushes pending setUniform calls
 }
 
 void Renderer::drawGeometry(const Geometry& geom, int instanceCount) {

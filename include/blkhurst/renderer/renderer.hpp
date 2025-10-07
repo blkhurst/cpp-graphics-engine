@@ -3,6 +3,7 @@
 #include <blkhurst/cameras/camera.hpp>
 #include <blkhurst/engine/config/defaults.hpp>
 #include <blkhurst/geometry/geometry.hpp>
+#include <blkhurst/graphics/ubo.hpp>
 #include <blkhurst/ibl/pmrem_generator.hpp>
 #include <blkhurst/materials/pipeline_state.hpp>
 #include <blkhurst/objects/mesh.hpp>
@@ -53,6 +54,7 @@ public:
 
 private:
   FrameUniforms frameUniforms_{};
+  UBO frameUbo_{static_cast<unsigned>(UniformBinding::Frame)};
 
   bool autoClear_ = true;
   bool scissorTestEnabled_ = false;
@@ -67,8 +69,8 @@ private:
 
   void renderMesh(const Mesh& mesh, const Camera& camera);
   static void applyPipeline(const PipelineState& state, bool wireframe);
-  void applyPerFrameUniforms(const Camera& camera);
-  void applyPerDrawUniforms(const Mesh& mesh, const Camera& camera) const;
+  void applyPerFrameUniforms();
+  void applyPerDrawUniforms(const Mesh& mesh, Material& material) const;
   static void drawGeometry(const Geometry& geom, int instanceCount);
 
   std::unique_ptr<Mesh> skyboxMesh_;
