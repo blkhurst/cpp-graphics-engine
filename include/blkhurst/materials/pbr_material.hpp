@@ -97,6 +97,7 @@ protected:
 
 private:
   PbrMaterialDesc desc_;
+  bool useIBL_ = false; // Track IBL state to avoid redundant setDefine calls
 };
 
 } // namespace blkhurst

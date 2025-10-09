@@ -189,6 +189,13 @@ void Renderer::renderMesh(const Mesh& mesh, const Camera& camera) {
     return;
   }
 
+  // TODO: Note:
+  // useProgram then applyPerDrawUniforms
+  //  - If define changes within applyPerDrawUniforms (USE_IBL), wont be picked up until next frame
+  // applyPerDrawUniforms then useProgram
+  //  - DSA allows this, but first frame after a rebuild, uniforms are lost (set on old programID)
+  // Order should be setDefines, useProgram (Rebuild), applyUniforms
+
   // Apply PipelineState and use shader Program.
   applyPipeline(material->pipeline(), mesh.wireframe());
   material->useProgram();

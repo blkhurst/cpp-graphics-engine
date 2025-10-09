@@ -52,8 +52,6 @@ public:
 
   void setDefine(const std::string& def, bool enabled);
   void setDefines(std::vector<std::string> defs);
-  void linkUniformBlock(const std::string& name, unsigned binding) const;
-  void linkStorageBlock(const std::string& name, unsigned binding) const;
 
 protected:
   void applyUniforms() const;

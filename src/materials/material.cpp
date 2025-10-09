@@ -86,16 +86,6 @@ void Material::setDefines(std::vector<std::string> defs) {
     program_->setDefines(std::move(defs));
   }
 }
-void Material::linkUniformBlock(const std::string& name, unsigned binding) const {
-  if (program_) {
-    program_->linkUniformBlock(name, binding);
-  }
-}
-void Material::linkStorageBlock(const std::string& name, unsigned binding) const {
-  if (program_) {
-    program_->linkStorageBlock(name, binding);
-  }
-}
 
 void Material::applyUniforms() const {
   for (const auto& [name, val] : uniforms_) {

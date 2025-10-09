@@ -68,6 +68,7 @@ constexpr const char* DisplacementMap = "uDisplacementMap";
 
 namespace defines {
 constexpr const char* UseEnvMap = "USE_ENVMAP";
+constexpr const char* UseIBL = "USE_IBL";
 constexpr const char* UseShadowMap = "USE_SHADOWMAP";
 constexpr const char* UseColorMap = "USE_COLORMAP";
 constexpr const char* UseAlphaMap = "USE_ALPHAMAP";

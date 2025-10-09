@@ -15,22 +15,16 @@ uniform sampler2D uBrdfLUT;
 uniform samplerCube uIrradianceMap;
 uniform samplerCube uPrefilterMap;
 
-uniform bool uUseIBL;
 uniform mat3 uEnvRotation;
 uniform float uEnvIntensity;
 
 vec3 getIBLIrradiance(vec3 N) {
-  if (!uUseIBL)
-    return vec3(0.0);
   vec3 dir = getCubeSampleDir(N, uEnvRotation);
   vec3 irradiance = textureLod(uIrradianceMap, dir, 0.0).rgb; // Force LOD 0
   return irradiance * uEnvIntensity;
 }
 
 vec3 getIBLRadiance(vec3 R, float roughness) {
-  if (!uUseIBL)
-    return vec3(0.0);
-
   vec3 dir = getCubeSampleDir(R, uEnvRotation);
 
   // Compute LOD for prefiltered environment map (LOD_MIN 4 16x16)
@@ -42,6 +36,14 @@ vec3 getIBLRadiance(vec3 R, float roughness) {
 }
 
 vec3 computeIBL(vec3 N, vec3 V, vec3 R, vec3 F0, vec3 albedo, float metalness, float roughness) {
+  //* Note:
+  // Early exits via uniforms/variables do not prevent NaN/disappearance when sampler unbound.
+  // Fixes include guarding texture/textureLod with ifdef,
+  // or ifndef early return (compiler optimises null code if guaranteed to return early)
+  #ifndef USE_IBL
+    return vec3(0.0);
+  #endif
+
   float NdotV = max(dot(N, V), 0.0);
 
   vec3 F = fresnelSchlickRoughness(NdotV, F0, roughness);

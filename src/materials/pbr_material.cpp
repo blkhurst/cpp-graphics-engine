@@ -185,7 +185,11 @@ void PbrMaterial::applyEnvironment(const EnvironmentBundle& env) {
   auto envIntensity = desc_.envIntensity != 1.0F ? desc_.envIntensity : env.intensity;
 
   const bool valid = (brdf && irradiance && prefilter);
-  setUniform("uUseIBL", valid ? 1 : 0);
+  if (useIBL_ != valid) {
+    useIBL_ = valid;
+    setDefine(defines::UseIBL, valid);
+  }
+
   setUniform(uniforms::EnvRotation, envRotation);
   setUniform(uniforms::EnvIntensity, envIntensity);
 

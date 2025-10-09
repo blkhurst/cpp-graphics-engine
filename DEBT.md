@@ -68,9 +68,10 @@
 
 ## Engine/Renderer
 
-- [ ] use `vec4` for `clearColor`
+- [x] use `vec4` for `clearColor`
 - [ ] Clarify that `uResolution` represents `windowFramebufferSize`, not `renderTargetFramebufferSize`, or `viewportSize`
 - [ ] Add callbacks & RootState for `windowSize` and `contentScale` (in addition to `windowFramebufferSize`)
+- [ ] Favor Renderer owned `ProgramCache` that uses programs via a hashmap instead of similar materials potentially owning multiple of the same program.
 
 ## Controllers
 

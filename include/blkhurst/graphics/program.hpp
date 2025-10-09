@@ -53,10 +53,6 @@ public:
   void setUniform(std::string_view name, const glm::mat4& value);
   void setSampler(std::string_view name, unsigned textureID, int unit);
 
-  // UBO / SSBO block binding points
-  void linkUniformBlock(std::string_view blockName, unsigned bindingPoint) const;
-  void linkStorageBlock(std::string_view blockName, unsigned bindingPoint) const;
-
   unsigned id() const {
     return id_;
   }

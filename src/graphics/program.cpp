@@ -95,57 +95,36 @@ int Program::uniformLocation(std::string_view name) const {
 }
 
 void Program::setUniform(std::string_view name, int value) {
-  glUniform1i(uniformLocation(name), value);
+  glProgramUniform1i(id_, uniformLocation(name), value);
 }
 
 void Program::setUniform(std::string_view name, float value) {
-  glUniform1f(uniformLocation(name), value);
+  glProgramUniform1f(id_, uniformLocation(name), value);
 }
 
 void Program::setUniform(std::string_view name, const glm::vec2& value) {
-  glUniform2fv(uniformLocation(name), 1, glm::value_ptr(value));
+  glProgramUniform2fv(id_, uniformLocation(name), 1, glm::value_ptr(value));
 }
 
 void Program::setUniform(std::string_view name, const glm::vec3& value) {
-  glUniform3fv(uniformLocation(name), 1, glm::value_ptr(value));
+  glProgramUniform3fv(id_, uniformLocation(name), 1, glm::value_ptr(value));
 }
 
 void Program::setUniform(std::string_view name, const glm::vec4& value) {
-  glUniform4fv(uniformLocation(name), 1, glm::value_ptr(value));
+  glProgramUniform4fv(id_, uniformLocation(name), 1, glm::value_ptr(value));
 }
 
 void Program::setUniform(std::string_view name, const glm::mat2& value) {
   // No need to transpose when using GLM; column-major by default
-  glUniformMatrix2fv(uniformLocation(name), 1, GL_FALSE, glm::value_ptr(value));
+  glProgramUniformMatrix2fv(id_, uniformLocation(name), 1, GL_FALSE, glm::value_ptr(value));
 }
 
 void Program::setUniform(std::string_view name, const glm::mat3& value) {
-  glUniformMatrix3fv(uniformLocation(name), 1, GL_FALSE, glm::value_ptr(value));
+  glProgramUniformMatrix3fv(id_, uniformLocation(name), 1, GL_FALSE, glm::value_ptr(value));
 }
 
 void Program::setUniform(std::string_view name, const glm::mat4& value) {
-  glUniformMatrix4fv(uniformLocation(name), 1, GL_FALSE, glm::value_ptr(value));
-}
-
-void Program::linkUniformBlock(std::string_view blockName, unsigned bindingPoint) const {
-  unsigned idx = glGetUniformBlockIndex(id_, std::string(blockName).c_str());
-  if (idx != GL_INVALID_INDEX) {
-    glUniformBlockBinding(id_, idx, bindingPoint);
-    spdlog::debug("Program({}) link UBO '{}' -> binding={}", id_, blockName, bindingPoint);
-  } else {
-    spdlog::warn("Program({}) UBO not found: '{}'", id_, blockName);
-  }
-}
-
-void Program::linkStorageBlock(std::string_view blockName, unsigned bindingPoint) const {
-  unsigned idx =
-      glGetProgramResourceIndex(id_, GL_SHADER_STORAGE_BLOCK, std::string(blockName).c_str());
-  if (idx != GL_INVALID_INDEX) {
-    glShaderStorageBlockBinding(id_, idx, bindingPoint);
-    spdlog::debug("Program({}) link SSBO '{}' -> binding={}", id_, blockName, bindingPoint);
-  } else {
-    spdlog::warn("Program({}) SSBO not found: '{}'", id_, blockName);
-  }
+  glProgramUniformMatrix4fv(id_, uniformLocation(name), 1, GL_FALSE, glm::value_ptr(value));
 }
 
 unsigned Program::compileShader(GLenum type, std::string_view src) {
