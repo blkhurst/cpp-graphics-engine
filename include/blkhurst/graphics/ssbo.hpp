@@ -23,7 +23,7 @@ public:
                   "SSBO::update requires trivially-copyable (std430) type");
     setData(&pod, sizeof(T));
   }
-  template <class T> void updateArray(std::span<const T> data) {
+  template <class T> void updateArray(const std::span<T> data) {
     static_assert(std::is_trivially_copyable_v<T>,
                   "SSBO::updateArray requires trivially-copyable (std430) type");
     setData(data.data(), data.size_bytes());

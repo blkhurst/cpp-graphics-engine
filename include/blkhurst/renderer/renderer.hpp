@@ -3,6 +3,7 @@
 #include <blkhurst/cameras/camera.hpp>
 #include <blkhurst/engine/config/defaults.hpp>
 #include <blkhurst/geometry/geometry.hpp>
+#include <blkhurst/graphics/ssbo.hpp>
 #include <blkhurst/graphics/ubo.hpp>
 #include <blkhurst/ibl/pmrem_generator.hpp>
 #include <blkhurst/materials/pipeline_state.hpp>
@@ -17,6 +18,21 @@ namespace blkhurst {
 
 enum class ToneMappingMode : int { None = 0, Linear = 1, Neutral = 2, ACES = 3 };
 enum class OutputColorSpace : int { Linear = 0, SRGB = 1 };
+
+struct FrameContext {
+  std::vector<Mesh*> meshList; // opaqueQueue, transparentQueue
+
+  LightDataGPU lightData{};
+  std::vector<DirectionalLightGPU> directionalLights;
+  std::vector<PointLightGPU> pointLights;
+};
+
+struct GpuBlocks {
+  UBO frame{uniform_bindings::Frame};
+  UBO lightData{uniform_bindings::LightData};
+  SSBO directionalLights{uniform_bindings::DirectionalLights};
+  SSBO pointLights{uniform_bindings::PointLights};
+};
 
 class Renderer {
 public:
@@ -54,7 +70,7 @@ public:
 
 private:
   FrameUniforms frameUniforms_{};
-  UBO frameUbo_{static_cast<unsigned>(UniformBinding::Frame)};
+  GpuBlocks gpuBlocks_{};
 
   bool autoClear_ = true;
   bool scissorTestEnabled_ = false;
@@ -67,9 +83,10 @@ private:
   ToneMappingMode toneMappingMode_ = ToneMappingMode::None;
   OutputColorSpace outputColorSpace_ = OutputColorSpace::SRGB;
 
+  static FrameContext collectRenderables(Object3D& root);
   void renderMesh(const Mesh& mesh, const Camera& camera);
   static void applyPipeline(const PipelineState& state, bool wireframe);
-  void applyPerFrameUniforms();
+  void applyPerFrameUniforms(FrameContext frameContext);
   void applyPerDrawUniforms(const Mesh& mesh, Material& material) const;
   static void drawGeometry(const Geometry& geom, int instanceCount);
 

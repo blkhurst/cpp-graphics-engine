@@ -1,4 +1,8 @@
 #include <blkhurst/geometry/box_geometry.hpp>
+#include <blkhurst/lights/ambient_light.hpp>
+#include <blkhurst/lights/directional_light.hpp>
+#include <blkhurst/lights/light.hpp>
+#include <blkhurst/lights/point_light.hpp>
 #include <blkhurst/materials/material.hpp>
 #include <blkhurst/materials/skybox_material.hpp>
 #include <blkhurst/renderer/cube_render_target.hpp>
@@ -69,29 +73,17 @@ void Renderer::render(Object3D& root, Camera& camera) {
     clear();
   }
 
-  applyPerFrameUniforms();
+  FrameContext frameContext;
+  frameContext = collectRenderables(root);
 
-  // Build Node List
-  std::vector<Mesh*> meshList;
-  root.traverse([&](Object3D& node) {
-    if (!node.visible()) {
-      return;
-    }
-    if (node.kind() == NodeKind::Mesh) {
-      auto* mesh = dynamic_cast<Mesh*>(&node);
-      meshList.push_back(mesh);
-    }
-    if (node.kind() == NodeKind::Light) {
-      // ...
-    }
-  });
+  applyPerFrameUniforms(frameContext);
 
   if (auto* scene = dynamic_cast<Scene*>(&root)) {
     setEnvironment(*scene);
     renderBackground(*scene, camera);
   }
 
-  for (auto* mesh : meshList) {
+  for (auto* mesh : frameContext.meshList) {
     renderMesh(*mesh, camera);
   }
 }
@@ -181,6 +173,48 @@ void Renderer::resetState() {
   spdlog::debug("Renderer state reset");
 }
 
+FrameContext Renderer::collectRenderables(Object3D& root) {
+  // FrameContext must be locally owned to prevent renderer clearing queue in nested renders.
+  FrameContext context;
+
+  root.traverse([&](Object3D& node) {
+    if (!node.visible()) {
+      return;
+    }
+
+    if (node.kind() == NodeKind::Mesh) {
+      auto* mesh = dynamic_cast<Mesh*>(&node);
+      context.meshList.push_back(mesh);
+    }
+
+    if (node.kind() == NodeKind::Light) {
+      auto* light = dynamic_cast<Light*>(&node);
+
+      if (light->type() == LightType::Ambient) {
+        context.lightData.ambientColor += light->color();
+        context.lightData.ambientIntensity += light->intensity();
+      }
+
+      if (light->type() == LightType::Directional) {
+        auto* dirLight = dynamic_cast<DirectionalLight*>(light);
+        context.directionalLights.push_back(
+            {dirLight->color(), dirLight->intensity(), dirLight->directionToTarget()});
+        context.lightData.directionalCount++;
+      }
+
+      if (light->type() == LightType::Point) {
+        auto* pointLight = dynamic_cast<PointLight*>(light);
+        context.pointLights.push_back({pointLight->color(), pointLight->intensity(),
+                                       pointLight->worldPosition(), pointLight->decay(),
+                                       pointLight->distance()});
+        context.lightData.pointCount++;
+      }
+    }
+  });
+
+  return context;
+}
+
 void Renderer::renderMesh(const Mesh& mesh, const Camera& camera) {
   const auto geometry = mesh.geometry();
   const auto material = mesh.material();
@@ -247,13 +281,26 @@ void Renderer::applyPipeline(const PipelineState& state, bool wireframe) {
   }
 }
 
-void Renderer::applyPerFrameUniforms() {
+void Renderer::applyPerFrameUniforms(FrameContext frameContext) {
   frameUniforms_.uToneMappingExposure = toneMappingExposure_;
   frameUniforms_.uToneMappingMode = static_cast<int>(toneMappingMode_);
   frameUniforms_.uOutputColorSpace = static_cast<int>(outputColorSpace_);
 
-  frameUbo_.update(frameUniforms_);
-  frameUbo_.bind(); // TODO: May need to bind per-draw if user overrides
+  // Frame Uniforms
+  gpuBlocks_.frame.update(frameUniforms_);
+  gpuBlocks_.frame.bind();
+
+  // Light Data // TODO: lightsDirty_ flag
+  gpuBlocks_.lightData.update(frameContext.lightData);
+  gpuBlocks_.lightData.bind();
+
+  // Directional Lights
+  gpuBlocks_.directionalLights.updateArray(std::span{frameContext.directionalLights});
+  gpuBlocks_.directionalLights.bind();
+
+  // Point Lights
+  gpuBlocks_.pointLights.updateArray(std::span{frameContext.pointLights});
+  gpuBlocks_.pointLights.bind();
 }
 
 void Renderer::applyPerDrawUniforms(const Mesh& mesh, Material& material) const {

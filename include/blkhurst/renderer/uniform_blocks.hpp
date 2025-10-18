@@ -7,12 +7,14 @@ namespace blkhurst {
 // SSBOs use std430, but keep CPU 16-byte Struct Alignment Bytes for simplicity
 constexpr int kCpuAlignment = 16;
 
-enum class UniformBinding {
-  Frame = 0,    // Per-frame UBO
-  Draw = 1,     // Per-draw UBO (Unused but kept for prosperity)
-  Lights = 2,   // Lights SSBO
-  Instance = 3, // Instance SSBO
-};
+namespace uniform_bindings {
+constexpr static int Frame = 0;             // UBO
+constexpr static int Draw = 1;              // UBO (optional since per-draw)
+constexpr static int LightData = 2;         // UBO
+constexpr static int DirectionalLights = 3; // SSBO
+constexpr static int PointLights = 4;       // SSBO
+constexpr static int Instance = 5;          // SSBO
+}; // namespace uniform_bindings
 
 struct alignas(kCpuAlignment) FrameUniforms {
   float uTime;      // 4
@@ -38,8 +40,35 @@ struct alignas(kCpuAlignment) FrameUniforms {
 
 struct alignas(kCpuAlignment) DrawUniforms {
   glm::mat4 uModel;
-  glm::mat4 uView;       // Temporary until FrameUniforms implements UBO
-  glm::mat4 uProjection; // Temporary until FrameUniforms implements UBO
+};
+
+struct alignas(kCpuAlignment) LightDataGPU {
+  glm::vec3 ambientColor; // 12
+  float ambientIntensity; // 4
+
+  int directionalCount; // 4
+  int pointCount;       // 4
+  int pad0_;            // 4
+  int pad1_;            // 4
+};
+
+struct alignas(kCpuAlignment) DirectionalLightGPU {
+  glm::vec3 color; // 12
+  float intensity; // 4
+
+  glm::vec3 worldDirection; // 12 (Light to Target)
+  float pad0_;              // 4
+};
+
+struct alignas(kCpuAlignment) PointLightGPU {
+  glm::vec3 color; // 12
+  float intensity; // 4
+
+  glm::vec3 worldPosition; // 12
+  float decay;             // 4
+
+  float distance;  // 4
+  glm::vec3 pad0_; // 12
 };
 
 // Optionally, group in 16-byte chunks.

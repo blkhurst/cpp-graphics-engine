@@ -8,6 +8,8 @@ inline const std::string ibl_fragment = R"GLSL(
 // *Depends on:
 //  common
 //    getCubeSampleDir
+//  lights_common
+//    computeSpecularOcclusion
 //  pbr_fragment
 //    fresnelSchlickRoughness
 
@@ -35,7 +37,7 @@ vec3 getIBLRadiance(vec3 R, float roughness) {
   return prefilteredColor * uEnvIntensity;
 }
 
-vec3 computeIBL(vec3 N, vec3 V, vec3 R, vec3 F0, vec3 albedo, float metalness, float roughness) {
+vec3 computeIBL(vec3 N, vec3 V, vec3 R, vec3 F0, vec3 albedo, float metalness, float roughness, float ao) {
   //* Note:
   // Early exits via uniforms/variables do not prevent NaN/disappearance when sampler unbound.
   // Fixes include guarding texture/textureLod with ifdef,
@@ -59,6 +61,11 @@ vec3 computeIBL(vec3 N, vec3 V, vec3 R, vec3 F0, vec3 albedo, float metalness, f
   vec3 prefilteredColor = getIBLRadiance(R, roughness);
   vec2 brdf = texture(uBrdfLUT, vec2(NdotV, roughness)).rg;
   vec3 specular = prefilteredColor * (F * brdf.x + brdf.y);
+
+  // Added Ambient and Specular Occlusion
+  float specOcclusion = computeSpecularOcclusion( NdotV, ao, roughness );
+  diffuse *= ao;
+  specular *= specOcclusion;
 
   vec3 ambient = (kD * diffuse + specular);
   return ambient;

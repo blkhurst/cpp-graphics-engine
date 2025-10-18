@@ -16,8 +16,10 @@
 #include <blkhurst/shaders/chunks/ibl_fragment.glsl.hpp>
 #include <blkhurst/shaders/chunks/io_fragment.glsl.hpp>
 #include <blkhurst/shaders/chunks/io_vertex.glsl.hpp>
+#include <blkhurst/shaders/chunks/lights_common.glsl.hpp>
 #include <blkhurst/shaders/chunks/normal_fragment.glsl.hpp>
 #include <blkhurst/shaders/chunks/pbr_common.glsl.hpp>
+#include <blkhurst/shaders/chunks/pbr_fragment.glsl.hpp>
 #include <blkhurst/shaders/chunks/tonemapping_fragment.glsl.hpp>
 #include <blkhurst/shaders/chunks/uniform_common.hpp>
 
@@ -77,6 +79,9 @@ void ShaderRegistry::registerBuiltinShaders() {
   // Fullscreen
   ShaderRegistry::registerSource("fullscreen_vert", shaders::fullscreen_vert);
 
+  // Lighting
+  ShaderRegistry::registerSource("lights_common", shaders::lights_common);
+
   // IBL
   ShaderRegistry::registerSource("pbr_common", shaders::pbr_common);
   ShaderRegistry::registerSource("brdf_lut_frag", shaders::brdf_lut_frag);
@@ -85,6 +90,7 @@ void ShaderRegistry::registerBuiltinShaders() {
   ShaderRegistry::registerSource("ibl_fragment", shaders::ibl_fragment);
 
   // PBRMaterial
+  ShaderRegistry::registerSource("pbr_fragment", shaders::pbr_fragment);
   ShaderRegistry::registerSource("pbr_vert", shaders::pbr_vert);
   ShaderRegistry::registerSource("pbr_frag", shaders::pbr_frag);
 }

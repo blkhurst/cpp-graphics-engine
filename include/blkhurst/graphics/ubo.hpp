@@ -24,7 +24,7 @@ public:
                   "UBO::update requires trivially-copyable (std140 padded) type");
     setData(&pod, sizeof(T));
   }
-  template <class T> void updateArray(std::span<const T> data) {
+  template <class T> void updateArray(const std::span<T> data) {
     static_assert(std::is_trivially_copyable_v<T>,
                   "UBO::updateArray requires trivially-copyable (std140 padded) type");
     setData(data.data(), data.size_bytes());
