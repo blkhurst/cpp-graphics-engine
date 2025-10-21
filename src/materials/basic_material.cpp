@@ -30,6 +30,10 @@ BasicMaterial::BasicMaterial(const BasicMaterialDesc& desc)
                 program()->uuidString());
 }
 
+const BasicMaterialDesc& BasicMaterial::desc() const {
+  return desc_;
+}
+
 void BasicMaterial::setColor(const glm::vec3& rgb) {
   desc_.color = rgb;
 }

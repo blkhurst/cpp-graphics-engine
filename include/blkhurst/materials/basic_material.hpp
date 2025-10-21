@@ -42,6 +42,8 @@ public:
     return std::make_shared<BasicMaterial>(desc);
   }
 
+  [[nodiscard]] const BasicMaterialDesc& desc() const;
+
   void setColor(const glm::vec3& rgb);
   void setOpacity(float alpha);
   void setAlphaTest(float threshold);

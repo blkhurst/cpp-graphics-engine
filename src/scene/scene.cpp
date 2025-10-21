@@ -1,4 +1,5 @@
 #include "blkhurst/textures/cube_texture.hpp"
+#include <blkhurst/objects/object3d.hpp>
 #include <blkhurst/scene/scene.hpp>
 
 #include <spdlog/spdlog.h>
@@ -6,7 +7,8 @@
 
 namespace blkhurst {
 
-Scene::Scene() {
+Scene::Scene()
+    : Object3D(NodeType::Object) {
   spdlog::trace("Scene({}) constructed", uuidString());
 }
 

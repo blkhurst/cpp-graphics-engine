@@ -1,11 +1,13 @@
 #include <algorithm>
 #include <blkhurst/objects/mesh.hpp>
+#include <blkhurst/objects/object3d.hpp>
 #include <spdlog/spdlog.h>
 
 namespace blkhurst {
 
 Mesh::Mesh(std::shared_ptr<Geometry> geometry, std::shared_ptr<Material> material)
-    : geometry_(std::move(geometry)),
+    : Object3D(NodeType::Mesh),
+      geometry_(std::move(geometry)),
       material_(std::move(material)) {
   if (!geometry_ || !material_) {
     spdlog::error("Mesh requires non-null Geometry and Material.");

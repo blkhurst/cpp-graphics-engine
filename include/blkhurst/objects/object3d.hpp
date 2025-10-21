@@ -11,11 +11,11 @@
 
 namespace blkhurst {
 
-enum class NodeKind { Object, Mesh, Lines, Points, Light, Camera };
+enum class NodeType { Object, Group, Mesh, Lines, Points, Light, Camera };
 
 class Object3D : public Identifiable {
 public:
-  Object3D() = default;
+  Object3D(NodeType nodeType);
   virtual ~Object3D() = default;
 
   Object3D(const Object3D&) = delete;
@@ -34,7 +34,7 @@ public:
 
   virtual void onUpdate(const RootState& /*state*/);
 
-  virtual NodeKind kind() const;
+  NodeType type() const;
   bool visible() const;
 
   // Getters
@@ -81,6 +81,7 @@ private:
   Object3D* parent_ = nullptr;
   std::vector<std::unique_ptr<Object3D>> children_;
 
+  NodeType type_ = NodeType::Object;
   bool visible_ = true;
 
   // TRS

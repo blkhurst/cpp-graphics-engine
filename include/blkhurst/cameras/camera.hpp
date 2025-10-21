@@ -7,17 +7,13 @@ namespace blkhurst {
 
 class Camera : public Object3D {
 public:
-  Camera() = default;
+  Camera();
   ~Camera() override = default;
 
   Camera(const Camera&) = delete;
   Camera& operator=(const Camera&) = delete;
   Camera(Camera&&) = delete;
   Camera& operator=(Camera&&) = delete;
-
-  NodeKind kind() const override {
-    return NodeKind::Camera;
-  }
 
   void onUpdate(const RootState& state) override {
   }

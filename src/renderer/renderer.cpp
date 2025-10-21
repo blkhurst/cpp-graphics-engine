@@ -183,12 +183,12 @@ FrameContext Renderer::collectRenderables(Object3D& root) {
       return;
     }
 
-    if (node.kind() == NodeKind::Mesh) {
+    if (node.type() == NodeType::Mesh) {
       auto* mesh = dynamic_cast<Mesh*>(&node);
       context.meshList.push_back(mesh);
     }
 
-    if (node.kind() == NodeKind::Light) {
+    if (node.type() == NodeType::Light) {
       auto* light = dynamic_cast<Light*>(&node);
 
       if (light->type() == LightType::Ambient) {

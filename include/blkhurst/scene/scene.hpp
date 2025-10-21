@@ -50,10 +50,6 @@ public:
   Scene(Scene&&) = delete;
   Scene& operator=(Scene&&) = delete;
 
-  NodeKind kind() const override {
-    return NodeKind::Object;
-  }
-
   void onUpdate(const RootState& /*state*/) override {
   }
 

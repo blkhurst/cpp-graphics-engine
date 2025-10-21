@@ -5,6 +5,10 @@
 
 namespace blkhurst {
 
+Camera::Camera()
+    : Object3D(NodeType::Camera) {
+}
+
 bool Camera::isOrthographic() const {
   return false;
 }

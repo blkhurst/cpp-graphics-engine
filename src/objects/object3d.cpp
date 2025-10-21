@@ -21,8 +21,11 @@ glm::quat extractRotationQ(const glm::mat4& matrix) {
 
 namespace blkhurst {
 
+Object3D::Object3D(NodeType nodeType)
+    : type_(nodeType) {
+}
+
 void Object3D::onUpdate(const RootState& /*state*/) {
-  // Default
 }
 
 Object3D* Object3D::parent() const {
@@ -62,8 +65,8 @@ bool Object3D::removeFromParent() {
   return (parent_ != nullptr) ? parent_->removeChild(this) : false;
 }
 
-NodeKind Object3D::kind() const {
-  return NodeKind::Object;
+NodeType Object3D::type() const {
+  return type_;
 }
 
 bool Object3D::visible() const {
@@ -196,7 +199,7 @@ void Object3D::lookAt(const glm::vec3& targetWorld) {
   glm::vec3 upVec = {0, 1, 0};
   glm::vec3 worldPos = worldPosition();
 
-  bool isLightOrCamera = (kind() == NodeKind::Camera || kind() == NodeKind::Light);
+  bool isLightOrCamera = (type() == NodeType::Camera || type() == NodeType::Light);
 
   // View Matrix - Eye, Center, Up
   glm::mat4 viewMat = isLightOrCamera ? glm::lookAt(worldPos, targetWorld, upVec)
@@ -249,7 +252,7 @@ void Object3D::calculateMatrices() const {
 
 // Deep copy
 std::unique_ptr<Object3D> Object3D::clone(bool recursive) const {
-  auto copy = std::make_unique<Object3D>();
+  auto copy = std::make_unique<Object3D>(type_);
   // copy->name_ = name_;
   copy->setName(name());
   copy->visible_ = visible_;

@@ -15,11 +15,6 @@ public:
   Light(Light&&) = delete;
   Light& operator=(Light&&) = delete;
 
-  // Override Object3D kind
-  NodeKind kind() const override {
-    return NodeKind::Light;
-  }
-
   [[nodiscard]] LightType type() const;
   [[nodiscard]] const glm::vec3& color() const;
   [[nodiscard]] float intensity() const;

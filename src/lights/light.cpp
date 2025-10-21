@@ -1,9 +1,11 @@
 #include <blkhurst/lights/light.hpp>
+#include <blkhurst/objects/object3d.hpp>
 
 namespace blkhurst {
 
 Light::Light(LightType type)
-    : type_(type) {
+    : Object3D(NodeType::Light),
+      type_(type) {
 }
 
 LightType Light::type() const {

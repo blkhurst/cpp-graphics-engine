@@ -23,10 +23,6 @@ public:
     return std::make_unique<Mesh>(std::move(geometry), std::move(material));
   }
 
-  NodeKind kind() const override {
-    return NodeKind::Mesh;
-  }
-
   [[nodiscard]] std::shared_ptr<Geometry> geometry() const;
   [[nodiscard]] std::shared_ptr<Material> material() const;
   [[nodiscard]] int instanceCount() const;
