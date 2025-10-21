@@ -6,7 +6,7 @@
 namespace blkhurst {
 
 OrthoCamera::OrthoCamera() {
-  spdlog::trace("OrthoCamera({}) constructed (defaults)", uuid());
+  spdlog::trace("OrthoCamera({}) constructed (defaults)", uuidString());
 }
 
 OrthoCamera::OrthoCamera(float left, float right, float bottom, float top, float nearZ, float farZ)
@@ -18,11 +18,11 @@ OrthoCamera::OrthoCamera(float left, float right, float bottom, float top, float
       farZ_(farZ) {
   spdlog::trace(
       "OrthoCamera({}) constructed lrtb=({:.2f},{:.2f},{:.2f},{:.2f}) near={:.2f} far={:.2f}",
-      uuid(), left, right, bottom, top, nearZ, farZ);
+      uuidString(), left, right, bottom, top, nearZ, farZ);
 }
 
 OrthoCamera::~OrthoCamera() {
-  spdlog::trace("OrthoCamera({}) destroyed", uuid());
+  spdlog::trace("OrthoCamera({}) destroyed", uuidString());
 }
 
 std::shared_ptr<OrthoCamera> OrthoCamera::create() {
@@ -52,15 +52,15 @@ void OrthoCamera::setBounds(float left, float right, float bottom, float top) {
   bottom_ = bottom;
   top_ = top;
   projNeedsUpdate_ = true;
-  spdlog::trace("OrthoCamera setBounds lrtb=({:.2f},{:.2f},{:.2f},{:.2f})", left, right, bottom,
-                top);
+  spdlog::trace("OrthoCamera({}) setBounds lrtb=({:.2f},{:.2f},{:.2f},{:.2f})", uuidString(), left,
+                right, bottom, top);
 }
 
 void OrthoCamera::setNearFar(float nearZ, float farZ) {
   nearZ_ = nearZ;
   farZ_ = farZ;
   projNeedsUpdate_ = true;
-  spdlog::trace("OrthoCamera setNearFar near={:.2f} far={:.2f}", nearZ, farZ);
+  spdlog::trace("OrthoCamera({}) setNearFar near={:.2f} far={:.2f}", uuidString(), nearZ, farZ);
 }
 
 std::unique_ptr<OrthoCamera> OrthoCamera::clone(bool recursive) {

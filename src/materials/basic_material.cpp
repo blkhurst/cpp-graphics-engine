@@ -26,7 +26,8 @@ BasicMaterial::BasicMaterial(const BasicMaterialDesc& desc)
   setVertexColors(desc.vertexColors);
 
   setUvTransform(desc.uvTransform_);
-  spdlog::trace("BasicMaterial created with Program({})", program()->id());
+  spdlog::trace("BasicMaterial({}) created with Program({})", uuidString(),
+                program()->uuidString());
 }
 
 void BasicMaterial::setColor(const glm::vec3& rgb) {

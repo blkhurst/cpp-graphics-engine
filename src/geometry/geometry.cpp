@@ -12,11 +12,11 @@ constexpr bool kDynamic = false;
 namespace blkhurst {
 
 Geometry::Geometry() {
-  spdlog::trace("Geometry constructed");
+  spdlog::trace("Geometry({}) constructed", uuidString());
 }
 
 Geometry::~Geometry() {
-  spdlog::trace("Geometry destroyed");
+  spdlog::trace("Geometry({}) destroyed", uuidString());
 }
 
 std::shared_ptr<Geometry> Geometry::create() {
@@ -55,20 +55,22 @@ void Geometry::setIndex(std::span<const unsigned> indices) {
 
 void Geometry::setPrimitive(PrimitiveMode mode) {
   primitive_ = mode;
-  spdlog::trace("Geometry setPrimitive {}", static_cast<int>(mode));
+  spdlog::trace("Geometry({}) setPrimitive {}", uuidString(), static_cast<int>(mode));
 }
 
 // NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
 void Geometry::setDrawRange(int start, int count) {
   drawRange_.start = std::max(0, start);
   drawRange_.count = std::max(0, count);
-  spdlog::trace("Geometry setDrawRange start={} count={}", drawRange_.start, drawRange_.count);
+  spdlog::trace("Geometry({}) setDrawRange start={} count={}", uuidString(), drawRange_.start,
+                drawRange_.count);
 }
 
 void Geometry::clearDrawRange() {
   drawRange_.start = 0;
   drawRange_.count = isIndexed_ ? indexCount_ : vertexCount_;
-  spdlog::trace("Geometry clearDrawRange -> start={} count={}", drawRange_.start, drawRange_.count);
+  spdlog::trace("Geometry({}) clearDrawRange -> start={} count={}", uuidString(), drawRange_.start,
+                drawRange_.count);
 }
 
 PrimitiveMode Geometry::primitive() const {

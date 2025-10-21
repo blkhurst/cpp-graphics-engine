@@ -6,14 +6,15 @@ namespace blkhurst {
 Material::Material(std::shared_ptr<Program> prog)
     : program_(std::move(prog)) {
   if (program_) {
-    spdlog::trace("Material constructed using Program({})", program_->id());
+    spdlog::trace("Material({}) constructed using Program({})", uuidString(),
+                  program_->uuidString());
   } else {
-    spdlog::warn("Material constructed with null Program");
+    spdlog::warn("Material({}) constructed with null Program", uuidString());
   }
 }
 
 Material::~Material() {
-  spdlog::trace("Material destroyed");
+  spdlog::trace("Material({}) destroyed", uuidString());
 }
 
 std::shared_ptr<Material> Material::create(std::shared_ptr<Program> prog) {

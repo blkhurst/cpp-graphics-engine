@@ -10,11 +10,11 @@ Mesh::Mesh(std::shared_ptr<Geometry> geometry, std::shared_ptr<Material> materia
   if (!geometry_ || !material_) {
     spdlog::error("Mesh requires non-null Geometry and Material.");
   }
-  spdlog::trace("Mesh({}) constructed", uuid());
+  spdlog::trace("Mesh({}) constructed", uuidString());
 }
 
 Mesh::~Mesh() {
-  spdlog::trace("Mesh({}) destroyed", uuid());
+  spdlog::trace("Mesh({}) destroyed", uuidString());
 }
 
 std::shared_ptr<Geometry> Mesh::geometry() const {
@@ -35,22 +35,22 @@ bool Mesh::wireframe() const {
 
 void Mesh::setGeometry(std::shared_ptr<Geometry> geometry) {
   geometry_ = std::move(geometry);
-  spdlog::trace("Mesh({}) setGeometry {}", uuid(), geometry_ ? "OK" : "null");
+  spdlog::trace("Mesh({}) setGeometry {}", uuidString(), geometry_ ? "OK" : "null");
 }
 
 void Mesh::setMaterial(std::shared_ptr<Material> material) {
   material_ = std::move(material);
-  spdlog::trace("Mesh({}) setMaterial {}", uuid(), material_ ? "OK" : "null");
+  spdlog::trace("Mesh({}) setMaterial {}", uuidString(), material_ ? "OK" : "null");
 }
 
 void Mesh::setInstanceCount(int count) {
   instanceCount_ = std::max(1, count);
-  spdlog::trace("Mesh({}) setInstanceCount {}", uuid(), instanceCount_);
+  spdlog::trace("Mesh({}) setInstanceCount {}", uuidString(), instanceCount_);
 }
 
 void Mesh::setWireframe(bool enabled) {
   wireframe_ = enabled;
-  spdlog::trace("Mesh({}) setWireframe {}", uuid(), wireframe_);
+  spdlog::trace("Mesh({}) setWireframe {}", uuidString(), wireframe_);
 }
 
 // Shallow copy of Geometry and Material

@@ -86,7 +86,7 @@ private:
   static FrameContext collectRenderables(Object3D& root);
   void renderMesh(const Mesh& mesh, const Camera& camera);
   static void applyPipeline(const PipelineState& state, bool wireframe);
-  void applyPerFrameUniforms(FrameContext frameContext);
+  void applyPerFrameUniforms(const FrameContext& frameContext);
   void applyPerDrawUniforms(const Mesh& mesh, Material& material) const;
   static void drawGeometry(const Geometry& geom, int instanceCount);
 

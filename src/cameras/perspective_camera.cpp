@@ -6,7 +6,7 @@
 namespace blkhurst {
 
 PerspectiveCamera::PerspectiveCamera() {
-  spdlog::trace("PerspectiveCamera({}) constructed (defaults)", uuid());
+  spdlog::trace("PerspectiveCamera({}) constructed (defaults)", uuidString());
 }
 
 PerspectiveCamera::PerspectiveCamera(float fovYDeg, float aspect, float nearZ, float farZ)
@@ -15,11 +15,11 @@ PerspectiveCamera::PerspectiveCamera(float fovYDeg, float aspect, float nearZ, f
       nearZ_(nearZ),
       farZ_(farZ) {
   spdlog::trace("PerspectiveCamera({}) constructed fov={:.2f} aspect={:.2f} near={:.2f} far={:.2f}",
-                uuid(), fovYDeg, aspect, nearZ, farZ);
+                uuidString(), fovYDeg, aspect, nearZ, farZ);
 }
 
 PerspectiveCamera::~PerspectiveCamera() {
-  spdlog::trace("PerspectiveCamera({}) destroyed", uuid());
+  spdlog::trace("PerspectiveCamera({}) destroyed", uuidString());
 }
 
 std::shared_ptr<PerspectiveCamera> PerspectiveCamera::create() {
@@ -46,20 +46,21 @@ const glm::mat4& PerspectiveCamera::projectionMatrix() const {
 void PerspectiveCamera::setFovYDeg(float fovYDeg) {
   fovYDeg_ = fovYDeg;
   projNeedsUpdate_ = true;
-  spdlog::trace("PerspectiveCamera setFovYDeg {:.2f}", fovYDeg);
+  spdlog::trace("PerspectiveCamera({}) setFovYDeg {:.2f}", uuidString(), fovYDeg);
 }
 
 void PerspectiveCamera::setAspect(float aspect) {
   aspect_ = aspect;
   projNeedsUpdate_ = true;
-  spdlog::trace("PerspectiveCamera setAspect {:.2f}", aspect);
+  spdlog::trace("PerspectiveCamera({}) setAspect {:.2f}", uuidString(), aspect);
 }
 
 void PerspectiveCamera::setNearFar(float nearZ, float farZ) {
   nearZ_ = nearZ;
   farZ_ = farZ;
   projNeedsUpdate_ = true;
-  spdlog::trace("PerspectiveCamera setNearFar near={:.2f} far={:.2f}", nearZ, farZ);
+  spdlog::trace("PerspectiveCamera({}) setNearFar near={:.2f} far={:.2f}", uuidString(), nearZ,
+                farZ);
 }
 
 void PerspectiveCamera::setAutoUpdateAspect(bool enabled) {

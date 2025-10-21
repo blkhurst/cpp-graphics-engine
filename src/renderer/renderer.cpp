@@ -19,6 +19,7 @@ Renderer::Renderer() {
   auto backgroundGeom = BoxGeometry::create({.width = 2.0F, .height = 2.0F, .depth = 2.0F});
   auto backgroundMat = SkyBoxMaterial::create();
   skyboxMesh_ = Mesh::create(backgroundGeom, backgroundMat);
+  skyboxMesh_->setName("RendererSkyBox");
 
   spdlog::debug("Renderer constructed");
 }
@@ -281,7 +282,7 @@ void Renderer::applyPipeline(const PipelineState& state, bool wireframe) {
   }
 }
 
-void Renderer::applyPerFrameUniforms(FrameContext frameContext) {
+void Renderer::applyPerFrameUniforms(const FrameContext& frameContext) {
   frameUniforms_.uToneMappingExposure = toneMappingExposure_;
   frameUniforms_.uToneMappingMode = static_cast<int>(toneMappingMode_);
   frameUniforms_.uOutputColorSpace = static_cast<int>(outputColorSpace_);

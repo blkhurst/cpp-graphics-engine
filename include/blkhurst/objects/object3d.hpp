@@ -1,22 +1,21 @@
 #pragma once
 
 #include <blkhurst/engine/root_state.hpp>
+#include <blkhurst/util/identifiable.hpp>
 
-#include <cstdint>
 #include <functional>
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
 #include <memory>
-#include <string>
 #include <vector>
 
 namespace blkhurst {
 
 enum class NodeKind { Object, Mesh, Lines, Points, Light, Camera };
 
-class Object3D {
+class Object3D : public Identifiable {
 public:
-  Object3D();
+  Object3D() = default;
   virtual ~Object3D() = default;
 
   Object3D(const Object3D&) = delete;
@@ -29,11 +28,12 @@ public:
 
   template <class T> T* addChild(std::unique_ptr<T> child);
   template <class T, class... Args> T* addChild(Args&&... args);
+  Object3D* findByName(const std::string& name, bool recursive);
+  bool removeChild(Object3D* child);
+  bool removeFromParent();
 
   virtual void onUpdate(const RootState& /*state*/);
 
-  std::uint64_t uuid() const;
-  const std::string& name() const;
   virtual NodeKind kind() const;
   bool visible() const;
 
@@ -49,7 +49,6 @@ public:
   glm::vec3 worldDirection() const;
 
   // Setters
-  void setName(std::string n);
   void setVisible(bool visible);
 
   void setPosition(const glm::vec3& position);
@@ -82,8 +81,6 @@ private:
   Object3D* parent_ = nullptr;
   std::vector<std::unique_ptr<Object3D>> children_;
 
-  std::uint64_t uuid_{0};
-  std::string name_;
   bool visible_ = true;
 
   // TRS
@@ -96,8 +93,6 @@ private:
 
   mutable bool needsUpdate_ = true;
   void calculateMatrices() const;
-
-  static std::uint64_t make_uuid_();
 };
 
 // Template Definition

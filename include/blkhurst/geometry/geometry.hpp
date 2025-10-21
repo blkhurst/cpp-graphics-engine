@@ -3,6 +3,7 @@
 #include <blkhurst/geometry/mesh_data.hpp>
 #include <blkhurst/graphics/buffer.hpp>
 #include <blkhurst/graphics/vertex_array.hpp>
+#include <blkhurst/util/identifiable.hpp>
 
 #include <cstdint>
 #include <memory>
@@ -28,7 +29,7 @@ enum class Attrib : std::uint8_t {
   InstanceMatrix = 5,
 };
 
-class Geometry {
+class Geometry : public Identifiable {
 public:
   Geometry();
   virtual ~Geometry();

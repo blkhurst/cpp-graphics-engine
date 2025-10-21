@@ -7,6 +7,8 @@ namespace blkhurst {
 EquirectMaterial::EquirectMaterial(const EquirectMaterialDesc& desc)
     : Material(Program::createFromRegistry({.vert = "fullscreen_vert", .frag = "equirect_frag"})),
       equirectTexture_(desc.equirectTexture) {
+  spdlog::trace("EquirectMaterial({}) created with Program({})", uuidString(),
+                program()->uuidString());
 }
 
 std::shared_ptr<EquirectMaterial> EquirectMaterial::create(const EquirectMaterialDesc& desc) {

@@ -4,6 +4,7 @@
 #include <blkhurst/materials/pipeline_state.hpp>
 #include <blkhurst/renderer/environment_bundle.hpp>
 #include <blkhurst/textures/texture.hpp>
+#include <blkhurst/util/identifiable.hpp>
 
 #include <glm/glm.hpp>
 #include <memory>
@@ -16,7 +17,7 @@ namespace blkhurst {
 using UniformValue =
     std::variant<int, float, glm::vec2, glm::vec3, glm::vec4, glm::mat2, glm::mat3, glm::mat4>;
 
-class Material {
+class Material : public Identifiable {
 public:
   Material(std::shared_ptr<Program> prog);
   virtual ~Material();

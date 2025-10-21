@@ -17,7 +17,7 @@ Program::Program(ProgramDesc desc)
 Program::~Program() {
   if (id_ != 0U) {
     glDeleteProgram(id_);
-    spdlog::trace("Program({}) deleted", id_);
+    spdlog::trace("Program({}, {}) deleted", uuidString(), id_);
   }
 }
 
@@ -26,7 +26,7 @@ std::shared_ptr<Program> Program::create(const ProgramDesc& desc) {
   auto program = std::make_shared<Program>(desc);
   program->sourceKind_ = SourceKind::Source;
   program->needsUpdate_ = true;
-  spdlog::trace("Program(<deferred>) created (SourceKind=Source)");
+  spdlog::trace("Program({}) created (SourceKind=Source)", program->uuidString());
   return program;
 }
 
@@ -34,7 +34,7 @@ std::shared_ptr<Program> Program::createFromRegistry(const ProgramDesc& desc) {
   auto program = std::make_shared<Program>(desc);
   program->sourceKind_ = SourceKind::Registry;
   program->needsUpdate_ = true;
-  spdlog::trace("Program(<deferred>) created (SourceKind=Registry)");
+  spdlog::trace("Program({}) created (SourceKind=Registry)", program->uuidString());
   return program;
 }
 
@@ -42,7 +42,7 @@ std::shared_ptr<Program> Program::createFromFiles(const ProgramDesc& desc) {
   auto program = std::make_shared<Program>(desc);
   program->sourceKind_ = SourceKind::File;
   program->needsUpdate_ = true;
-  spdlog::trace("Program(<deferred>) created (SourceKind=File)");
+  spdlog::trace("Program({}) created (SourceKind=File)", program->uuidString());
   return program;
 }
 
@@ -59,7 +59,7 @@ void Program::addDefine(const std::string& define) {
   if (std::find(desc_.defines.begin(), desc_.defines.end(), define) == desc_.defines.end()) {
     desc_.defines.push_back(define);
     needsUpdate_ = true;
-    spdlog::trace("Program({}) addDefine({})", id_, define);
+    spdlog::trace("Program({}) addDefine({})", uuidString(), define);
   }
 }
 
@@ -68,7 +68,7 @@ void Program::removeDefine(const std::string& define) {
   if (found != desc_.defines.end()) {
     desc_.defines.erase(found, desc_.defines.end());
     needsUpdate_ = true;
-    spdlog::trace("Program({}) removeDefine({})", id_, define);
+    spdlog::trace("Program({}) removeDefine({})", uuidString(), define);
   }
 }
 
@@ -78,7 +78,7 @@ void Program::setDefines(std::vector<std::string> defines) {
   if (defines != desc_.defines) {
     desc_.defines = std::move(defines);
     needsUpdate_ = true;
-    spdlog::trace("Program({}) setDefines(...)", id_);
+    spdlog::trace("Program({}) setDefines(...)", uuidString());
   }
 }
 
@@ -261,12 +261,13 @@ void Program::buildFromStrings_(std::string_view vert, std::string_view frag, st
 
   if (id_ != 0U) {
     glDeleteProgram(id_);
+    spdlog::trace("Program({}, {}) deleted", uuidString(), id_);
   }
   id_ = newId;
   uniformCache_.clear();
 
-  spdlog::trace("Program({}) built (V:{} F:{} TC:{} TE:{})", id_, !vert.empty(), !frag.empty(),
-                !tesc.empty(), !tese.empty());
+  spdlog::trace("Program({}, {}) built (V:{} F:{} TC:{} TE:{})", uuidString(), id_, !vert.empty(),
+                !frag.empty(), !tesc.empty(), !tese.empty());
 }
 
 } // namespace blkhurst

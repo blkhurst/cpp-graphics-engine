@@ -1,7 +1,6 @@
 #include <blkhurst/objects/object3d.hpp>
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/orthonormalize.hpp>
-#include <random>
 #include <spdlog/spdlog.h>
 
 /**
@@ -22,10 +21,6 @@ glm::quat extractRotationQ(const glm::mat4& matrix) {
 
 namespace blkhurst {
 
-Object3D::Object3D()
-    : uuid_(make_uuid_()) {
-}
-
 void Object3D::onUpdate(const RootState& /*state*/) {
   // Default
 }
@@ -38,11 +33,33 @@ const std::vector<std::unique_ptr<Object3D>>& Object3D::children() const {
   return children_;
 }
 
-std::uint64_t Object3D::uuid() const {
-  return uuid_;
+Object3D* Object3D::findByName(const std::string& name, bool recursive) {
+  for (auto& child : children_) {
+    if (child->name() == name) {
+      return child.get();
+    }
+    if (recursive) {
+      if (auto* rChild = child->findByName(name, true)) {
+        return rChild;
+      }
+    }
+  }
+  return nullptr;
 }
-const std::string& Object3D::name() const {
-  return name_;
+
+bool Object3D::removeChild(Object3D* child) {
+  auto found = std::find_if(children_.begin(), children_.end(),
+                            [&](auto& node) { return node.get() == child; });
+  if (found == children_.end()) {
+    return false;
+  }
+  (*found)->parent_ = nullptr;
+  children_.erase(found);
+  return true;
+}
+
+bool Object3D::removeFromParent() {
+  return (parent_ != nullptr) ? parent_->removeChild(this) : false;
 }
 
 NodeKind Object3D::kind() const {
@@ -84,11 +101,6 @@ glm::vec3 Object3D::worldPosition() const {
 glm::vec3 Object3D::worldDirection() const {
   glm::mat3 worldRotation = glm::orthonormalize(glm::mat3(worldMatrix()));
   return glm::normalize(worldRotation * glm::vec3(0, 0, 1)); // +Z
-}
-
-void Object3D::setName(std::string n) {
-  spdlog::trace("Object3D({}) setName '{}'", uuid_, n);
-  name_ = std::move(n);
 }
 
 void Object3D::setVisible(bool visible) {
@@ -238,7 +250,8 @@ void Object3D::calculateMatrices() const {
 // Deep copy
 std::unique_ptr<Object3D> Object3D::clone(bool recursive) const {
   auto copy = std::make_unique<Object3D>();
-  copy->name_ = name_;
+  // copy->name_ = name_;
+  copy->setName(name());
   copy->visible_ = visible_;
   copy->position_ = position_;
   copy->rotation_ = rotation_;
@@ -253,16 +266,10 @@ std::unique_ptr<Object3D> Object3D::clone(bool recursive) const {
   return copy;
 }
 
-std::uint64_t Object3D::make_uuid_() {
-  static std::mt19937_64 rng{std::random_device{}()};
-  static std::uniform_int_distribution<std::uint64_t> dist;
-  return dist(rng);
-}
-
 Object3D* Object3D::addChild_(std::unique_ptr<Object3D> child) {
   child->parent_ = this;
   child->needsUpdate();
-  spdlog::trace("Object3D({}) add child Object3D({})", uuid_, child->uuid_);
+  spdlog::trace("Object3D({}) add child Object3D({})", uuidString(), child->uuidString());
   children_.push_back(std::move(child));
   return children_.back().get();
 }

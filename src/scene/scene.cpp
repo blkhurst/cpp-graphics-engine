@@ -7,11 +7,11 @@
 namespace blkhurst {
 
 Scene::Scene() {
-  spdlog::trace("Scene({}) constructed", uuid());
+  spdlog::trace("Scene({}) constructed", uuidString());
 }
 
 Scene::~Scene() {
-  spdlog::trace("Scene({}) destroyed", uuid());
+  spdlog::trace("Scene({}) destroyed", uuidString());
 }
 
 const SceneBackground& Scene::background() const {
@@ -23,7 +23,7 @@ void Scene::setBackground(const glm::vec4& color) {
   background_.color = color;
   background_.texture.reset();
   background_.cubemap.reset();
-  spdlog::trace("Scene({}) setBackground [{:.2f}, {:.2f}, {:.2f}, {:.2f}]", uuid(), color[0],
+  spdlog::trace("Scene({}) setBackground [{:.2f}, {:.2f}, {:.2f}, {:.2f}]", uuidString(), color[0],
                 color[1], color[2], color[3]);
 }
 
@@ -31,31 +31,31 @@ void Scene::setBackground(std::shared_ptr<CubeTexture> cubemap) {
   // Clear Background
   if (cubemap == nullptr) {
     this->setBackground(background_.color);
-    spdlog::debug("Scene({}) Background cleared", uuid());
+    spdlog::debug("Scene({}) Background cleared", uuidString());
     return;
   }
   background_.type = BackgroundType::Cube;
   background_.cubemap = std::move(cubemap);
   background_.texture.reset();
-  spdlog::debug("Scene({}) setBackground CubeTexture({})", uuid(), background_.cubemap->id());
+  spdlog::debug("Scene({}) setBackground CubeTexture({})", uuidString(), background_.cubemap->id());
 }
 
 void Scene::setBackground(std::shared_ptr<Texture> equirect) {
   // Clear Background
   if (equirect == nullptr) {
     this->setBackground(background_.color);
-    spdlog::debug("Scene({}) Background cleared", uuid());
+    spdlog::debug("Scene({}) Background cleared", uuidString());
     return;
   }
   background_.type = BackgroundType::Equirect;
   background_.texture = std::move(equirect);
   background_.cubemap.reset();
-  spdlog::debug("Scene({}) setBackground Texture({})", uuid(), background_.texture->id());
+  spdlog::debug("Scene({}) setBackground Texture({})", uuidString(), background_.texture->id());
 }
 
 void Scene::setBackgroundIntensity(float intensity) {
   background_.intensity = intensity;
-  spdlog::trace("Scene({}) setBackgroundIntensity({})", uuid(), intensity);
+  spdlog::trace("Scene({}) setBackgroundIntensity({})", uuidString(), intensity);
 }
 
 SceneEnvironment& Scene::environment() {
@@ -73,23 +73,23 @@ void Scene::setEnvironment(std::shared_ptr<Texture> equirect, bool setBackground
     if (setBackground) {
       this->setBackground(background_.color);
     }
-    spdlog::debug("Scene({}) Environment cleared", uuid());
+    spdlog::debug("Scene({}) Environment cleared", uuidString());
     return;
   }
   environment_.equirect = std::move(equirect);
   environment_.setBackground = setBackground;
   environment_.needsUpdate = true;
-  spdlog::debug("Scene({}) setEnvironment Texture({})", uuid(), environment_.equirect->id());
+  spdlog::debug("Scene({}) setEnvironment Texture({})", uuidString(), environment_.equirect->id());
 }
 
 void Scene::setEnvironmentIntensity(float intensity) {
   environment_.intensity = intensity;
-  spdlog::trace("Scene({}) setEnvironmentIntensity({})", uuid(), intensity);
+  spdlog::trace("Scene({}) setEnvironmentIntensity({})", uuidString(), intensity);
 }
 
 void Scene::setEnvironmentRotation(const glm::mat3& rotation) {
   environment_.rotation = rotation;
-  spdlog::trace("Scene({}) setEnvironmentRotation", uuid());
+  spdlog::trace("Scene({}) setEnvironmentRotation", uuidString());
 }
 
 Camera* Scene::activeCamera() const {
@@ -106,35 +106,35 @@ const std::vector<std::shared_ptr<UiEntry>>& Scene::uiEntries() const {
 
 // void Scene::setBackground(const glm::vec4& backgroundVariant) {
 //   background_ = backgroundVariant;
-//   spdlog::trace("Scene({}) setBackground [{:.3f}, {:.3f}, {:.3f}, {:.3f}]", uuid(),
+//   spdlog::trace("Scene({}) setBackground [{:.3f}, {:.3f}, {:.3f}, {:.3f}]", uuidString(),
 //   background_[0],
 //                 background_[1], background_[2], background_[3]);
 // }
 
 void Scene::setActiveCamera(std::shared_ptr<Camera> camera) {
   if (!camera) {
-    spdlog::warn("Scene({}) setActiveCamera called with null camera", uuid());
+    spdlog::warn("Scene({}) setActiveCamera called with null camera", uuidString());
     return;
   }
   activeCamera_ = std::move(camera);
-  spdlog::trace("Scene({}) setActiveCamera({})", uuid(), activeCamera_->uuid());
+  spdlog::trace("Scene({}) setActiveCamera({})", uuidString(), activeCamera_->uuidString());
 }
 
 void Scene::setActiveController(std::shared_ptr<Controller> controller) {
   if (!controller) {
-    spdlog::warn("Scene({}) setActiveController called with null controller", uuid());
+    spdlog::warn("Scene({}) setActiveController called with null controller", uuidString());
     return;
   }
   activeController_ = std::move(controller);
-  spdlog::trace("Scene({}) setActiveController", uuid());
+  spdlog::trace("Scene({}) setActiveController", uuidString());
 }
 
 void Scene::addUiEntry(std::shared_ptr<UiEntry> entry) {
   if (!entry) {
-    spdlog::warn("Scene({}) addUiEntry called with null entry", uuid());
+    spdlog::warn("Scene({}) addUiEntry called with null entry", uuidString());
     return;
   }
-  spdlog::trace("Scene({}) addUiEntry '{}'", uuid(), entry->title());
+  spdlog::trace("Scene({}) addUiEntry '{}'", uuidString(), entry->title());
   uiEntries_.push_back(std::move(entry));
 }
 

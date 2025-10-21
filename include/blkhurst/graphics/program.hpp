@@ -1,5 +1,6 @@
 #pragma once
 
+#include <blkhurst/util/identifiable.hpp>
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <memory>
@@ -22,7 +23,7 @@ struct ProgramDesc {
 
 enum class SourceKind { Source, Registry, File };
 
-class Program {
+class Program : public Identifiable {
 public:
   Program(ProgramDesc desc);
   virtual ~Program();

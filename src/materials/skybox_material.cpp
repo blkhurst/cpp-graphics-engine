@@ -1,5 +1,6 @@
 #include <blkhurst/materials/skybox_material.hpp>
 #include <glm/glm.hpp>
+#include <spdlog/spdlog.h>
 
 namespace blkhurst {
 
@@ -14,6 +15,8 @@ SkyBoxMaterial::SkyBoxMaterial(const SkyBoxMaterialDesc& desc)
   setDepthTest(true);
   setDepthFunc(DepthFunc::Lequal);
   setDepthWrite(false);
+  spdlog::trace("SkyBoxMaterial({}) created with Program({})", uuidString(),
+                program()->uuidString());
 }
 
 void SkyBoxMaterial::setCubeMap(std::shared_ptr<CubeTexture> cubemap) {

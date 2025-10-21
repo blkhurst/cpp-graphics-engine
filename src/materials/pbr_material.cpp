@@ -34,7 +34,7 @@ PbrMaterial::PbrMaterial(const PbrMaterialDesc& desc)
   setVertexColors(desc.vertexColors);
 
   setUvTransform(desc_.uvTransform_);
-  spdlog::trace("PbrMaterial created with Program({})", program()->id());
+  spdlog::trace("PbrMaterial({}) created with Program({})", uuidString(), program()->uuidString());
 }
 
 void PbrMaterial::setColor(const glm::vec3& rgb) {
