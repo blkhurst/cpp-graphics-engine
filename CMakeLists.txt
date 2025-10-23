@@ -15,30 +15,44 @@ find_package(OpenGL REQUIRED)
 if (BLKHURST_USE_FETCHCONTENT)
   include(FetchContent)
 
-  set(GLM_BUILD_INSTALL ON)
+  # GLM
+  set(GLM_BUILD_INSTALL ON CACHE BOOL "" FORCE) # Fixes warning about missing install target (export set)
   FetchContent_Declare(glm
     GIT_REPOSITORY	https://github.com/g-truc/glm.git
     GIT_TAG 1.0.1
   )
   FetchContent_MakeAvailable(glm)
 
-  set(GLFW_INSTALL ON)
+  # GLFW
+  set(GLFW_INSTALL ON CACHE BOOL "" FORCE)
   FetchContent_Declare(glfw
     GIT_REPOSITORY https://github.com/glfw/glfw.git
     GIT_TAG 3.4
   )
   FetchContent_MakeAvailable(glfw)
 
-  set(SPDLOG_INSTALL ON)
+  # SPDLOG
+  set(SPDLOG_INSTALL ON CACHE BOOL "" FORCE)
   FetchContent_Declare(spdlog
     GIT_REPOSITORY https://github.com/gabime/spdlog/
     GIT_TAG v1.15.3
   )
   FetchContent_MakeAvailable(spdlog)
+
+  # ASSIMP
+  set(ASSIMP_INSTALL ON CACHE BOOL "" FORCE)
+  set(ASSIMP_BUILD_TESTS OFF)
+  set(ASSIMP_BUILD_ZLIB OFF CACHE BOOL "" FORCE) # Requires zlib
+  FetchContent_Declare(assimp
+    GIT_REPOSITORY https://github.com/assimp/assimp.git
+    GIT_TAG v6.0.2
+  )
+  FetchContent_MakeAvailable(assimp)
 else()
   find_package(glm 1.0.1 REQUIRED)
   find_package(glfw3 3.4 REQUIRED)
   find_package(spdlog 1.15.3 REQUIRED)
+  find_package(assimp 6.0.2 REQUIRED)
 endif()
 
 add_subdirectory(dependencies)
@@ -72,6 +86,7 @@ target_link_libraries(BlkhurstEngine
     glfw
     glm::glm
     spdlog::spdlog
+    assimp::assimp
 )
 
 # Compile Features
