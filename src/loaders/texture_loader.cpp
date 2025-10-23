@@ -123,4 +123,97 @@ std::shared_ptr<Texture> TextureLoader::makeFallback_() {
   return texture;
 }
 
+LoadedPixels TextureLoader::readPixelsFromMemory(const unsigned char* data, size_t byteCount,
+                                                 bool flipY, int desiredChannels) {
+  LoadedPixels out{};
+  if ((data == nullptr) || byteCount == 0) {
+    return out;
+  }
+
+  stbi_set_flip_vertically_on_load(flipY ? 1 : 0);
+
+  int width = 0;
+  int height = 0;
+  int nChannels = 0;
+  const bool isHdr = stbi_is_hdr_from_memory(data, static_cast<int>(byteCount)) != 0;
+
+  if (isHdr) {
+    out.floats = stbi_loadf_from_memory(data, static_cast<int>(byteCount), &width, &height,
+                                        &nChannels, desiredChannels);
+    out.isFloat = true;
+  } else {
+    out.bytes = stbi_load_from_memory(data, static_cast<int>(byteCount), &width, &height,
+                                      &nChannels, desiredChannels);
+    out.isFloat = false;
+  }
+
+  if ((out.floats == nullptr && out.bytes == nullptr) || width <= 0 || height <= 0) {
+    out.width = out.height = out.channels = 0;
+    return out;
+  }
+
+  out.width = width;
+  out.height = height;
+  out.channels = (desiredChannels > 0) ? desiredChannels : nChannels;
+  return out;
+}
+
+std::shared_ptr<Texture> TextureLoader::loadFromMemory(const unsigned char* data, size_t byteCount,
+                                                       const TextureLoaderDesc& desc) {
+  // Always output 4 channels (RGBA)
+  const int outputChannels = 4; // TODO: Support auto channels/formats when bandwidth is a concern
+
+  LoadedPixels pixels = readPixelsFromMemory(data, byteCount, desc.flipY, outputChannels);
+  if (!pixels.valid()) {
+    spdlog::error("TextureLoader: failed to decode image from memory ({} bytes)", byteCount);
+    pixels.free();
+    return makeFallback_();
+  }
+
+  TextureFormat outputFormat = desc.srgb ? TextureFormat::SRGB8_ALPHA8 : TextureFormat::RGBA8;
+  if (pixels.isFloat) {
+    outputFormat = TextureFormat::RGBA32F;
+  }
+
+  TextureDesc textureDesc{};
+  textureDesc.format = outputFormat;
+  textureDesc.minFilter = desc.minFilter;
+  textureDesc.magFilter = desc.magFilter;
+  textureDesc.wrapS = desc.wrapS;
+  textureDesc.wrapT = desc.wrapT;
+  textureDesc.generateMipmaps = desc.generateMipmaps;
+
+  auto texture = Texture::create(pixels.width, pixels.height, textureDesc);
+  if (pixels.isFloat) {
+    texture->setPixels(static_cast<const void*>(pixels.floats), 0);
+  } else {
+    texture->setPixels(static_cast<const void*>(pixels.bytes), 0);
+  }
+  pixels.free();
+
+  spdlog::debug("TextureLoader loaded from memory ({}x{}, hdr={}, srgb={})", texture->width(),
+                texture->height(), pixels.isFloat, desc.srgb);
+  return texture;
+}
+
+std::shared_ptr<Texture> TextureLoader::fromRgba8(int width, int height, const unsigned char* rgba,
+                                                  const TextureLoaderDesc& desc) {
+  if ((rgba == nullptr) || width <= 0 || height <= 0) {
+    spdlog::error("TextureLoader::fromRgba8 invalid args");
+    return makeFallback_();
+  }
+
+  TextureDesc textureDesc{};
+  textureDesc.format = desc.srgb ? TextureFormat::SRGB8_ALPHA8 : TextureFormat::RGBA8;
+  textureDesc.minFilter = desc.minFilter;
+  textureDesc.magFilter = desc.magFilter;
+  textureDesc.wrapS = desc.wrapS;
+  textureDesc.wrapT = desc.wrapT;
+  textureDesc.generateMipmaps = desc.generateMipmaps;
+
+  auto texture = Texture::create(width, height, textureDesc);
+  texture->setPixels(rgba, 0);
+  return texture;
+}
+
 } // namespace blkhurst

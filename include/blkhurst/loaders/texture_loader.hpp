@@ -34,9 +34,16 @@ struct LoadedPixels {
 struct TextureLoader {
 public:
   static std::shared_ptr<Texture> load(const std::string& path, const TextureLoaderDesc& desc = {});
+  static std::shared_ptr<Texture> loadFromMemory(const unsigned char* data, size_t byteCount,
+                                                 const TextureLoaderDesc& desc);
 
   // If desiredChannels is 0, file channels are used.
   static LoadedPixels readPixels(const std::string& absPath, bool flipY, int desiredChannels);
+  static LoadedPixels readPixelsFromMemory(const unsigned char* data, size_t byteCount, bool flipY,
+                                           int desiredChannels);
+
+  static std::shared_ptr<Texture> fromRgba8(int width, int height, const unsigned char* rgba,
+                                            const TextureLoaderDesc& desc);
 
 private:
   // Create a 2×2 fallback checker.
