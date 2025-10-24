@@ -171,6 +171,10 @@ void Renderer::resetState() {
   setRenderTarget(nullptr);
   setScissorTest(false);
 
+  setToneMappingExposure(1.0);
+  setToneMappingMode(ToneMappingMode::None);
+  setOutputColorSpace(OutputColorSpace::SRGB);
+
   spdlog::debug("Renderer state reset");
 }
 

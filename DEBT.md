@@ -85,5 +85,9 @@
 
 ## Scene
 
-- [ ] Add `onAttach` or `onStart` with access to renderer.
+- [x] Add `onAttach` with access to renderer.
 - [ ] Make `Scene::environment` const, set SceneEnvironment with IBL setter.
+
+## Events
+
+- Make `emit` immediate, `post` queued until `events_.poll()`.

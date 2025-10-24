@@ -16,6 +16,13 @@ Scene::~Scene() {
   spdlog::trace("Scene({}) destroyed", uuidString());
 }
 
+void Scene::ensureStarted(const RootState& state) {
+  if (!started_) {
+    onStart(state);
+    started_ = true;
+  }
+}
+
 const SceneBackground& Scene::background() const {
   return background_;
 }

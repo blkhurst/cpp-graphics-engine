@@ -52,6 +52,14 @@ public:
 
   void onUpdate(const RootState& /*state*/) override {
   }
+  virtual void onStart(const RootState& /*state*/) {
+  }
+  virtual void onAttach(const RootState& /*state*/) {
+  }
+  virtual void onDetach() {
+  }
+
+  void ensureStarted(const RootState& state);
 
   [[nodiscard]] const SceneBackground& background() const;
   void setBackground(const glm::vec4& color);
@@ -74,6 +82,8 @@ public:
   void addUiEntry(std::shared_ptr<UiEntry> entry);
 
 private:
+  bool started_ = false;
+
   SceneBackground background_{};
   SceneEnvironment environment_{};
 

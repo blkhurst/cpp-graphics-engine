@@ -40,11 +40,20 @@ public:
   }
 
   void run() {
+    Scene* previousScene_ = nullptr;
+
     while (!window_.shouldClose()) {
       // Poll Events & Input
       input_.beginFrame();
       window_.pollEvents();
       input_.endFrame();
+
+      // Apply Pending Scene Change
+      int pendingScene = pendingSceneChange_.exchange(-1);
+      if (pendingScene != -1 && pendingScene != scene_.currentIndex()) {
+        renderer_.resetState();
+        scene_.setScene(pendingScene);
+      }
 
       // Gather Frame State
       const auto tick = clock_.tick();
@@ -53,6 +62,19 @@ public:
       auto* currentCamera = availableScene ? currentScene->activeCamera() : nullptr;
       auto* currentController = availableScene ? currentScene->activeController() : nullptr;
       auto rootState = buildRootState(tick, currentScene, currentCamera);
+
+      // Handle Scene Attach/Detach
+      if (currentScene != previousScene_) {
+        if (previousScene_ != nullptr) {
+          previousScene_->onDetach();
+          // TODO: Optional unload
+        }
+        if (currentScene != nullptr) {
+          currentScene->ensureStarted(rootState);
+          currentScene->onAttach(rootState);
+        }
+        previousScene_ = currentScene;
+      }
 
       // UI only if no active scene/camera
       if ((currentScene == nullptr) || (currentCamera == nullptr)) {
@@ -148,12 +170,12 @@ private:
   Renderer renderer_;
 
   std::vector<Subscription> subscriptions_;
+  std::atomic<int> pendingSceneChange_{-1};
 
   void registerEvents() {
     using namespace events;
     on<SceneChange>([this](const SceneChange& scene) {
-      renderer_.resetState();
-      scene_.setScene(scene.index);
+      pendingSceneChange_.store(scene.index, std::memory_order_relaxed);
     });
     on<ToggleFullscreen>(
         [this](const ToggleFullscreen& fullscreen) { window_.useFullscreen(fullscreen.enabled); });
