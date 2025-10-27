@@ -44,9 +44,12 @@ struct TextureDesc {
   bool generateMipmaps = true;
 };
 
+enum class TextureType { Texture2D, Cube };
+
 class Texture {
 public:
-  Texture(int width, int height, const TextureDesc& desc);
+  Texture(int width, int height, const TextureDesc& desc,
+          TextureType type = TextureType::Texture2D);
   virtual ~Texture();
 
   Texture(const Texture&) = delete;
@@ -55,6 +58,7 @@ public:
   Texture& operator=(Texture&&) = delete;
 
   static std::shared_ptr<Texture> create(int width, int height, const TextureDesc& desc);
+  void recreate(int width, int height, const TextureDesc& desc);
 
   // Sampler parameters
   void setFiltering(TextureFilter minFilter, TextureFilter magFilter) const;
@@ -80,10 +84,6 @@ public:
   static bool isDepthStencilFormat(TextureFormat format);
 
 protected:
-  Texture() = default;
-  void adoptGLTexture(unsigned newId, int width, int height, int mipLevels,
-                      const TextureDesc& desc);
-
   static unsigned toGLInternal(TextureFormat format);
   static unsigned toGLFilter(TextureFilter filter, bool isMin);
   static unsigned toGLWrap(TextureWrap wrap);
@@ -95,6 +95,10 @@ private:
   int height_ = 0;
   int mipLevels_ = 1;
   TextureDesc desc_{};
+  TextureType type_ = TextureType::Texture2D;
+
+  void buildTexture();
+  void deleteTexture();
 };
 
 } // namespace blkhurst

@@ -29,8 +29,8 @@ struct CubeTextureLoader {
                                            const CubeTextureLoaderDesc& desc = {});
 
 private:
-  static std::shared_ptr<CubeTexture> makeFallback_();
-  static bool validateFaces_(const std::vector<LoadedPixels>& faces);
+  static std::shared_ptr<CubeTexture> makeFallback();
+  static bool validateFaces(const std::vector<DecodedPixels>& faces);
 };
 
 } // namespace blkhurst
