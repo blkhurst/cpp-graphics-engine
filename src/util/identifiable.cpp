@@ -7,8 +7,6 @@
 
 namespace blkhurst {
 
-using UUID = Identifiable::UUID;
-
 Identifiable::Identifiable()
     : uuid_(uuidMake()),
       hex_(uuidHex(uuid_)) {

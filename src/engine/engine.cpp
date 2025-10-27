@@ -40,6 +40,7 @@ public:
   }
 
   void run() {
+    UUID previousSceneId = kInvalidUUID;
     Scene* previousScene_ = nullptr;
 
     while (!window_.shouldClose()) {
@@ -59,12 +60,13 @@ public:
       const auto tick = clock_.tick();
       auto* currentScene = scene_.currentScene();
       bool availableScene = (currentScene != nullptr);
+      UUID currentSceneId = availableScene ? currentScene->uuid() : kInvalidUUID;
       auto* currentCamera = availableScene ? currentScene->activeCamera() : nullptr;
       auto* currentController = availableScene ? currentScene->activeController() : nullptr;
       auto rootState = buildRootState(tick, currentScene, currentCamera);
 
       // Handle Scene Attach/Detach
-      if (currentScene != previousScene_) {
+      if (currentSceneId != previousSceneId) {
         if (previousScene_ != nullptr) {
           previousScene_->onDetach();
           // TODO: Optional unload
@@ -74,6 +76,7 @@ public:
           currentScene->onAttach(rootState);
         }
         previousScene_ = currentScene;
+        previousSceneId = currentScene->uuid();
       }
 
       // UI only if no active scene/camera
