@@ -26,6 +26,7 @@ public:
   explicit Impl(const EngineConfig& cfg)
       : config_(cfg),
         window_(cfg.windowConfig),
+        scene_(cfg.scenesConfig),
         ui_(cfg.uiConfig, events_, window_),
         input_(events_) {
     // Register EventBus Subscriptions
@@ -40,9 +41,21 @@ public:
   }
 
   void run() {
-    UUID previousSceneId = kInvalidUUID;
-    Scene* previousScene_ = nullptr;
+    // Preload Scenes If Instance Exists
+    for (const auto& sceneEntry : scene_.sceneEntries()) {
+      if (sceneEntry.instance) {
+        SceneContext state = gatherSceneContext(sceneEntry.instance.get());
+        RootState rootState = buildRootState(state.tick, state.currentScene, state.currentCamera);
+        sceneEntry.instance->ensureStarted(rootState);
+      }
+    }
 
+    // Scene Tracking
+    UUID previousSceneId = kInvalidUUID;
+    Scene* previousScene = nullptr;
+    std::string previousSceneName;
+
+    // Main Loop
     while (!window_.shouldClose()) {
       // Poll Events & Input
       input_.beginFrame();
@@ -57,56 +70,52 @@ public:
       }
 
       // Gather Frame State
-      const auto tick = clock_.tick();
-      auto* currentScene = scene_.currentScene();
-      bool availableScene = (currentScene != nullptr);
-      UUID currentSceneId = availableScene ? currentScene->uuid() : kInvalidUUID;
-      auto* currentCamera = availableScene ? currentScene->activeCamera() : nullptr;
-      auto* currentController = availableScene ? currentScene->activeController() : nullptr;
-      auto rootState = buildRootState(tick, currentScene, currentCamera);
+      const auto ctx = gatherSceneContext(scene_.currentScene());
+      auto rootState = buildRootState(ctx.tick, ctx.currentScene, ctx.currentCamera);
 
       // Handle Scene Attach/Detach
-      if (currentSceneId != previousSceneId) {
-        if (previousScene_ != nullptr) {
-          previousScene_->onDetach();
-          // TODO: Optional unload
+      if (ctx.currentSceneId != previousSceneId) {
+        if (previousScene != nullptr) {
+          previousScene->onDetach();
+          scene_.unloadIfNeeded(previousSceneName);
         }
-        if (currentScene != nullptr) {
-          currentScene->ensureStarted(rootState);
-          currentScene->onAttach(rootState);
+        if (ctx.currentScene != nullptr) {
+          ctx.currentScene->ensureStarted(rootState);
+          ctx.currentScene->onAttach(rootState);
         }
-        previousScene_ = currentScene;
-        previousSceneId = currentScene->uuid();
+        previousScene = ctx.currentScene;
+        previousSceneId = ctx.currentSceneId;
+        previousSceneName = scene_.currentName();
       }
 
       // UI only if no active scene/camera
-      if ((currentScene == nullptr) || (currentCamera == nullptr)) {
+      if ((ctx.currentScene == nullptr) || (ctx.currentCamera == nullptr)) {
         renderer_.clear();
-        drawUi(rootState, currentScene);
+        drawUi(rootState, ctx.currentScene);
         window_.swapBuffers();
         continue;
       }
 
       // Update Controller
-      if (currentController != nullptr) {
-        currentController->update(rootState);
+      if (ctx.currentController != nullptr) {
+        ctx.currentController->update(rootState);
       }
 
       // Update Camera (PerspectiveCamera calls updateAspectFromState)
-      currentCamera->onUpdate(rootState);
+      ctx.currentCamera->onUpdate(rootState);
 
       // Build/Set Uniforms
-      auto frameUniforms = buildFrameUniforms(input_, tick, currentCamera);
+      auto frameUniforms = buildFrameUniforms(input_, ctx.tick, ctx.currentCamera);
       renderer_.setFrameUniforms(frameUniforms);
 
       // Update Scene (May call renderer.render)
-      currentScene->traverse([&](Object3D& node) { node.onUpdate(rootState); });
+      ctx.currentScene->traverse([&](Object3D& node) { node.onUpdate(rootState); });
 
       // Render
-      renderer_.render(*currentScene, *currentCamera);
+      renderer_.render(*ctx.currentScene, *ctx.currentCamera);
 
       // Ui
-      drawUi(rootState, currentScene);
+      drawUi(rootState, ctx.currentScene);
 
       window_.swapBuffers();
     }
@@ -145,6 +154,26 @@ public:
     return frameUniforms;
   }
 
+  struct SceneContext {
+    ClockInfo tick{};
+    Scene* currentScene = nullptr;
+    UUID currentSceneId = kInvalidUUID;
+    Camera* currentCamera = nullptr;
+    Controller* currentController = nullptr;
+  };
+
+  SceneContext gatherSceneContext(Scene* scene) {
+    SceneContext state;
+    state.tick = clock_.tick();
+    state.currentScene = scene;
+    if (state.currentScene != nullptr) {
+      state.currentSceneId = state.currentScene->uuid();
+      state.currentCamera = state.currentScene->activeCamera();
+      state.currentController = state.currentScene->activeController();
+    }
+    return state;
+  }
+
   void drawUi(const RootState& rootState, Scene* currentScene) {
     ui_.beginFrame();
     ui_.drawBaseUi(rootState);
@@ -154,6 +183,10 @@ public:
       }
     }
     ui_.endFrame();
+  }
+
+  void setScene(const std::string& name) {
+    scene_.setScene(name);
   }
 
   void registerSceneFactory(const std::string& name,
@@ -216,6 +249,10 @@ Engine::~Engine() {
 void Engine::run() {
   spdlog::info("Engine running...");
   impl_->run();
+}
+
+void Engine::setScene(const std::string& name) {
+  impl_->setScene(name);
 }
 
 void Engine::registerSceneFactory(const std::string& name,

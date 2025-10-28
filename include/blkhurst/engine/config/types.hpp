@@ -11,4 +11,11 @@ struct GLVersion {
   int minor;
 };
 
+// Scenes
+enum class SceneLoadPolicy {
+  Preload,
+  OnDemand,
+  OnDemandUnloadInactive,
+};
+
 } // namespace blkhurst

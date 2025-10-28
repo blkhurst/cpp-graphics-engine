@@ -39,4 +39,9 @@ inline constexpr bool showStatsHeader = true;
 inline constexpr bool showScenesHeader = true;
 } // namespace ui
 
+namespace scenes {
+inline constexpr SceneLoadPolicy loadMode = SceneLoadPolicy::Preload;
+inline constexpr bool showLoadingScreen = true;
+} // namespace scenes
+
 } // namespace blkhurst::defaults

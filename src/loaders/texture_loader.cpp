@@ -33,7 +33,7 @@ std::shared_ptr<Texture> TextureLoader::load(const std::string& path,
   // Read Pixels
   DecodedPixels pixels = decodeFromPath(path, desc.flipY, kOutputChannels);
   if (!pixels.valid()) {
-    spdlog::error("TextureLoader failed to load ({})", path);
+    spdlog::warn("TextureLoader failed to load ({})", path);
     pixels.free();
     return makeFallback();
   }
@@ -67,7 +67,7 @@ std::shared_ptr<Texture> TextureLoader::loadFromMemory(const unsigned char* data
   // Read Pixels
   DecodedPixels pixels = decodeFromMemory(data, byteCount, desc.flipY, kOutputChannels);
   if (!pixels.valid()) {
-    spdlog::error("TextureLoader: failed to decode image from memory ({} bytes)", byteCount);
+    spdlog::warn("TextureLoader: failed to decode image from memory ({} bytes)", byteCount);
     pixels.free();
     return makeFallback();
   }
@@ -100,7 +100,7 @@ std::shared_ptr<Texture> TextureLoader::loadFromRgba8(int width, int height,
                                                       const unsigned char* rgba,
                                                       const TextureLoaderDesc& desc) {
   if ((rgba == nullptr) || width <= 0 || height <= 0) {
-    spdlog::error("TextureLoader::fromRgba8 invalid args");
+    spdlog::warn("TextureLoader::fromRgba8 invalid args");
     return makeFallback();
   }
 
@@ -126,7 +126,7 @@ DecodedPixels TextureLoader::decodeFromPath(const std::string& path, bool flipY,
   // Resolve Asset Path
   auto resolvedPath = assets::find(path);
   if (!resolvedPath) {
-    spdlog::error("TextureLoader::decodeFromPath asset not found ({})", path);
+    spdlog::warn("TextureLoader::decodeFromPath asset not found ({})", path);
     return out;
   }
 

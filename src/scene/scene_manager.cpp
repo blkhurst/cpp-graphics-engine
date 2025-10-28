@@ -1,12 +1,11 @@
 #include "scene/scene_manager.hpp"
 #include <spdlog/spdlog.h>
 
-namespace {
-constexpr bool kEagerLoadScenes = false;
-constexpr int kNoActiveIndex = -1;
-}; // namespace
-
 namespace blkhurst {
+
+SceneManager::SceneManager(const ScenesConfig& config)
+    : config_(config) {
+}
 
 void SceneManager::registerFactory(const std::string& name,
                                    std::function<std::unique_ptr<Scene>()> factory) {
@@ -17,19 +16,14 @@ void SceneManager::registerFactory(const std::string& name,
   const int index = static_cast<int>(sceneEntries_.size());
   sceneEntries_.push_back(std::move(entry));
 
-  if (kEagerLoadScenes) {
+  if (config_.loadMode == SceneLoadPolicy::Preload) {
     ensureConstructed(index);
-  }
-
-  // Make first registered scene active
-  if (currentIndex_ == kNoActiveIndex) {
-    setScene(index);
   }
 }
 
 void SceneManager::setScene(const std::string& name) {
   const int idx = indexOf(name);
-  if (idx == kNoActiveIndex) {
+  if (idx == kNoActiveSceneIndex) {
     spdlog::warn("SceneManager Scene({}) not found", name);
     return;
   }
@@ -48,7 +42,7 @@ void SceneManager::setScene(int index) {
 
 void SceneManager::preload(const std::string& name) {
   const int idx = indexOf(name);
-  if (idx == kNoActiveIndex) {
+  if (idx == kNoActiveSceneIndex) {
     return;
   }
   ensureConstructed(idx);
@@ -56,20 +50,26 @@ void SceneManager::preload(const std::string& name) {
 
 void SceneManager::unload(const std::string& name) {
   const int idx = indexOf(name);
-  if (idx == kNoActiveIndex) {
+  if (idx == kNoActiveSceneIndex) {
     return;
   }
   if (currentIndex_ == idx) {
-    spdlog::warn("SceneManager unloading current Scene");
-    currentIndex_ = kNoActiveIndex;
+    currentIndex_ = kNoActiveSceneIndex;
   }
   sceneEntries_[idx].instance.reset();
   spdlog::debug("SceneManager unloaded Scene({})", name);
 }
 
+void SceneManager::unloadIfNeeded(const std::string& name) {
+  if (config_.loadMode != SceneLoadPolicy::OnDemandUnloadInactive) {
+    return;
+  }
+  unload(name);
+}
+
 void SceneManager::reload(const std::string& name) {
   const int idx = indexOf(name);
-  if (idx == kNoActiveIndex) {
+  if (idx == kNoActiveSceneIndex) {
     spdlog::warn("SceneManager reload Scene({}) not found", name);
     return;
   }
@@ -81,7 +81,7 @@ void SceneManager::reload(const std::string& name) {
 }
 
 Scene* SceneManager::currentScene() const {
-  if (currentIndex_ == kNoActiveIndex) {
+  if (currentIndex_ == kNoActiveSceneIndex) {
     return nullptr;
   }
   return sceneEntries_[currentIndex_].instance.get();
@@ -89,6 +89,13 @@ Scene* SceneManager::currentScene() const {
 
 int SceneManager::currentIndex() const {
   return currentIndex_;
+}
+
+std::string SceneManager::currentName() const {
+  if (currentIndex_ == kNoActiveSceneIndex) {
+    return {};
+  }
+  return sceneEntries_[currentIndex_].name;
 }
 
 std::vector<std::string> SceneManager::names() const {
@@ -100,13 +107,17 @@ std::vector<std::string> SceneManager::names() const {
   return out;
 }
 
+const std::vector<SceneEntry>& SceneManager::sceneEntries() const {
+  return sceneEntries_;
+}
+
 int SceneManager::indexOf(const std::string& name) const {
   for (int i = 0; i < sceneEntries_.size(); ++i) {
     if (sceneEntries_[i].name == name) {
       return i;
     }
   }
-  return kNoActiveIndex;
+  return kNoActiveSceneIndex;
 }
 
 void SceneManager::ensureConstructed(int index) {
@@ -118,6 +129,7 @@ void SceneManager::ensureConstructed(int index) {
   if (!sceneEntry.instance) {
     spdlog::debug("SceneManager constructing Scene({})", sceneEntry.name);
     sceneEntry.instance = sceneEntry.factory();
+    sceneEntry.instance->setName(sceneEntry.name);
     if (!sceneEntry.instance) {
       spdlog::error("SceneManager failed to construct Scene({})", sceneEntry.name);
     }
