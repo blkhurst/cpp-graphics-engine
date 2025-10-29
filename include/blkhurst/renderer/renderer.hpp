@@ -34,6 +34,16 @@ struct GpuBlocks {
   SSBO pointLights{uniform_bindings::PointLights};
 };
 
+struct RendererDesc {
+  bool autoClear = true;
+  glm::vec4 clearColor = defaults::window::clearColor;
+  glm::ivec2 framebufferSize = {0, 0}; // Window Backbuffer
+
+  float toneMappingExposure = 1.0F;
+  ToneMappingMode toneMappingMode = ToneMappingMode::None;
+  OutputColorSpace outputColorSpace = OutputColorSpace::SRGB;
+};
+
 class Renderer {
 public:
   Renderer();
@@ -44,61 +54,78 @@ public:
   Renderer(Renderer&&) = delete;
   Renderer& operator=(Renderer&&) = delete;
 
+  [[nodiscard]] const RendererDesc& desc() const;
+
+  void render(Object3D& root, Camera& camera);
+  void beginPass();
+
   void setFrameUniforms(const FrameUniforms& frameUniforms); // Used by Engine
+  void setDefaultFramebufferSize(int width, int height);     // Set by engine
+
   void setRenderTarget(const RenderTarget* target);
   void setRenderTarget(const CubeRenderTarget* target, int face, int mip = 0);
-  void render(Object3D& root, Camera& camera);
 
   void setAutoClear(bool enabled = true);
   void setClearColor(glm::vec4 rgba);
   void clear(bool color = true, bool depth = true, bool stencil = true);
-  void clearColor();
-  void clearDepth();
-  void clearStencil();
 
-  void setDefaultFramebufferSize(int width, int height); // Set by engine
   void setViewport(int xpos, int ypos, int width, int height);
+  void resetViewport();
+
   void setScissor(int xpos, int ypos, int width, int height);
   void setScissorTest(bool enabled);
 
   void setToneMappingExposure(float exposure);
   void setToneMappingMode(ToneMappingMode mode);
   void setOutputColorSpace(OutputColorSpace space);
-  // TODO: setAnimationLoop, copyFrameBufferToTexture
 
   void resetState();
+  // TODO: setAnimationLoop, copyFrameBufferToTexture
 
 private:
+  RendererDesc desc_{};
+  const RenderTarget* currentTarget_ = nullptr;
+
   FrameUniforms frameUniforms_{};
   GpuBlocks gpuBlocks_{};
 
-  bool autoClear_ = true;
-  bool scissorTestEnabled_ = false;
-
-  glm::vec4 clearColor_ = defaults::window::clearColor;
-
-  glm::ivec2 framebufferSize_ = {0, 0}; // Window Backbuffer
-
-  float toneMappingExposure_ = 1.0F;
-  ToneMappingMode toneMappingMode_ = ToneMappingMode::None;
-  OutputColorSpace outputColorSpace_ = OutputColorSpace::SRGB;
-
+  // Queue visible meshes & lights for this frame
   static FrameContext collectRenderables(Object3D& root);
+
+  // Render a single mesh (geometry + material)
   void renderMesh(const Mesh& mesh, const Camera& camera);
+
+  // Apply Per-Draw Pipeline State (depth, blend, cull)
   static void applyPipeline(const PipelineState& state, bool wireframe);
-  void applyPerFrameUniforms(const FrameContext& frameContext);
-  void applyPerDrawUniforms(const Mesh& mesh, Material& material) const;
+
+  //
   static void drawGeometry(const Geometry& geom, int instanceCount);
 
+  //
+  void applyPerFrameUniforms(const FrameContext& frameContext);
+
+  //
+  void applyPerDrawUniforms(const Mesh& mesh, Material& material) const;
+
+  // ------ Background / Environment ------
+
+  //
   std::unique_ptr<Mesh> skyboxMesh_;
+  //
   void renderBackground(Scene& scene, Camera& camera);
 
+  //
   PMREMGenerator pmremGenerator_{this};
+  //
   EnvironmentBundle environmentBundle_{};
+  //
   void setEnvironment(Scene& scene);
 
-  // Helpers
+  // ------ Utilities ------
+
+  //
   static unsigned toGlPrimitive(PrimitiveMode mode);
+  //
   static unsigned toGLDepthFunc(blkhurst::DepthFunc func);
 };
 

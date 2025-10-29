@@ -5,6 +5,7 @@
 #include <blkhurst/lights/point_light.hpp>
 #include <blkhurst/materials/material.hpp>
 #include <blkhurst/materials/skybox_material.hpp>
+#include <blkhurst/materials/uniforms.hpp>
 #include <blkhurst/renderer/cube_render_target.hpp>
 #include <blkhurst/renderer/renderer.hpp>
 #include <blkhurst/scene/scene.hpp>
@@ -24,28 +25,73 @@ Renderer::Renderer() {
   spdlog::debug("Renderer constructed");
 }
 
+const RendererDesc& Renderer::desc() const {
+  return desc_;
+}
+
+void Renderer::render(Object3D& root, Camera& camera) {
+  beginPass();
+
+  FrameContext frameContext;
+  frameContext = collectRenderables(root);
+
+  applyPerFrameUniforms(frameContext);
+
+  if (auto* scene = dynamic_cast<Scene*>(&root)) {
+    setEnvironment(*scene);
+    renderBackground(*scene, camera);
+  }
+
+  for (auto* mesh : frameContext.meshList) {
+    renderMesh(*mesh, camera);
+  }
+}
+
+// Set Known-Safe Baseline State Per Pass
+void Renderer::beginPass() {
+  glEnable(GL_DEPTH_TEST);
+  glDepthFunc(GL_LESS);
+  glDisable(GL_BLEND);
+
+  // Ensure Buffers Are Writeable & Clear
+  if (desc_.autoClear) {
+    clear(true, true, true);
+  }
+}
+
 void Renderer::setFrameUniforms(const FrameUniforms& frameUniforms) {
   frameUniforms_ = frameUniforms;
 }
 
+// NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
+void Renderer::setDefaultFramebufferSize(int width, int height) {
+  desc_.framebufferSize[0] = width;
+  desc_.framebufferSize[1] = height;
+  setViewport(0, 0, width, height);
+}
+
 void Renderer::setRenderTarget(const RenderTarget* target) {
+  currentTarget_ = target;
+
   bool bindDefaultFramebuffer = (target == nullptr);
   if (bindDefaultFramebuffer) {
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    setViewport(0, 0, framebufferSize_[0], framebufferSize_[1]);
+    resetViewport();
     return;
   }
 
   glBindFramebuffer(GL_FRAMEBUFFER, target->id());
-  setViewport(0, 0, target->width(), target->height());
+  resetViewport();
 }
 
 // NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
 void Renderer::setRenderTarget(const CubeRenderTarget* target, int face, int mip) {
+  // TODO: Merge RenderTarget and CubeRenderTarget for unified "currentTarget_"
   bool bindDefaultFramebuffer = (target == nullptr);
   if (bindDefaultFramebuffer) {
+    currentTarget_ = nullptr; // TODO Move Upwards & Set To "target"
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    setViewport(0, 0, framebufferSize_[0], framebufferSize_[1]);
+    resetViewport();
     return;
   }
 
@@ -69,37 +115,23 @@ void Renderer::setRenderTarget(const CubeRenderTarget* target, int face, int mip
   setViewport(0, 0, size, size);
 }
 
-void Renderer::render(Object3D& root, Camera& camera) {
-  if (autoClear_) {
-    clear();
-  }
-
-  FrameContext frameContext;
-  frameContext = collectRenderables(root);
-
-  applyPerFrameUniforms(frameContext);
-
-  if (auto* scene = dynamic_cast<Scene*>(&root)) {
-    setEnvironment(*scene);
-    renderBackground(*scene, camera);
-  }
-
-  for (auto* mesh : frameContext.meshList) {
-    renderMesh(*mesh, camera);
-  }
-}
-
 void Renderer::setAutoClear(bool enabled) {
-  autoClear_ = enabled;
+  desc_.autoClear = enabled;
 }
 
 void Renderer::setClearColor(glm::vec4 rgba) {
-  clearColor_ = rgba;
+  desc_.clearColor = rgba;
   glClearColor(rgba[0], rgba[1], rgba[2], rgba[3]);
 }
 
 // NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 void Renderer::clear(bool color, bool depth, bool stencil) {
+  // Ensure Buffers are Writable
+  glDisable(GL_SCISSOR_TEST);
+  glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+  glDepthMask(GL_TRUE);
+  glStencilMask(0xFF);
+
   GLbitfield mask = 0;
   if (color) {
     mask |= GL_COLOR_BUFFER_BIT;
@@ -113,28 +145,17 @@ void Renderer::clear(bool color, bool depth, bool stencil) {
   glClear(mask);
 }
 
-void Renderer::clearColor() {
-  clear(true, false, false);
-}
-
-void Renderer::clearDepth() {
-  clear(false, true, false);
-}
-
-void Renderer::clearStencil() {
-  clear(false, false, true);
-}
-
-// NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
-void Renderer::setDefaultFramebufferSize(int width, int height) {
-  framebufferSize_[0] = width;
-  framebufferSize_[1] = height;
-  setViewport(0, 0, width, height);
-}
-
 // NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 void Renderer::setViewport(int xpos, int ypos, int width, int height) {
   glViewport(xpos, ypos, width, height);
+}
+
+void Renderer::resetViewport() {
+  if (currentTarget_ == nullptr) {
+    setViewport(0, 0, desc_.framebufferSize[0], desc_.framebufferSize[1]);
+    return;
+  }
+  setViewport(0, 0, currentTarget_->width(), currentTarget_->height());
 }
 
 // NOLINTNEXTLINE(readability-convert-member-functions-to-static)
@@ -142,8 +163,8 @@ void Renderer::setScissor(int xpos, int ypos, int width, int height) {
   glScissor(xpos, ypos, width, height);
 }
 
+// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 void Renderer::setScissorTest(bool enabled) {
-  scissorTestEnabled_ = enabled;
   if (enabled) {
     glEnable(GL_SCISSOR_TEST);
   } else {
@@ -152,21 +173,23 @@ void Renderer::setScissorTest(bool enabled) {
 }
 
 void Renderer::setToneMappingExposure(float exposure) {
-  toneMappingExposure_ = exposure;
+  desc_.toneMappingExposure = exposure;
 }
 
 void Renderer::setToneMappingMode(ToneMappingMode mode) {
-  toneMappingMode_ = mode;
+  desc_.toneMappingMode = mode;
 }
 
 void Renderer::setOutputColorSpace(OutputColorSpace space) {
-  outputColorSpace_ = space;
+  desc_.outputColorSpace = space;
 }
 
 void Renderer::resetState() {
-  autoClear_ = true;
-  clearColor_ = defaults::window::clearColor;
-  setClearColor(clearColor_);
+  RendererDesc defaultDesc;
+  defaultDesc.framebufferSize = desc_.framebufferSize;
+  desc_ = defaultDesc;
+
+  setClearColor(desc_.clearColor);
 
   setRenderTarget(nullptr);
   setScissorTest(false);
@@ -286,37 +309,6 @@ void Renderer::applyPipeline(const PipelineState& state, bool wireframe) {
   }
 }
 
-void Renderer::applyPerFrameUniforms(const FrameContext& frameContext) {
-  frameUniforms_.uToneMappingExposure = toneMappingExposure_;
-  frameUniforms_.uToneMappingMode = static_cast<int>(toneMappingMode_);
-  frameUniforms_.uOutputColorSpace = static_cast<int>(outputColorSpace_);
-
-  // Frame Uniforms
-  gpuBlocks_.frame.update(frameUniforms_);
-  gpuBlocks_.frame.bind();
-
-  // Light Data // TODO: lightsDirty_ flag
-  gpuBlocks_.lightData.update(frameContext.lightData);
-  gpuBlocks_.lightData.bind();
-
-  // Directional Lights
-  gpuBlocks_.directionalLights.updateArray(std::span{frameContext.directionalLights});
-  gpuBlocks_.directionalLights.bind();
-
-  // Point Lights
-  gpuBlocks_.pointLights.updateArray(std::span{frameContext.pointLights});
-  gpuBlocks_.pointLights.bind();
-}
-
-void Renderer::applyPerDrawUniforms(const Mesh& mesh, Material& material) const {
-  // Per-draw Uniforms
-  material.setUniform("uModel", mesh.worldMatrix());
-
-  // Apply Uniforms & Resources
-  material.applyEnvironment(environmentBundle_);
-  material.applyUniformsAndResources(); // Apply last - flushes pending setUniform calls
-}
-
 void Renderer::drawGeometry(const Geometry& geom, int instanceCount) {
   const DrawRange range = geom.drawRange();
   const GLenum primitive = toGlPrimitive(geom.primitive());
@@ -339,6 +331,37 @@ void Renderer::drawGeometry(const Geometry& geom, int instanceCount) {
   }
 }
 
+void Renderer::applyPerFrameUniforms(const FrameContext& frameContext) {
+  frameUniforms_.uToneMappingExposure = desc_.toneMappingExposure;
+  frameUniforms_.uToneMappingMode = static_cast<int>(desc_.toneMappingMode);
+  frameUniforms_.uOutputColorSpace = static_cast<int>(desc_.outputColorSpace);
+
+  // Frame Uniforms
+  gpuBlocks_.frame.update(frameUniforms_);
+  gpuBlocks_.frame.bind();
+
+  // Light Data // TODO: lightsDirty_ flag
+  gpuBlocks_.lightData.update(frameContext.lightData);
+  gpuBlocks_.lightData.bind();
+
+  // Directional Lights
+  gpuBlocks_.directionalLights.updateArray(std::span{frameContext.directionalLights});
+  gpuBlocks_.directionalLights.bind();
+
+  // Point Lights
+  gpuBlocks_.pointLights.updateArray(std::span{frameContext.pointLights});
+  gpuBlocks_.pointLights.bind();
+}
+
+void Renderer::applyPerDrawUniforms(const Mesh& mesh, Material& material) const {
+  // Per-draw Uniforms
+  material.setUniform(uniforms::Model, mesh.worldMatrix());
+
+  // Apply Uniforms & Resources
+  material.applyEnvironment(environmentBundle_);
+  material.applyUniformsAndResources(); // Apply last - flushes pending setUniform calls
+}
+
 void Renderer::renderBackground(Scene& scene, Camera& camera) {
   const auto& sceneBackground = scene.background();
   const auto& sceneEnvironment = scene.environment();
@@ -355,7 +378,6 @@ void Renderer::renderBackground(Scene& scene, Camera& camera) {
 
   if (sceneBackground.type == BackgroundType::Color) {
     setClearColor(sceneBackground.color);
-    clearColor();
     return;
   }
 
