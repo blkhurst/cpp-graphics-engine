@@ -111,6 +111,10 @@ const std::vector<SceneEntry>& SceneManager::sceneEntries() const {
   return sceneEntries_;
 }
 
+[[nodiscard]] SceneLoadPolicy SceneManager::sceneLoadPolicy() const {
+  return config_.loadMode;
+}
+
 int SceneManager::indexOf(const std::string& name) const {
   for (int i = 0; i < sceneEntries_.size(); ++i) {
     if (sceneEntries_[i].name == name) {

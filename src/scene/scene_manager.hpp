@@ -41,8 +41,11 @@ public:
   [[nodiscard]] Scene* currentScene() const;
   [[nodiscard]] int currentIndex() const;
   [[nodiscard]] std::string currentName() const;
+
   [[nodiscard]] std::vector<std::string> names() const;
   [[nodiscard]] const std::vector<SceneEntry>& sceneEntries() const;
+
+  [[nodiscard]] SceneLoadPolicy sceneLoadPolicy() const;
 
 private:
   ScenesConfig config_;
