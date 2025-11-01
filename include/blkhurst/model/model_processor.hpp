@@ -9,6 +9,8 @@
 
 namespace blkhurst {
 
+class AssetLoader;
+
 struct ModelProcessorDesc {
   bool genSmoothNormals = false;
   bool calcTangents = false;
@@ -20,11 +22,13 @@ struct ModelProcessorContext {
   ModelProcessorDesc desc;
   std::string modelPath;
   std::unordered_map<std::string, std::shared_ptr<Texture>> textureCache;
+  AssetLoader* assetLoader = nullptr;
 };
 
 struct ModelProcessor {
 public:
-  static ModelCPU load(const std::string& path, const ModelProcessorDesc& desc = {});
+  static ModelCPU load(const std::string& path, const ModelProcessorDesc& desc = {},
+                       AssetLoader* loader = nullptr);
 
 private:
   static NodeCPU processNode(const aiScene* scene, const aiNode* node,
@@ -39,6 +43,15 @@ private:
   static std::shared_ptr<Texture> loadTexture(const aiScene* scene, const aiString& texturePath,
                                               const TextureLoaderDesc& desc,
                                               ModelProcessorContext& context);
+  static std::shared_ptr<Texture> loadTextureFile(const std::string& path,
+                                                  const TextureLoaderDesc& desc,
+                                                  ModelProcessorContext& context);
+  static std::shared_ptr<Texture> loadTextureEmbedded(std::vector<uint8_t> data,
+                                                      const TextureLoaderDesc& desc,
+                                                      ModelProcessorContext& context);
+  static std::shared_ptr<Texture> loadTextureRgba8(int width, int height, std::vector<uint8_t> rgba,
+                                                   const TextureLoaderDesc& desc,
+                                                   ModelProcessorContext& context);
 };
 
 } // namespace blkhurst

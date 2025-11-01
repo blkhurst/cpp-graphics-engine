@@ -11,6 +11,7 @@ class Renderer;
 class Camera;
 class Scene;
 class Input;
+class AssetLoader;
 
 struct RootState {
   float delta = 0.0F;
@@ -25,6 +26,7 @@ struct RootState {
   Input* input = nullptr;
   Scene* scene = nullptr;
   EventBus* events = nullptr;
+  AssetLoader* assets = nullptr;
 
   int currentSceneIndex = -1;
   std::vector<std::string> sceneNames;

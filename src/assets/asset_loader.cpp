@@ -220,7 +220,6 @@ std::shared_ptr<Texture> AssetLoader::makeThreadSafeFallbackTexture(bool srgb) {
     // Custom Deleter (Ensure deletion on main thread)
     auto customDeleter = [&](Texture* texture) {
       dispatcher_.invokeMainAndWait([texture] { delete texture; });
-      spdlog::warn("TextureCustomDtor");
     };
 
     // Create Texture with Custom Deleter

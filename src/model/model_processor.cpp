@@ -1,3 +1,4 @@
+#include <blkhurst/assets/asset_loader.hpp>
 #include <blkhurst/model/model_processor.hpp>
 #include <blkhurst/objects/mesh.hpp>
 #include <blkhurst/util/assets.hpp>
@@ -15,7 +16,8 @@
 
 namespace blkhurst {
 
-ModelCPU ModelProcessor::load(const std::string& path, const ModelProcessorDesc& desc) {
+ModelCPU ModelProcessor::load(const std::string& path, const ModelProcessorDesc& desc,
+                              AssetLoader* loader) {
   // Resolve Model Path
   auto resolvedPath = assets::find(path);
   if (!resolvedPath) {
@@ -27,6 +29,7 @@ ModelCPU ModelProcessor::load(const std::string& path, const ModelProcessorDesc&
   ModelProcessorContext context;
   context.desc = desc;
   context.modelPath = *resolvedPath;
+  context.assetLoader = loader;
 
   // Import Scene
   Assimp::Importer importer;
@@ -392,12 +395,12 @@ std::shared_ptr<Texture> ModelProcessor::loadTexture(const aiScene* scene,
     const auto candidate = (modelDir / pathStr).generic_string();
 
     if (auto rel = assets::find(candidate)) {
-      auto texture = TextureLoader::load(*rel, desc);
+      auto texture = loadTextureFile(*rel, desc, context);
       context.textureCache[pathStr] = texture;
       return texture;
     }
     if (auto direct = assets::find(pathStr)) {
-      auto texture = TextureLoader::load(*direct, desc);
+      auto texture = loadTextureFile(*direct, desc, context);
       context.textureCache[pathStr] = texture;
       return texture;
     }
@@ -430,7 +433,9 @@ std::shared_ptr<Texture> ModelProcessor::loadTexture(const aiScene* scene,
     if (sceneTexture->mHeight == 0) {
       const auto* raw = std::bit_cast<const unsigned char*>(sceneTexture->pcData);
       const size_t size = sceneTexture->mWidth; // Assimp stores byte count in mWidth.
-      auto texture = TextureLoader::loadFromMemory(raw, size, desc);
+      auto blob = std::vector<unsigned char>(size);
+      std::memcpy(blob.data(), raw, size);
+      auto texture = loadTextureEmbedded(std::move(blob), desc, context);
       context.textureCache[pathStr] = texture;
       return texture;
     }
@@ -441,6 +446,7 @@ std::shared_ptr<Texture> ModelProcessor::loadTexture(const aiScene* scene,
     const size_t texelCount = static_cast<size_t>(width) * static_cast<size_t>(height);
 
     const std::span<const aiTexel> texels{sceneTexture->pcData, texelCount};
+    // loadModel runs in a thread, so already asynchronous
     std::vector<unsigned char> rgba;
     rgba.reserve(texelCount * 4);
     for (const aiTexel& texel : texels) {
@@ -449,13 +455,45 @@ std::shared_ptr<Texture> ModelProcessor::loadTexture(const aiScene* scene,
       rgba.push_back(texel.b);
       rgba.push_back(texel.a);
     }
-    auto texture = TextureLoader::fromRgba8(width, height, rgba.data(), desc);
+    auto texture = loadTextureRgba8(width, height, std::move(rgba), desc, context);
     context.textureCache[pathStr] = texture;
     return texture;
   }
 
   spdlog::error("ModelProcessor: texture not found '{}'", pathStr);
   return nullptr;
+}
+
+// Use AssetLoader if available (async); else load synchronously
+std::shared_ptr<Texture> ModelProcessor::loadTextureFile(const std::string& path,
+                                                         const TextureLoaderDesc& desc,
+                                                         ModelProcessorContext& context) {
+
+  if (context.assetLoader != nullptr) {
+    return context.assetLoader->loadTexture(path, desc);
+  }
+  return TextureLoader::load(path, desc);
+}
+
+std::shared_ptr<Texture> ModelProcessor::loadTextureEmbedded(std::vector<uint8_t> data,
+                                                             const TextureLoaderDesc& desc,
+                                                             ModelProcessorContext& context) {
+  //* Imperative we move data to avoid dangling pointer
+  if (context.assetLoader != nullptr) {
+    return context.assetLoader->loadTextureFromMemory(std::move(data), desc);
+  }
+  return TextureLoader::loadFromMemory(data.data(), data.size(), desc);
+}
+
+std::shared_ptr<Texture> ModelProcessor::loadTextureRgba8(int width, int height,
+                                                          std::vector<uint8_t> rgba,
+                                                          const TextureLoaderDesc& desc,
+                                                          ModelProcessorContext& context) {
+  //* Imperative we move rgba to avoid dangling pointer
+  if (context.assetLoader != nullptr) {
+    return context.assetLoader->loadTextureFromRgba8(width, height, std::move(rgba), desc);
+  }
+  return TextureLoader::loadFromRgba8(width, height, rgba.data(), desc);
 }
 
 } // namespace blkhurst

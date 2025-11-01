@@ -4,6 +4,7 @@
 #include "ui/ui_manager.hpp"
 #include "window/glfw_callbacks.hpp"
 #include "window/window_manager.hpp"
+#include <blkhurst/assets/asset_loader.hpp>
 #include <blkhurst/engine.hpp>
 #include <blkhurst/engine/config.hpp>
 #include <blkhurst/engine/root_state.hpp>
@@ -28,7 +29,8 @@ public:
         window_(cfg.windowConfig),
         scene_(cfg.scenesConfig),
         ui_(cfg.uiConfig, events_, window_),
-        input_(events_) {
+        input_(events_),
+        assetLoader_(cfg.scenesConfig.loadMode == SceneLoadPolicy::OnDemandUnloadInactive) {
     // Register EventBus Subscriptions
     registerEvents();
 
@@ -61,10 +63,14 @@ public:
       input_.beginFrame();
       window_.pollEvents();
       input_.endFrame();
+      assetLoader_.flushMainQueue();
 
       // Apply Pending Scene Change
       int pendingScene = pendingSceneChange_.exchange(-1);
       if (pendingScene != -1 && pendingScene != scene_.currentIndex()) {
+        if (scene_.sceneLoadPolicy() == SceneLoadPolicy::OnDemandUnloadInactive) {
+          assetLoader_.cancelPendingJobs();
+        }
         renderer_.resetState();
         scene_.setScene(pendingScene);
       }
@@ -133,6 +139,7 @@ public:
         .input = &input_,
         .scene = currentScene,
         .events = &events_,
+        .assets = &assetLoader_,
         .currentSceneIndex = scene_.currentIndex(),
         .sceneNames = scene_.names(),
     };
@@ -204,6 +211,7 @@ private:
   UiManager ui_;
   Input input_;
   Renderer renderer_;
+  AssetLoader assetLoader_;
 
   std::vector<Subscription> subscriptions_;
   std::atomic<int> pendingSceneChange_{-1};
