@@ -45,6 +45,7 @@ public:
   [[nodiscard]] std::vector<std::string> names() const;
   [[nodiscard]] const std::vector<SceneEntry>& sceneEntries() const;
 
+  [[nodiscard]] bool isConstructed(int index) const;
   [[nodiscard]] SceneLoadPolicy sceneLoadPolicy() const;
 
 private:

@@ -111,6 +111,13 @@ const std::vector<SceneEntry>& SceneManager::sceneEntries() const {
   return sceneEntries_;
 }
 
+bool SceneManager::isConstructed(int index) const {
+  if (index < 0 || index >= sceneEntries_.size()) {
+    return false;
+  }
+  return (sceneEntries_[index].instance != nullptr);
+}
+
 [[nodiscard]] SceneLoadPolicy SceneManager::sceneLoadPolicy() const {
   return config_.loadMode;
 }

@@ -1,3 +1,4 @@
+#include "assets/loading_manager.hpp"
 #include "engine/clock.hpp"
 #include "logging/logger.hpp"
 #include "scene/scene_manager.hpp"
@@ -30,7 +31,8 @@ public:
         scene_(cfg.loadingConfig),
         ui_(cfg.uiConfig, events_, window_),
         input_(events_),
-        assetLoader_(cfg.loadingConfig.loadMode == SceneLoadPolicy::OnDemandUnloadInactive) {
+        assetLoader_(cfg.loadingConfig.loadMode == SceneLoadPolicy::OnDemandUnloadInactive),
+        loadingManager_(cfg.loadingConfig) {
     // Register EventBus Subscriptions
     registerEvents();
 
@@ -66,13 +68,12 @@ public:
       assetLoader_.flushMainQueue();
 
       // Apply Pending Scene Change
-      int pendingScene = pendingSceneChange_.exchange(-1);
-      if (pendingScene != -1 && pendingScene != scene_.currentIndex()) {
+      if (auto newScene = loadingManager_.pendingSceneChange(scene_.currentIndex())) {
         if (scene_.sceneLoadPolicy() == SceneLoadPolicy::OnDemandUnloadInactive) {
           assetLoader_.cancelPendingJobs();
         }
         renderer_.resetState();
-        scene_.setScene(pendingScene);
+        scene_.setScene(newScene.value());
       }
 
       // Gather Frame State
@@ -93,6 +94,11 @@ public:
         previousSceneId = ctx.currentSceneId;
         previousSceneName = scene_.currentName();
       }
+
+      // Update Loading State
+      auto progress = assetLoader_.progress();
+      bool loading = progress.loading;
+      loadingManager_.tick(ctx.tick, loading);
 
       // UI only if no active scene/camera
       if ((ctx.currentScene == nullptr) || (ctx.currentCamera == nullptr)) {
@@ -119,6 +125,9 @@ public:
 
       // Render
       renderer_.render(*ctx.currentScene, *ctx.currentCamera);
+
+      // Render Loading Screen If Needed
+      loadingManager_.renderLoadingScreen(renderer_);
 
       // Ui
       drawUi(rootState, ctx.currentScene);
@@ -212,14 +221,18 @@ private:
   Input input_;
   Renderer renderer_;
   AssetLoader assetLoader_;
+  LoadingManager loadingManager_;
 
   std::vector<Subscription> subscriptions_;
-  std::atomic<int> pendingSceneChange_{-1};
 
   void registerEvents() {
     using namespace events;
     on<SceneChange>([this](const SceneChange& scene) {
-      pendingSceneChange_.store(scene.index, std::memory_order_relaxed);
+      if (scene.index == scene_.currentIndex()) {
+        return;
+      }
+      const bool targetAlreadyLoaded = scene_.isConstructed(scene.index);
+      loadingManager_.requestSceneChange(scene.index, targetAlreadyLoaded);
     });
     on<ToggleFullscreen>(
         [this](const ToggleFullscreen& fullscreen) { window_.useFullscreen(fullscreen.enabled); });
