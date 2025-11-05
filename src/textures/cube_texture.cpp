@@ -7,24 +7,10 @@
 
 namespace blkhurst {
 
-CubeTexture::CubeTexture(int size, const TextureDesc& desc) {
-  unsigned texId = 0U;
-  glCreateTextures(GL_TEXTURE_CUBE_MAP, 1, &texId);
-
-  // Allocate storage for 6 faces
-  const GLenum internal = toGLInternal(desc.format);
-  const int levels = desc.generateMipmaps ? calcMipLevels(size, size) : 1;
-
-  glTextureStorage2D(texId, levels, internal, size, size);
-
-  // Send state to base class
-  adoptGLTexture(texId, size, size, levels, desc);
-
-  setFiltering(desc.minFilter, desc.magFilter);
+CubeTexture::CubeTexture(int size, const TextureDesc& desc)
+    : Texture(size, size, desc, TextureType::Cube) {
+  // CubeTexture Initialised in Texture::buildTexture
   setWrap(desc.wrapS, desc.wrapT, desc.wrapT); // wrapR defaults to wrapT
-
-  spdlog::trace("CubeTexture({}) {}x{} levels={} fmt={}", texId, size, size, levels,
-                static_cast<int>(desc.format));
 }
 
 std::shared_ptr<CubeTexture> CubeTexture::create(int size, const TextureDesc& desc) {

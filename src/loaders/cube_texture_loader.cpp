@@ -6,65 +6,44 @@
 
 namespace blkhurst {
 
-static constexpr int kOutputChannels = 4;
-
 std::shared_ptr<CubeTexture>
 CubeTextureLoader::load(const std::array<std::string, kCubeFaceCount>& paths,
                         const CubeTextureLoaderDesc& desc) {
-  // Resolve asset paths
-  std::vector<std::string> resolvedPaths{};
-  resolvedPaths.reserve(kCubeFaceCount);
-  for (auto path : paths) {
-    auto found = assets::find(path);
-    if (!found) {
-      spdlog::error("CubeTextureLoader asset not found ({})", path);
-      return makeFallback_();
-    }
-    resolvedPaths.push_back(*found);
-  }
-
-  // Read Face Pixels
-  std::vector<LoadedPixels> faces{};
+  // Resolve Asset Paths & Read Face Pixels
+  std::vector<DecodedPixels> faces{};
   faces.reserve(kCubeFaceCount);
-  for (auto path : resolvedPaths) {
-    LoadedPixels pixels = TextureLoader::readPixels(path, desc.flipY, kOutputChannels);
+  for (auto path : paths) {
+    DecodedPixels pixels = TextureLoader::decodeFromPath(path, desc.flipY, kOutputChannels);
     if (!pixels.valid()) {
       spdlog::error("CubeTextureLoader failed to read ({})", path);
       for (auto& face : faces) {
         face.free();
       }
-      return makeFallback_();
+      return makeFallback();
     }
     faces.push_back(pixels);
   }
 
   // Validate dimensions & HDR consistency
-  if (!validateFaces_(faces)) {
+  if (!validateFaces(faces)) {
     for (auto& face : faces) {
       face.free();
     }
-    return makeFallback_();
+    return makeFallback();
   }
 
   const int size = faces[0].width;
   const bool isHdr = faces[0].isFloat;
 
-  // Pick Format
-  TextureFormat outputFormat = desc.srgb ? TextureFormat::SRGB8_ALPHA8 : TextureFormat::RGBA8;
-  if (isHdr) {
-    outputFormat = TextureFormat::RGBA32F; // Float
-  }
-
   // Create CubeTexture
   TextureDesc textureDesc{};
-  textureDesc.format = outputFormat;
+  textureDesc.format = TextureLoader::chooseFormat(isHdr, desc.srgb);
   textureDesc.minFilter = desc.minFilter;
   textureDesc.magFilter = desc.magFilter;
   textureDesc.wrapS = desc.wrapS;
   textureDesc.wrapT = desc.wrapT;
   // textureDesc.wrapR = TextureWrap::ClampToEdge;
   textureDesc.generateMipmaps = desc.generateMipmaps;
-
   auto cubeTexture = CubeTexture::create(size, textureDesc);
 
   // Set CubeTexture Face Data
@@ -76,17 +55,16 @@ CubeTextureLoader::load(const std::array<std::string, kCubeFaceCount>& paths,
     }
   }
 
-  // Free Pixels
+  // Free Pixels & Return
   for (auto& face : faces) {
     face.free();
   }
-
   spdlog::debug("CubeTextureLoader loaded cubemap (size={} ch={} hdr={} srgb={})", size,
                 kOutputChannels, isHdr, desc.srgb);
   return cubeTexture;
 }
 
-std::shared_ptr<CubeTexture> CubeTextureLoader::makeFallback_() {
+std::shared_ptr<CubeTexture> CubeTextureLoader::makeFallback() {
   // 2×2 RGBA checker (magenta/black)
   const int kSize = 2;
   constexpr auto kCount = static_cast<std::size_t>(kSize) * kSize * 4;
@@ -111,7 +89,7 @@ std::shared_ptr<CubeTexture> CubeTextureLoader::makeFallback_() {
   return cube;
 }
 
-bool CubeTextureLoader::validateFaces_(const std::vector<LoadedPixels>& faces) {
+bool CubeTextureLoader::validateFaces(const std::vector<DecodedPixels>& faces) {
   const int width0 = faces[0].width;
   const int height0 = faces[0].height;
   const bool isFloat0 = faces[0].isFloat;

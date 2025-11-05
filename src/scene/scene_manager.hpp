@@ -1,5 +1,6 @@
 #pragma once
 
+#include <blkhurst/engine/config/loading.hpp>
 #include <blkhurst/scene/scene.hpp>
 
 #include <functional>
@@ -9,9 +10,17 @@
 
 namespace blkhurst {
 
+constexpr int kNoActiveSceneIndex = -1;
+
+struct SceneEntry {
+  std::string name;
+  std::function<std::unique_ptr<Scene>()> factory;
+  std::unique_ptr<Scene> instance;
+};
+
 class SceneManager {
 public:
-  SceneManager() = default;
+  SceneManager(const LoadingConfig& config);
   ~SceneManager() = default;
 
   SceneManager(const SceneManager&) = delete;
@@ -26,24 +35,26 @@ public:
 
   void preload(const std::string& name);
   void unload(const std::string& name);
+  void unloadIfNeeded(const std::string& name);
   void reload(const std::string& name);
 
   [[nodiscard]] Scene* currentScene() const;
   [[nodiscard]] int currentIndex() const;
+  [[nodiscard]] std::string currentName() const;
+
   [[nodiscard]] std::vector<std::string> names() const;
+  [[nodiscard]] const std::vector<SceneEntry>& sceneEntries() const;
+
+  [[nodiscard]] bool isConstructed(int index) const;
+  [[nodiscard]] SceneLoadPolicy sceneLoadPolicy() const;
 
 private:
-  struct SceneEntry {
-    std::string name;
-    std::function<std::unique_ptr<Scene>()> factory;
-    std::unique_ptr<Scene> instance;
-  };
+  LoadingConfig config_;
+  std::vector<SceneEntry> sceneEntries_;
+  int currentIndex_ = kNoActiveSceneIndex;
 
   [[nodiscard]] int indexOf(const std::string& name) const;
   void ensureConstructed(int index);
-
-  std::vector<SceneEntry> sceneEntries_;
-  int currentIndex_ = -1;
 };
 
 } // namespace blkhurst

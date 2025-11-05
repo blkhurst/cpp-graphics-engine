@@ -5,33 +5,33 @@
 
 namespace blkhurst {
 
-Texture::Texture(int width, int height, const TextureDesc& desc)
+Texture::Texture(int width, int height, const TextureDesc& desc, TextureType type)
     : width_(width),
       height_(height),
       mipLevels_(desc.generateMipmaps ? calcMipLevels(width, height) : 1),
-      desc_(desc) {
-  glCreateTextures(GL_TEXTURE_2D, 1, &id_);
-
-  const unsigned internal = toGLInternal(desc.format);
-  glTextureStorage2D(id_, mipLevels_, internal, width_, height_);
-
-  setFiltering(desc.minFilter, desc.magFilter);
-  setWrap(desc.wrapS, desc.wrapT);
-
-  spdlog::trace("Texture({}) {}x{} levels={} fmt={}", id_, width_, height_, mipLevels_,
-                static_cast<int>(desc_.format));
+      desc_(desc),
+      type_(type) {
+  buildTexture();
 }
 
 Texture::~Texture() {
-  if (id_ != 0U) {
-    glDeleteTextures(1, &id_);
-    spdlog::trace("Texture({}) destroyed", id_);
-    id_ = 0U;
-  }
+  deleteTexture();
 }
 
 std::shared_ptr<Texture> Texture::create(int width, int height, const TextureDesc& desc) {
   return std::make_shared<Texture>(width, height, desc);
+}
+
+void Texture::recreate(int width, int height, const TextureDesc& desc) {
+  // Set New Properties
+  width_ = width;
+  height_ = height;
+  mipLevels_ = desc.generateMipmaps ? calcMipLevels(width, height) : 1;
+  desc_ = desc;
+
+  // Delete Old & Create New Texture
+  deleteTexture();
+  buildTexture();
 }
 
 void Texture::setFiltering(TextureFilter minFilter, TextureFilter magFilter) const {
@@ -115,19 +115,6 @@ bool Texture::isDepthFormat(TextureFormat format) {
 }
 bool Texture::isDepthStencilFormat(TextureFormat format) {
   return format == TextureFormat::Depth24Stencil8 || format == TextureFormat::Depth32FStencil8;
-}
-
-// NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
-void Texture::adoptGLTexture(unsigned newId, int width, int height, int mipLevels,
-                             const TextureDesc& desc) {
-  if (id_ != 0U) {
-    glDeleteTextures(1, &id_);
-  }
-  id_ = newId;
-  width_ = width;
-  height_ = height;
-  mipLevels_ = mipLevels;
-  desc_ = desc;
 }
 
 /* -------------- Gl Helpers -------------- */
@@ -298,6 +285,37 @@ void Texture::pixelFormatAndType(TextureFormat format, GLenum& outFormat, GLenum
     outFormat = GL_RGBA;
     outType = GL_UNSIGNED_BYTE;
     break;
+  }
+}
+
+void Texture::buildTexture() {
+  std::string typeName = "Texture";
+
+  if (type_ == TextureType::Texture2D) {
+    glCreateTextures(GL_TEXTURE_2D, 1, &id_);
+  } else if (type_ == TextureType::Cube) {
+    glCreateTextures(GL_TEXTURE_CUBE_MAP, 1, &id_);
+    typeName = "CubeTexture";
+  } else {
+    spdlog::error("Texture::buildTexture unknown TextureType");
+    return;
+  }
+
+  const GLenum internal = toGLInternal(desc_.format);
+  glTextureStorage2D(id_, mipLevels_, internal, width_, height_);
+
+  setFiltering(desc_.minFilter, desc_.magFilter);
+  setWrap(desc_.wrapS, desc_.wrapT);
+
+  spdlog::trace("{}({}) {}x{} levels={} fmt={}", typeName, id_, width_, height_, mipLevels_,
+                static_cast<int>(desc_.format));
+}
+
+void Texture::deleteTexture() {
+  if (id_ != 0U) {
+    glDeleteTextures(1, &id_);
+    spdlog::trace("Texture({}) destroyed", id_);
+    id_ = 0U;
   }
 }
 

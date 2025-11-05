@@ -91,3 +91,10 @@
 ## Events
 
 - Make `emit` immediate, `post` queued until `events_.poll()`.
+
+## Renderer
+
+- [ ] Improve Architecture\
+       Since starting, I have noticed a few places where I had wished the engine was structured differently, and building from scratch has made me aware of _why_ these practices are implemented. Especially with `Program` requiring to be built/re-built only _after_ defines have been set, and now with asynchronous loading with Geometry/VertexArray/Buffer and Texture, I wish OpenGL calls were confined to the renderer (GL calls must be run on main thread). This means I cant use these classes in other threads requiring me to approach with different tactics for what would have been simple (e.g. dispatching to the main thread for creating and updating textures, rather than using my existing classes + `needsUpdate` handled later by the renderer). This is also the approach that would allow support for different backends such as `GlRenderer`/`MetalRenderer`/`VulkanRenderer`/`DxRenderer`.
+  - [ ] ...
+  - [ ] Once GL is confined to Renderer, can remove `GeometryCPU`/`NodeCPU`/... from `ModelProcessor`. Equally, `AssetLoader` will become simpler without having to pair a custom deleter for `Texture` with `invokeMainAndWait` for main thread creation.

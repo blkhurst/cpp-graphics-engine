@@ -4,11 +4,13 @@
 
 namespace blkhurst {
 
+using UUID = std::uint64_t;
+static constexpr UUID kInvalidUUID = 0;
+
 class Identifiable {
 public:
   Identifiable();
 
-  using UUID = std::uint64_t;
   [[nodiscard]] UUID uuid() const;
   [[nodiscard]] const std::string& uuidString() const; // name if set, else hex representation
   [[nodiscard]] const std::string& name() const;

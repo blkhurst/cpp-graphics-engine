@@ -17,6 +17,7 @@ public:
   Engine& operator=(Engine&&) = delete;
 
   void run();
+  void setScene(const std::string& name);
 
   template <class TScene, class... Args>
   void registerScene(const std::string& name, Args&&... args) {
