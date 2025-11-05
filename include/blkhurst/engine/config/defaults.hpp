@@ -39,9 +39,13 @@ inline constexpr bool showStatsHeader = true;
 inline constexpr bool showScenesHeader = true;
 } // namespace ui
 
-namespace scenes {
+namespace loading {
 inline constexpr SceneLoadPolicy loadMode = SceneLoadPolicy::Preload;
 inline constexpr bool showLoadingScreen = true;
-} // namespace scenes
+inline constexpr bool animateWhenLoaded = false; // Show overlay when target scene is already loaded
+inline constexpr float fadeInDuration = 0.2F;
+inline constexpr float fadeOutDuration = 0.4F;
+inline constexpr float minDisplayTime = 0.4F;
+} // namespace loading
 
 } // namespace blkhurst::defaults

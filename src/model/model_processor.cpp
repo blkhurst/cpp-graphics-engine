@@ -21,7 +21,7 @@ ModelCPU ModelProcessor::load(const std::string& path, const ModelProcessorDesc&
   // Resolve Model Path
   auto resolvedPath = assets::find(path);
   if (!resolvedPath) {
-    spdlog::error("ModelProcessor asset not found '{}'", path);
+    spdlog::warn("ModelProcessor asset not found '{}'", path);
     return {.success = false};
   }
 
@@ -460,7 +460,7 @@ std::shared_ptr<Texture> ModelProcessor::loadTexture(const aiScene* scene,
     return texture;
   }
 
-  spdlog::error("ModelProcessor: texture not found '{}'", pathStr);
+  spdlog::warn("ModelProcessor: texture not found '{}'", pathStr);
   return nullptr;
 }
 

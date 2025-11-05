@@ -1,6 +1,6 @@
 #pragma once
 
-#include <blkhurst/engine/config/scenes.hpp>
+#include <blkhurst/engine/config/loading.hpp>
 #include <blkhurst/scene/scene.hpp>
 
 #include <functional>
@@ -20,7 +20,7 @@ struct SceneEntry {
 
 class SceneManager {
 public:
-  SceneManager(const ScenesConfig& config);
+  SceneManager(const LoadingConfig& config);
   ~SceneManager() = default;
 
   SceneManager(const SceneManager&) = delete;
@@ -48,7 +48,7 @@ public:
   [[nodiscard]] SceneLoadPolicy sceneLoadPolicy() const;
 
 private:
-  ScenesConfig config_;
+  LoadingConfig config_;
   std::vector<SceneEntry> sceneEntries_;
   int currentIndex_ = kNoActiveSceneIndex;
 

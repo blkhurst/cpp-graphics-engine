@@ -1,8 +1,8 @@
 #pragma once
 
 #include <blkhurst/engine/config/assets.hpp>
+#include <blkhurst/engine/config/loading.hpp>
 #include <blkhurst/engine/config/logger.hpp>
-#include <blkhurst/engine/config/scenes.hpp>
 #include <blkhurst/engine/config/ui.hpp>
 #include <blkhurst/engine/config/window.hpp>
 
@@ -13,7 +13,7 @@ struct EngineConfig {
   LoggerConfig loggerConfig{};
   WindowConfig windowConfig{};
   UiConfig uiConfig{};
-  ScenesConfig scenesConfig{};
+  LoadingConfig loadingConfig{};
 };
 
 } // namespace blkhurst

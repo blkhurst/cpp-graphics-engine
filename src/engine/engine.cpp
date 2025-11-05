@@ -27,10 +27,10 @@ public:
   explicit Impl(const EngineConfig& cfg)
       : config_(cfg),
         window_(cfg.windowConfig),
-        scene_(cfg.scenesConfig),
+        scene_(cfg.loadingConfig),
         ui_(cfg.uiConfig, events_, window_),
         input_(events_),
-        assetLoader_(cfg.scenesConfig.loadMode == SceneLoadPolicy::OnDemandUnloadInactive) {
+        assetLoader_(cfg.loadingConfig.loadMode == SceneLoadPolicy::OnDemandUnloadInactive) {
     // Register EventBus Subscriptions
     registerEvents();
 

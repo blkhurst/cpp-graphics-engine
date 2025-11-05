@@ -3,7 +3,7 @@
 
 namespace blkhurst {
 
-SceneManager::SceneManager(const ScenesConfig& config)
+SceneManager::SceneManager(const LoadingConfig& config)
     : config_(config) {
 }
 
