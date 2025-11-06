@@ -1,6 +1,6 @@
 #pragma once
 
-#include <blkhurst/cameras/ortho_camera.hpp>
+#include <blkhurst/cameras/perspective_camera.hpp>
 #include <blkhurst/controllers/controller.hpp>
 #include <blkhurst/engine/config/defaults.hpp>
 #include <blkhurst/objects/object3d.hpp>
@@ -37,7 +37,7 @@ struct SceneEnvironment {
   float intensity = 1.0F;
 
   bool setBackground = true;
-  bool needsUpdate = false;
+  bool needsUpdate = false; // Equirect to Cubemap
 };
 
 class Scene : public Object3D {
@@ -79,7 +79,7 @@ public:
 
   void setActiveCamera(std::shared_ptr<Camera> camera);
   void setActiveController(std::shared_ptr<Controller> controller);
-  void addUiEntry(std::shared_ptr<UiEntry> entry);
+  template <class T> std::shared_ptr<T> addUiEntry(std::shared_ptr<T> entry);
 
 private:
   bool started_ = false;
@@ -87,9 +87,16 @@ private:
   SceneBackground background_{};
   SceneEnvironment environment_{};
 
-  std::shared_ptr<Camera> activeCamera_ = std::make_shared<OrthoCamera>();
+  std::shared_ptr<Camera> activeCamera_ = std::make_shared<PerspectiveCamera>();
   std::shared_ptr<Controller> activeController_ = nullptr;
   std::vector<std::shared_ptr<UiEntry>> uiEntries_;
 };
+
+//
+template <class T> std::shared_ptr<T> Scene::addUiEntry(std::shared_ptr<T> entry) {
+  static_assert(std::is_base_of_v<UiEntry, T>, "T must derive from UiEntry");
+  uiEntries_.push_back(entry);
+  return entry;
+}
 
 } // namespace blkhurst

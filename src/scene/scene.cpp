@@ -138,13 +138,4 @@ void Scene::setActiveController(std::shared_ptr<Controller> controller) {
   spdlog::trace("Scene({}) setActiveController", uuidString());
 }
 
-void Scene::addUiEntry(std::shared_ptr<UiEntry> entry) {
-  if (!entry) {
-    spdlog::warn("Scene({}) addUiEntry called with null entry", uuidString());
-    return;
-  }
-  spdlog::trace("Scene({}) addUiEntry '{}'", uuidString(), entry->title());
-  uiEntries_.push_back(std::move(entry));
-}
-
 } // namespace blkhurst
