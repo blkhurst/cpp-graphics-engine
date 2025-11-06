@@ -8,7 +8,7 @@
 namespace blkhurst {
 
 struct FlyControllerDesc {
-  float baseSpeed_ = 4.0F;
+  float baseSpeed = 4.0F;
   float fastMultiplier = 3.0F;
   float damping = 12.0F;            // per-second
   float mouseSensitivity = 0.0025F; // rad per pixel
@@ -28,6 +28,10 @@ public:
   FlyController(FlyController&&) = delete;
   FlyController& operator=(FlyController&&) = delete;
 
+  static std::shared_ptr<FlyController> create(const FlyControllerDesc& desc = {});
+
+  [[nodiscard]] const FlyControllerDesc& desc() const;
+
   void update(const RootState& state) override;
 
   void setBaseSpeed(float unitsPerSecond);
@@ -38,14 +42,7 @@ public:
 private:
   const float kPitchLimit = 1.55334303F; // ~89 degrees
 
-  float baseSpeed_;
-  float fastMultiplier_;
-  float mouseSensitivity_;
-  float damping_;
-
-  bool enableDamping_;
-  bool enableMouseDamping_;
-  float mouseDampingAlpha_;
+  FlyControllerDesc desc_;
 
   // State
   bool rotating_ = false;

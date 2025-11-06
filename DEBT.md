@@ -76,7 +76,7 @@
 ## Controllers
 
 - [ ] `OrbitController` does not support `OrthoCamera`.
-- [ ] `OrbitController` is not framerate independent.
+- [x] `OrbitController` is not framerate independent.
 - [ ] `OrbitController` jitters when at the poles.
 
 ## Object

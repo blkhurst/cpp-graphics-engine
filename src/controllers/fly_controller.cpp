@@ -9,29 +9,31 @@
 namespace blkhurst {
 
 FlyController::FlyController(const FlyControllerDesc& desc)
-    : baseSpeed_(desc.baseSpeed_),
-      fastMultiplier_(desc.fastMultiplier),
-      mouseSensitivity_(desc.mouseSensitivity),
-      damping_(desc.damping),
-      enableDamping_(desc.enableDamping),
-      enableMouseDamping_(desc.enableMouseDamping),
-      mouseDampingAlpha_(desc.mouseDampingAlpha) {
+    : desc_(desc) {
+}
+
+std::shared_ptr<FlyController> FlyController::create(const FlyControllerDesc& desc) {
+  return std::make_shared<FlyController>(desc);
+}
+
+const FlyControllerDesc& FlyController::desc() const {
+  return desc_;
 }
 
 void FlyController::setBaseSpeed(float unitsPerSecond) {
-  baseSpeed_ = unitsPerSecond;
+  desc_.baseSpeed = unitsPerSecond;
 }
 
 void FlyController::setFastMultiplier(float mul) {
-  fastMultiplier_ = mul;
+  desc_.fastMultiplier = mul;
 }
 
 void FlyController::setMouseSensitivity(float radiansPerPixel) {
-  mouseSensitivity_ = radiansPerPixel;
+  desc_.mouseSensitivity = radiansPerPixel;
 }
 
 void FlyController::setDamping(float perSecond) {
-  damping_ = perSecond;
+  desc_.damping = perSecond;
 }
 
 void FlyController::update(const RootState& state) {
@@ -77,16 +79,16 @@ void FlyController::initialiseYawPitchFromCamera_(Camera& cam) {
 
 void FlyController::applyMouseLook_(const RootState& state, Camera& cam) {
   glm::vec2 mouseDelta = state.input->mouseDelta();
-  if (enableMouseDamping_) {
+  if (desc_.enableMouseDamping) {
     if (skipFirstDelta_) {
       skipFirstDelta_ = false;
       mouseDelta = {};
     }
-    smoothed_ = smoothed_ * (1.0F - mouseDampingAlpha_) + mouseDelta * mouseDampingAlpha_;
+    smoothed_ = smoothed_ * (1.0F - desc_.mouseDampingAlpha) + mouseDelta * desc_.mouseDampingAlpha;
     mouseDelta = smoothed_;
   }
-  yaw_ -= mouseDelta[0] * mouseSensitivity_;
-  pitch_ -= mouseDelta[1] * mouseSensitivity_;
+  yaw_ -= mouseDelta[0] * desc_.mouseSensitivity;
+  pitch_ -= mouseDelta[1] * desc_.mouseSensitivity;
 
   // Clamp pitch to avoid flipping
   if (pitch_ > kPitchLimit) {
@@ -111,7 +113,7 @@ void FlyController::applyKeyboardMove_(const RootState& state, Camera& cam) {
 
   const bool fast = state.input->keyDown(Key::LeftShift) || state.input->keyDown(Key::RightShift);
 
-  float speed = baseSpeed_ * (fast ? fastMultiplier_ : 1.0F);
+  float speed = desc_.baseSpeed * (fast ? desc_.fastMultiplier : 1.0F);
 
   float moveX = 0.0F;
   float moveY = 0.0F;
@@ -151,8 +153,8 @@ void FlyController::applyKeyboardMove_(const RootState& state, Camera& cam) {
   const glm::vec3 targetVel = wishWorld * speed;
 
   // Dampened interpolation: v += (target - v) * (1 - exp(-damping*dt))
-  if (enableDamping_) {
-    const float alpha = 1.0F - std::exp(-damping_ * frameDelta);
+  if (desc_.enableDamping) {
+    const float alpha = 1.0F - std::exp(-desc_.damping * frameDelta);
     velocity_ += (targetVel - velocity_) * alpha;
   } else {
     velocity_ = targetVel;

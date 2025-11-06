@@ -30,7 +30,7 @@ struct OrbitControllerDesc {
   float minAzimuth{-std::numeric_limits<float>::infinity()};
   float maxAzimuth{std::numeric_limits<float>::infinity()};
 
-  // Damping [0-1]
+  // Damping (Half-life in seconds)
   bool dampingEnabled{true};
   float dampingFactor{0.1F};
 
@@ -58,11 +58,13 @@ public:
   OrbitController(OrbitController&&) = delete;
   OrbitController& operator=(OrbitController&&) = delete;
 
+  static std::shared_ptr<OrbitController> create(const OrbitControllerDesc& desc = {});
+
   void update(const RootState& state) override;
 
-  void setTarget(const glm::vec3& target);
-  [[nodiscard]] const glm::vec3& target() const;
+  [[nodiscard]] const OrbitControllerDesc& desc() const;
 
+  void setTarget(const glm::vec3& target);
   void setSpherical(float radius, float polar, float azimuth);
 
   void setRotateSpeed(float speed);
@@ -86,32 +88,7 @@ public:
   void setWorldSpacePanning(bool enabled);
 
 private:
-  glm::vec3 target_;
-  float radius_;
-  float polar_;
-  float azimuth_;
-
-  float minRadius_;
-  float maxRadius_;
-  float minPolar_;
-  float maxPolar_;
-  float minAzimuth_;
-  float maxAzimuth_;
-
-  float rotateSpeed_;
-  float panSpeed_;
-  float zoomSpeed_;
-
-  bool dampingEnabled_;
-  float dampingFactor_;
-
-  bool panEnabled_;
-  bool zoomEnabled_;
-  bool rotateEnabled_;
-
-  bool autoRotate_;
-  float autoRotateSpeed_;
-  bool worldSpacePanning_;
+  OrbitControllerDesc desc_;
 
   // Accumulated deltas (Applied per-frame, decayed if damping)
   glm::vec2 angularDelta_{0.0F}; // x: azimuth, y: polar
@@ -134,7 +111,7 @@ private:
   void accumulatePan(const FrameSample& frm);
   void accumulateZoom(const FrameSample& frm);
   void clampSpherical();
-  void integrateWithDamping();
+  void integrateWithDamping(float delta);
   static void applyCameraTransform(Camera& cam, const glm::vec3& target, float radius, float polar,
                                    float azimuth);
 

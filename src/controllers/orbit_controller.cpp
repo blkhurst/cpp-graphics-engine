@@ -17,95 +17,80 @@ constexpr glm::vec2 scrollDeltaMultiplier{100.0F}; // GLFW scrollCallback return
 namespace blkhurst {
 
 OrbitController::OrbitController(const OrbitControllerDesc& desc)
-    : target_(desc.target),
-      radius_(desc.radius),
-      polar_(desc.polar),
-      azimuth_(desc.azimuth),
-      minRadius_(desc.minRadius),
-      maxRadius_(desc.maxRadius),
-      minPolar_(desc.minPolar),
-      maxPolar_(desc.maxPolar),
-      minAzimuth_(desc.minAzimuth),
-      maxAzimuth_(desc.maxAzimuth),
-      rotateSpeed_(desc.rotateSpeed),
-      panSpeed_(desc.panSpeed),
-      zoomSpeed_(desc.zoomSpeed),
-      dampingEnabled_(desc.dampingEnabled),
-      dampingFactor_(desc.dampingFactor),
-      panEnabled_(desc.panEnabled),
-      zoomEnabled_(desc.zoomEnabled),
-      rotateEnabled_(desc.rotateEnabled),
-      autoRotate_(desc.autoRotate),
-      autoRotateSpeed_(desc.autoRotateSpeed),
-      worldSpacePanning_(desc.worldSpacePanning) {
-  setSpherical(radius_, polar_, azimuth_);
+    : desc_(desc) {
+  setSpherical(desc.radius, desc.polar, desc.azimuth);
+}
+
+std::shared_ptr<OrbitController> OrbitController::create(const OrbitControllerDesc& desc) {
+  return std::make_shared<OrbitController>(desc);
+}
+
+const OrbitControllerDesc& OrbitController::desc() const {
+  return desc_;
 }
 
 void OrbitController::setTarget(const glm::vec3& target) {
-  target_ = target;
-}
-const glm::vec3& OrbitController::target() const {
-  return target_;
+  desc_.target = target;
 }
 
 // NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
 void OrbitController::setSpherical(float radius, float polar, float azimuth) {
-  radius_ = glm::clamp(radius, minRadius_, maxRadius_);
-  polar_ = glm::clamp(polar, minPolar_, maxPolar_);
-  azimuth_ = glm::clamp(wrapPi(azimuth), minAzimuth_, maxAzimuth_);
+  desc_.radius = glm::clamp(radius, desc_.minRadius, desc_.maxRadius);
+  desc_.polar = glm::clamp(polar, desc_.minPolar, desc_.maxPolar);
+  desc_.azimuth = glm::clamp(wrapPi(azimuth), desc_.minAzimuth, desc_.maxAzimuth);
 }
 
 void OrbitController::setRotateSpeed(float speed) {
-  rotateSpeed_ = speed;
+  desc_.rotateSpeed = speed;
 }
 void OrbitController::setPanSpeed(float speed) {
-  panSpeed_ = speed;
+  desc_.panSpeed = speed;
 }
 void OrbitController::setZoomSpeed(float speed) {
-  zoomSpeed_ = speed;
+  desc_.zoomSpeed = speed;
 }
 
 void OrbitController::setDistanceLimits(float minDist, float maxDist) {
-  minRadius_ = std::max(0.0F, std::min(minDist, maxDist));
-  maxRadius_ = std::max(minDist, maxDist);
-  radius_ = glm::clamp(radius_, minRadius_, maxRadius_);
+  desc_.minRadius = std::max(0.0F, std::min(minDist, maxDist));
+  desc_.maxRadius = std::max(minDist, maxDist);
+  desc_.radius = glm::clamp(desc_.radius, desc_.minRadius, desc_.maxRadius);
 }
 void OrbitController::setPolarLimits(float minPolarRad, float maxPolarRad) {
-  minPolar_ = std::min(minPolarRad, maxPolarRad);
-  maxPolar_ = std::max(minPolarRad, maxPolarRad);
-  polar_ = glm::clamp(polar_, minPolar_, maxPolar_);
+  desc_.minPolar = std::min(minPolarRad, maxPolarRad);
+  desc_.maxPolar = std::max(minPolarRad, maxPolarRad);
+  desc_.polar = glm::clamp(desc_.polar, desc_.minPolar, desc_.maxPolar);
 }
 void OrbitController::setAzimuthalLimits(float minAzimuthRad, float maxAzimuthRad) {
-  minAzimuth_ = std::min(minAzimuthRad, maxAzimuthRad);
-  maxAzimuth_ = std::max(minAzimuthRad, maxAzimuthRad);
-  azimuth_ = glm::clamp(azimuth_, minAzimuth_, maxAzimuth_);
+  desc_.minAzimuth = std::min(minAzimuthRad, maxAzimuthRad);
+  desc_.maxAzimuth = std::max(minAzimuthRad, maxAzimuthRad);
+  desc_.azimuth = glm::clamp(desc_.azimuth, desc_.minAzimuth, desc_.maxAzimuth);
 }
 
 void OrbitController::setDampingEnabled(bool enabled) {
-  dampingEnabled_ = enabled;
+  desc_.dampingEnabled = enabled;
 }
 void OrbitController::setDampingFactor(float factor) {
-  dampingFactor_ = glm::clamp(factor, 0.0F, 1.0F);
+  desc_.dampingFactor = glm::clamp(factor, 0.0F, 1.0F);
 }
 
 void OrbitController::enablePan(bool enabled) {
-  panEnabled_ = enabled;
+  desc_.panEnabled = enabled;
 }
 void OrbitController::enableZoom(bool enabled) {
-  zoomEnabled_ = enabled;
+  desc_.zoomEnabled = enabled;
 }
 void OrbitController::enableRotate(bool enabled) {
-  rotateEnabled_ = enabled;
+  desc_.rotateEnabled = enabled;
 }
 
 void OrbitController::setAutoRotate(bool enabled) {
-  autoRotate_ = enabled;
+  desc_.autoRotate = enabled;
 }
 void OrbitController::setAutoRotateSpeed(float speed) {
-  autoRotateSpeed_ = speed;
+  desc_.autoRotateSpeed = speed;
 }
 void OrbitController::setWorldSpacePanning(bool enabled) {
-  worldSpacePanning_ = enabled;
+  desc_.worldSpacePanning = enabled;
 }
 
 /* --------------------------------- Update ---------------------------------- */
@@ -121,11 +106,11 @@ void OrbitController::update(const RootState& state) {
   accumulatePan(sample);
   accumulateZoom(sample);
 
-  integrateWithDamping();
+  integrateWithDamping(sample.dt);
 
   clampSpherical();
 
-  applyCameraTransform(*state.camera, target_, radius_, polar_, azimuth_);
+  applyCameraTransform(*state.camera, desc_.target, desc_.radius, desc_.polar, desc_.azimuth);
 }
 
 OrbitController::FrameSample OrbitController::sampleFrame(const RootState& state) {
@@ -145,12 +130,12 @@ OrbitController::FrameSample OrbitController::sampleFrame(const RootState& state
 
 // Mouse (LMB) + optional auto-rotate -> angularDelta_
 void OrbitController::accumulateRotate(const FrameSample& frm) {
-  if (autoRotate_ && !frm.leftDown && !frm.middleDown && !frm.rightDown) {
-    const float autoAngle = (kTwoPi / 60.0F) * autoRotateSpeed_ * frm.dt;
+  if (desc_.autoRotate && !frm.leftDown && !frm.middleDown && !frm.rightDown) {
+    const float autoAngle = (kTwoPi / 60.0F) * desc_.autoRotateSpeed * frm.dt;
     angularDelta_.x -= autoAngle;
   }
-  if (rotateEnabled_ && frm.leftDown && !(frm.middleDown || frm.rightDown)) {
-    const float factor = (kTwoPi / frm.vpH) * rotateSpeed_;
+  if (desc_.rotateEnabled && frm.leftDown && !(frm.middleDown || frm.rightDown)) {
+    const float factor = (kTwoPi / frm.vpH) * desc_.rotateSpeed;
     angularDelta_.x -= frm.mouseDelta.x * factor; // azimuth
     angularDelta_.y -= frm.mouseDelta.y * factor; // polar
   }
@@ -158,26 +143,27 @@ void OrbitController::accumulateRotate(const FrameSample& frm) {
 
 // Mid/RMB panning in WorldUp or CameraUp frame -> panOffset_
 void OrbitController::accumulatePan(const FrameSample& frm) {
-  if (!panEnabled_ || !(frm.middleDown || frm.rightDown)) {
+  if (!desc_.panEnabled || !(frm.middleDown || frm.rightDown)) {
     return;
   }
 
-  const glm::vec3 camPos = sphericalToCartesian(radius_, polar_, azimuth_) + target_;
-  const glm::vec3 forward = glm::normalize(target_ - camPos);
+  const glm::vec3 camPos =
+      sphericalToCartesian(desc_.radius, desc_.polar, desc_.azimuth) + desc_.target;
+  const glm::vec3 forward = glm::normalize(desc_.target - camPos);
 
   // TODO: Implement PerspectiveCamera::FovGetter and Camera::isPerspective
   // Three-like normalization for perspective: 2 * dist * tan(fov/2) / viewportHeight
   float fovY = glm::radians(fovFallback);
   // Fetch PerspectiveCameras FOV
-  const float dist = glm::length(camPos - target_);
+  const float dist = glm::length(camPos - desc_.target);
   const float norm = (2.0F * dist * std::tan(0.5F * fovY)) / frm.vpH;
-  const float deltaX = frm.mouseDelta.x * norm * panSpeed_;
-  const float deltaY = frm.mouseDelta.y * norm * panSpeed_;
+  const float deltaX = frm.mouseDelta.x * norm * desc_.panSpeed;
+  const float deltaY = frm.mouseDelta.y * norm * desc_.panSpeed;
 
-  if (worldSpacePanning_) {
+  if (desc_.worldSpacePanning) {
     // Lock to XZ plane
-    const float sinA = std::sin(azimuth_);
-    const float cosA = std::cos(azimuth_);
+    const float sinA = std::sin(desc_.azimuth);
+    const float cosA = std::cos(desc_.azimuth);
     const glm::vec3 rightXZ{cosA, 0.0F, -sinA};
     const glm::vec3 fwdXZ{sinA, 0.0F, cosA};
     panOffset_ += (-deltaX) * rightXZ;
@@ -187,7 +173,7 @@ void OrbitController::accumulatePan(const FrameSample& frm) {
     glm::vec3 worldUp{0.0F, 1.0F, 0.0F};
     glm::vec3 right = glm::cross(forward, worldUp);
     if (glm::length2(right) < kEpsilon) {
-      right = {std::cos(azimuth_), 0.0F, -std::sin(azimuth_)};
+      right = {std::cos(desc_.azimuth), 0.0F, -std::sin(desc_.azimuth)};
     } else {
       right = glm::normalize(right);
     }
@@ -200,50 +186,59 @@ void OrbitController::accumulatePan(const FrameSample& frm) {
 
 // Scroll -> multiplicative zoom scale
 void OrbitController::accumulateZoom(const FrameSample& frm) {
-  if (!zoomEnabled_ || frm.scrollDelta.y == 0.0F) {
+  if (!desc_.zoomEnabled || frm.scrollDelta.y == 0.0F) {
     return;
   }
-  const float scale = threeZoomScale(frm.scrollDelta.y, zoomSpeed_);
+  const float scale = threeZoomScale(frm.scrollDelta.y, desc_.zoomSpeed);
   zoomScale_ = (frm.scrollDelta.y < 0.0F) ? (zoomScale_ / scale) : (zoomScale_ * scale);
 }
 
 // Enforce limits and clamp
 void OrbitController::clampSpherical() {
-  azimuth_ = glm::clamp(wrapPi(azimuth_), minAzimuth_, maxAzimuth_);
+  desc_.azimuth = glm::clamp(wrapPi(desc_.azimuth), desc_.minAzimuth, desc_.maxAzimuth);
   const float eps = kEpsilon;
-  polar_ =
-      glm::clamp(polar_, std::max(minPolar_, eps), std::min(maxPolar_, glm::pi<float>() - eps));
-  radius_ = glm::clamp(radius_, minRadius_, maxRadius_);
+  desc_.polar = glm::clamp(desc_.polar, std::max(desc_.minPolar, eps),
+                           std::min(desc_.maxPolar, glm::pi<float>() - eps));
+  desc_.radius = glm::clamp(desc_.radius, desc_.minRadius, desc_.maxRadius);
+}
+
+static float alphaFromDeltaHalfLife(float delta, float t_half) {
+  if (t_half <= 0.0F || delta <= 0.0F) {
+    return 1.0F;
+  }
+  return 1.0F - std::pow(0.5F, delta / t_half);
 }
 
 // Integrate deltas with optional damping; update radius/target; decay integrators
-void OrbitController::integrateWithDamping() {
-  if (dampingEnabled_) {
-    // integrate angles with a fraction of the delta each frame
-    azimuth_ += angularDelta_.x * dampingFactor_;
-    polar_ += angularDelta_.y * dampingFactor_;
+void OrbitController::integrateWithDamping(float delta) {
+  if (desc_.dampingEnabled) {
+    const float alpha = alphaFromDeltaHalfLife(delta, desc_.dampingFactor);
+    const float keep = 1.0F - alpha;
+
+    // integrate angles with a fraction of the delta each frame (now time-based)
+    desc_.azimuth += angularDelta_.x * alpha;
+    desc_.polar += angularDelta_.y * alpha;
 
     // integrate zoom smoothly by applying a fractional exponent
-    const float applied = std::pow(zoomScale_, dampingFactor_);
-    radius_ = glm::clamp(radius_ * applied, minRadius_, maxRadius_);
-    const float keep = 1.0F - dampingFactor_;
+    const float applied = std::pow(zoomScale_, alpha);
+    desc_.radius = glm::clamp(desc_.radius * applied, desc_.minRadius, desc_.maxRadius);
+    //
     zoomScale_ = std::pow(zoomScale_, keep);
     if (std::abs(zoomScale_ - 1.0F) < kEpsilon) {
       zoomScale_ = 1.0F;
     }
 
     // integrate pan toward target
-    target_ += panOffset_ * dampingFactor_;
+    desc_.target += panOffset_ * alpha;
 
     // decay integrators
-    const float decay = (1.0F - dampingFactor_);
-    angularDelta_ *= decay;
-    panOffset_ *= decay;
+    angularDelta_ *= keep;
+    panOffset_ *= keep;
   } else {
-    azimuth_ += angularDelta_.x;
-    polar_ += angularDelta_.y;
-    radius_ = glm::clamp(radius_ * zoomScale_, minRadius_, maxRadius_);
-    target_ += panOffset_;
+    desc_.azimuth += angularDelta_.x;
+    desc_.polar += angularDelta_.y;
+    desc_.radius = glm::clamp(desc_.radius * zoomScale_, desc_.minRadius, desc_.maxRadius);
+    desc_.target += panOffset_;
     angularDelta_ = {0.0F, 0.0F};
     panOffset_ = {0.0F, 0.0F, 0.0F};
     zoomScale_ = 1.0F;
