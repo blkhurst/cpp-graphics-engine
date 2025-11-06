@@ -13,6 +13,7 @@ struct WindowConfig {
   int msaa = defaults::window::msaaSamples;
   bool enableVSync = defaults::window::vSync;
   glm::vec4 clearColor = defaults::window::clearColor;
+  bool useDarkMode = defaults::window::useDarkMode; // Windows only
 };
 
 } // namespace blkhurst

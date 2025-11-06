@@ -23,6 +23,7 @@ inline constexpr glm::ivec2 size = {1600, 800};
 inline constexpr int msaaSamples = 4;
 inline constexpr bool vSync = true;
 inline constexpr glm::vec4 clearColor = {0.1F, 0.1F, 0.1F, 1.0F};
+inline constexpr bool useDarkMode = true;
 } // namespace window
 
 namespace ui {

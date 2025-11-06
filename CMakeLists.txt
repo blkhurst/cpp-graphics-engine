@@ -90,6 +90,11 @@ target_link_libraries(BlkhurstEngine
     assimp::assimp
 )
 
+# Support for Windows Dark Mode
+if (WIN32)
+  target_link_libraries(BlkhurstEngine PUBLIC dwmapi)
+endif()
+
 # Compile Features
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)

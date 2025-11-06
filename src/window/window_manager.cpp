@@ -1,6 +1,7 @@
 #define GLFW_INCLUDE_NONE
 
 #include "window/window_manager.hpp"
+#include "window/window_theme.hpp"
 #include <blkhurst/engine/config/defaults.hpp>
 
 #include <GLFW/glfw3.h>
@@ -144,6 +145,10 @@ bool WindowManager::initialiseGlfw() {
   glfwMakeContextCurrent(window_);
 
   glfwSwapInterval(static_cast<int>(config_.enableVSync));
+
+  if (config_.useDarkMode) {
+    enableWindowDarkMode(window_);
+  }
 
   return true;
 }
