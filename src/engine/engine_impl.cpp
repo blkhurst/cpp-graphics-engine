@@ -5,14 +5,14 @@
 namespace blkhurst {
 
 // PImpl
-Engine::Impl::Impl(const EngineConfig& cfg)
-    : config_(cfg),
-      window_(cfg.windowConfig),
-      scene_(cfg.loadingConfig),
-      ui_(cfg.uiConfig, events_, window_),
+Engine::Impl::Impl(const EngineConfig& config)
+    : config_(config),
+      window_(config.window),
+      scene_(config.loading),
+      ui_(config.ui, events_, window_),
       input_(events_),
-      assetLoader_(cfg.loadingConfig.loadMode == SceneLoadPolicy::OnDemandUnloadInactive),
-      loadingManager_(cfg.loadingConfig) {
+      assetLoader_(config.loading.loadMode == SceneLoadPolicy::OnDemandUnloadInactive),
+      loadingManager_(config.loading) {
   // Register EventBus Subscriptions
   registerEvents();
 

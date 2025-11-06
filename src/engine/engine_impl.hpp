@@ -25,7 +25,7 @@ struct SceneContext {
 // PImpl
 class Engine::Impl {
 public:
-  explicit Impl(const EngineConfig& cfg);
+  explicit Impl(const EngineConfig& config);
   void run();
 
   RootState buildRootState(const ClockInfo& tick, Scene* currentScene, Camera* currentCam);

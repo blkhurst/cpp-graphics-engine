@@ -9,11 +9,11 @@
 namespace blkhurst {
 
 struct EngineConfig {
-  AssetsConfig assetsConfig{};
-  LoggerConfig loggerConfig{};
-  WindowConfig windowConfig{};
-  UiConfig uiConfig{};
-  LoadingConfig loadingConfig{};
+  AssetsConfig assets{};
+  LoggerConfig logger{};
+  WindowConfig window{};
+  UiConfig ui{};
+  LoadingConfig loading{};
 };
 
 } // namespace blkhurst

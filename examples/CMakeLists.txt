@@ -1,6 +1,6 @@
 if (WIN32)
-  set(ICON BlkhurstEngine.rc)
+  set(ICON blkhurst.rc)
 endif()
 
-add_executable(example WIN32 example.cpp ${ICON})
+add_executable(example example.cpp ${ICON}) # WIN32
 target_link_libraries(example PRIVATE BlkhurstEngine)

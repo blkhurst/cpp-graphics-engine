@@ -10,9 +10,9 @@ namespace blkhurst {
 
 Engine::Engine(const EngineConfig& config) {
   // Configure Logger and Assets
-  Logger logger_(config.loggerConfig.level);
-  assets::setInstallRoot(config.assetsConfig.installRoot);
-  assets::setSearchPaths(config.assetsConfig.searchPaths);
+  Logger logger_(config.logger.level);
+  assets::setInstallRoot(config.assets.installRoot);
+  assets::setSearchPaths(config.assets.searchPaths);
 
   // Register Builtin Shaders
   ShaderRegistry::registerBuiltinShaders();
