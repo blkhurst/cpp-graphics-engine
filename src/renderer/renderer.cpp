@@ -10,7 +10,9 @@
 #include <blkhurst/renderer/renderer.hpp>
 #include <blkhurst/scene/scene.hpp>
 
+#define GLM_ENABLE_EXPERIMENTAL
 #include <glad/gl.h>
+#include <glm/gtx/norm.hpp>
 #include <spdlog/spdlog.h>
 #include <vector>
 
@@ -33,7 +35,7 @@ void Renderer::render(Object3D& root, Camera& camera) {
   beginPass();
 
   FrameContext frameContext;
-  frameContext = collectRenderables(root);
+  frameContext = collectRenderables(root, camera);
 
   applyPerFrameUniforms(frameContext);
 
@@ -42,7 +44,12 @@ void Renderer::render(Object3D& root, Camera& camera) {
     renderBackground(*scene, camera);
   }
 
-  for (auto* mesh : frameContext.meshList) {
+  // Render Opaque Meshes
+  for (auto* mesh : frameContext.opaqueMeshes) {
+    renderMesh(*mesh, camera);
+  }
+  // Render Transparent Meshes
+  for (auto* mesh : frameContext.transparentMeshes) {
     renderMesh(*mesh, camera);
   }
 }
@@ -201,9 +208,10 @@ void Renderer::resetState() {
   spdlog::debug("Renderer state reset");
 }
 
-FrameContext Renderer::collectRenderables(Object3D& root) {
+FrameContext Renderer::collectRenderables(Object3D& root, const Camera& camera) {
   // FrameContext must be locally owned to prevent renderer clearing queue in nested renders.
   FrameContext context;
+  const glm::vec3 cameraPos = camera.worldPosition();
 
   root.traverse([&](Object3D& node) {
     if (!node.visible()) {
@@ -212,7 +220,11 @@ FrameContext Renderer::collectRenderables(Object3D& root) {
 
     if (node.type() == NodeType::Mesh) {
       auto* mesh = dynamic_cast<Mesh*>(&node);
-      context.meshList.push_back(mesh);
+      const auto material = mesh->material();
+
+      const bool isTransparent = material->pipeline().blend;
+      isTransparent ? context.transparentMeshes.push_back(mesh)
+                    : context.opaqueMeshes.push_back(mesh);
     }
 
     if (node.type() == NodeType::Light) {
@@ -239,6 +251,23 @@ FrameContext Renderer::collectRenderables(Object3D& root) {
       }
     }
   });
+
+  // Sort Opaque Front-To-Back
+  std::sort(context.opaqueMeshes.begin(), context.opaqueMeshes.end(),
+            [&](const Mesh* meshA, const Mesh* meshB) {
+              // distance^2 — avoids sqrt
+              const float distA = glm::distance2(cameraPos, meshA->worldPosition());
+              const float distB = glm::distance2(cameraPos, meshB->worldPosition());
+              return distA < distB;
+            });
+
+  // Sort Transparent Back-To-Front
+  std::sort(context.transparentMeshes.begin(), context.transparentMeshes.end(),
+            [&](const Mesh* meshA, const Mesh* meshB) {
+              const float distA = glm::distance2(cameraPos, meshA->worldPosition());
+              const float distB = glm::distance2(cameraPos, meshB->worldPosition());
+              return distA > distB;
+            });
 
   return context;
 }

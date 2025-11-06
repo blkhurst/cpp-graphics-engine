@@ -20,7 +20,8 @@ enum class ToneMappingMode : int { None = 0, Linear = 1, Neutral = 2, ACES = 3 }
 enum class OutputColorSpace : int { Linear = 0, SRGB = 1 };
 
 struct FrameContext {
-  std::vector<Mesh*> meshList; // opaqueQueue, transparentQueue
+  std::vector<Mesh*> opaqueMeshes;      // Sorted Front-To-Back
+  std::vector<Mesh*> transparentMeshes; // Sorted Back-To-Front
 
   LightDataGPU lightData{};
   std::vector<DirectionalLightGPU> directionalLights;
@@ -89,8 +90,8 @@ private:
   FrameUniforms frameUniforms_{};
   GpuBlocks gpuBlocks_{};
 
-  // Queue visible meshes & lights for this frame
-  static FrameContext collectRenderables(Object3D& root);
+  // Queue & Sort visible meshes & lights for this frame
+  static FrameContext collectRenderables(Object3D& root, const Camera& camera);
 
   // Render a single mesh (geometry + material)
   void renderMesh(const Mesh& mesh, const Camera& camera);
