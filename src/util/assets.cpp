@@ -138,7 +138,7 @@ std::optional<std::string> Assets::find(std::string_view file) const {
   // 1) <root>/<rel>
   for (const auto& root : roots) {
     if (auto hit = try_one(join_clean(root, inPath))) {
-      return hit;
+      return hit->string();
     }
   }
 
@@ -146,7 +146,7 @@ std::optional<std::string> Assets::find(std::string_view file) const {
   for (const auto& root : roots) {
     for (const auto& prefix : relPrefixes) {
       if (auto hit = try_one(join_clean(join_clean(root, prefix), inPath))) {
-        return hit;
+        return hit->string();
       }
     }
   }

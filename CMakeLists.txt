@@ -41,8 +41,9 @@ if (BLKHURST_USE_FETCHCONTENT)
 
   # ASSIMP
   set(ASSIMP_INSTALL ON CACHE BOOL "" FORCE)
-  set(ASSIMP_BUILD_TESTS OFF)
-  set(ASSIMP_BUILD_ZLIB OFF CACHE BOOL "" FORCE) # Requires zlib
+  set(ASSIMP_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+  set(ASSIMP_BUILD_ZLIB ON CACHE BOOL "" FORCE) # Build zlib (default)
+  # set(ASSIMP_BUILD_USE_CCACHE OFF CACHE BOOL "" FORCE) # Disable ccache if build fails; Windows unquoted space in path.
   FetchContent_Declare(assimp
     GIT_REPOSITORY https://github.com/assimp/assimp.git
     GIT_TAG v6.0.2
