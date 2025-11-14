@@ -1,6 +1,7 @@
 #include "materials/equirect_material.hpp"
 #include <blkhurst/cameras/ortho_camera.hpp>
 #include <blkhurst/geometry/plane_geometry.hpp>
+#include <blkhurst/helpers/fullscreen_quad.hpp>
 #include <blkhurst/objects/mesh.hpp>
 #include <blkhurst/renderer/cube_render_target.hpp>
 #include <blkhurst/renderer/renderer.hpp>
@@ -77,17 +78,15 @@ CubeRenderTarget::fromEquirect(Renderer& renderer, const std::shared_ptr<Texture
   auto cubeRenderTarget = CubeRenderTarget::create(faceSize, crtDesc);
 
   // Fullscreen Quad
-  auto camera = OrthoCamera::create(); // Unused by EquirectMaterial
-  auto planeGeometry = PlaneGeometry::create({.width = 2.0F, .height = 2.0F});
   auto equirectMaterial = EquirectMaterial::create({.equirectTexture = equirect});
-  auto equirectMesh = Mesh::create(planeGeometry, equirectMaterial);
+  FullscreenQuad fullscreenQuad(equirectMaterial);
 
   // Render into each face
   const int faceCount = 6;
   for (int face = 0; face < faceCount; ++face) {
     equirectMaterial->setFace(face);
     renderer.setRenderTarget(cubeRenderTarget.get(), face, /*mip*/ 0);
-    renderer.render(*equirectMesh, *camera);
+    fullscreenQuad.render(renderer);
   }
 
   // Build mipmaps
