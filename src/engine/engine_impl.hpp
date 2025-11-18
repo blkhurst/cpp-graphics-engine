@@ -10,6 +10,7 @@
 #include <blkhurst/engine/root_state.hpp>
 #include <blkhurst/events/event_bus.hpp>
 #include <blkhurst/input/input.hpp>
+#include <blkhurst/postprocessing/effect_composer.hpp>
 #include <blkhurst/renderer/renderer.hpp>
 
 namespace blkhurst {
@@ -50,6 +51,7 @@ private:
   Renderer renderer_;
   AssetLoader assetLoader_;
   LoadingManager loadingManager_;
+  EffectComposer composer_;
 
   std::vector<Subscription> subscriptions_;
   void registerEvents();
