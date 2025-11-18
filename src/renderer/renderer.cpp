@@ -78,7 +78,7 @@ void Renderer::setDefaultFramebufferSize(int width, int height) {
 }
 
 void Renderer::setRenderTarget(const RenderTarget* target) {
-  currentTarget_ = target;
+  desc_.currentTarget_ = target;
 
   bool bindDefaultFramebuffer = (target == nullptr);
   if (bindDefaultFramebuffer) {
@@ -96,7 +96,7 @@ void Renderer::setRenderTarget(const CubeRenderTarget* target, int face, int mip
   // TODO: Merge RenderTarget and CubeRenderTarget for unified "currentTarget_"
   bool bindDefaultFramebuffer = (target == nullptr);
   if (bindDefaultFramebuffer) {
-    currentTarget_ = nullptr; // TODO Move Upwards & Set To "target"
+    desc_.currentTarget_ = nullptr; // TODO Move Upwards & Set To "target"
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     resetViewport();
     return;
@@ -158,11 +158,11 @@ void Renderer::setViewport(int xpos, int ypos, int width, int height) {
 }
 
 void Renderer::resetViewport() {
-  if (currentTarget_ == nullptr) {
+  if (desc_.currentTarget_ == nullptr) {
     setViewport(0, 0, desc_.framebufferSize[0], desc_.framebufferSize[1]);
     return;
   }
-  setViewport(0, 0, currentTarget_->width(), currentTarget_->height());
+  setViewport(0, 0, desc_.currentTarget_->width(), desc_.currentTarget_->height());
 }
 
 // NOLINTNEXTLINE(readability-convert-member-functions-to-static)
@@ -361,9 +361,15 @@ void Renderer::drawGeometry(const Geometry& geom, int instanceCount) {
 }
 
 void Renderer::applyPerFrameUniforms(const FrameContext& frameContext) {
+  // Only Apply ColorSpace / ToneMapping When Rendering To Default Framebuffer
+  if (desc_.currentTarget_ == nullptr) {
+    frameUniforms_.uOutputColorSpace = static_cast<int>(desc_.outputColorSpace);
+    frameUniforms_.uToneMappingMode = static_cast<int>(desc_.toneMappingMode);
+  } else {
+    frameUniforms_.uOutputColorSpace = static_cast<int>(OutputColorSpace::Linear);
+    frameUniforms_.uToneMappingMode = static_cast<int>(ToneMappingMode::None);
+  }
   frameUniforms_.uToneMappingExposure = desc_.toneMappingExposure;
-  frameUniforms_.uToneMappingMode = static_cast<int>(desc_.toneMappingMode);
-  frameUniforms_.uOutputColorSpace = static_cast<int>(desc_.outputColorSpace);
 
   // Frame Uniforms
   gpuBlocks_.frame.update(frameUniforms_);
