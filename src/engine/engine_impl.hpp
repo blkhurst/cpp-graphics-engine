@@ -31,7 +31,7 @@ public:
 
   RootState buildRootState(const ClockInfo& tick, Scene* currentScene, Camera* currentCam);
   FrameUniforms buildFrameUniforms(const Input& input, const ClockInfo& tick, Camera* currentCam);
-  SceneContext gatherSceneContext(Scene* scene);
+  static SceneContext gatherSceneContext(const ClockInfo& tick, Scene* scene);
 
   void drawUi(const RootState& rootState, Scene* currentScene);
 

@@ -26,10 +26,12 @@ Engine::Impl::Impl(const EngineConfig& config)
 }
 
 void Engine::Impl::run() {
+  ClockInfo tick = clock_.tick();
+
   // Preload Scenes If Instance Exists
   for (const auto& sceneEntry : scene_.sceneEntries()) {
     if (sceneEntry.instance) {
-      SceneContext state = gatherSceneContext(sceneEntry.instance.get());
+      SceneContext state = gatherSceneContext(tick, sceneEntry.instance.get());
       RootState rootState = buildRootState(state.tick, state.currentScene, state.currentCamera);
       sceneEntry.instance->ensureStarted(rootState);
     }
@@ -59,7 +61,8 @@ void Engine::Impl::run() {
     }
 
     // Gather Frame State
-    const auto ctx = gatherSceneContext(scene_.currentScene());
+    ClockInfo tick = clock_.tick();
+    auto ctx = gatherSceneContext(tick, scene_.currentScene());
     auto rootState = buildRootState(ctx.tick, ctx.currentScene, ctx.currentCamera);
 
     // Handle Scene Attach/Detach
@@ -71,6 +74,10 @@ void Engine::Impl::run() {
       if (ctx.currentScene != nullptr) {
         ctx.currentScene->ensureStarted(rootState);
         ctx.currentScene->onAttach(rootState);
+
+        // onStart/onAttach may replace active camera/controller.
+        ctx = gatherSceneContext(ctx.tick, ctx.currentScene);
+        rootState = buildRootState(ctx.tick, ctx.currentScene, ctx.currentCamera);
       }
       previousScene = ctx.currentScene;
       previousSceneId = ctx.currentSceneId;
@@ -159,9 +166,9 @@ FrameUniforms Engine::Impl::buildFrameUniforms(const Input& input, const ClockIn
   return frameUniforms;
 }
 
-SceneContext Engine::Impl::gatherSceneContext(Scene* scene) {
+SceneContext Engine::Impl::gatherSceneContext(const ClockInfo& tick, Scene* scene) {
   SceneContext state;
-  state.tick = clock_.tick();
+  state.tick = tick;
   state.currentScene = scene;
   if (state.currentScene != nullptr) {
     state.currentSceneId = state.currentScene->uuid();
