@@ -434,7 +434,7 @@ void Renderer::setEnvironment(Scene& scene) {
   const auto& sceneBackground = scene.background();
   auto& sceneEnvironment = scene.environment();
 
-  if (sceneEnvironment.needsUpdate) {
+  if (sceneEnvironment.needsUpdate && sceneEnvironment.equirect) {
     // Convert Equirect to Cubemap
     auto cubemap = CubeRenderTarget::fromEquirect(*this, sceneEnvironment.equirect)->texture();
 
