@@ -9,6 +9,7 @@
 #include <blkhurst/renderer/cube_render_target.hpp>
 #include <blkhurst/renderer/renderer.hpp>
 #include <blkhurst/scene/scene.hpp>
+#include <blkhurst/util/color.hpp>
 
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glad/gl.h>
@@ -128,6 +129,15 @@ void Renderer::setAutoClear(bool enabled) {
 
 void Renderer::setClearColor(glm::vec4 rgba) {
   desc_.clearColor = rgba;
+}
+
+void applyClearColorForTarget(const RendererDesc& desc) {
+  glm::vec4 rgba = desc.clearColor;
+
+  if (desc.currentTarget_ != nullptr) {
+    rgba = color::srgbToLinear(rgba);
+  }
+
   glClearColor(rgba[0], rgba[1], rgba[2], rgba[3]);
 }
 
@@ -149,6 +159,8 @@ void Renderer::clear(bool color, bool depth, bool stencil) {
   if (stencil) {
     mask |= GL_STENCIL_BUFFER_BIT;
   }
+
+  applyClearColorForTarget(desc_);
   glClear(mask);
 }
 
@@ -362,6 +374,7 @@ void Renderer::drawGeometry(const Geometry& geom, int instanceCount) {
 
 void Renderer::applyPerFrameUniforms(const FrameContext& frameContext) {
   // Only Apply ColorSpace / ToneMapping When Rendering To Default Framebuffer
+  // https://github.com/mrdoob/three.js/blob/02201339d5429a610a71ec19f5bf36eb4e7d2b04/src/renderers/WebGLRenderer.js#L2198
   if (desc_.currentTarget_ == nullptr) {
     frameUniforms_.uOutputColorSpace = static_cast<int>(desc_.outputColorSpace);
     frameUniforms_.uToneMappingMode = static_cast<int>(desc_.toneMappingMode);

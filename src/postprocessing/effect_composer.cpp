@@ -121,32 +121,15 @@ void EffectComposer::swapBuffers() {
 
 // ---------- RendererConfigurationScope ----------
 
-constexpr float SRGB_EPSILON = 0.04045F;
-constexpr float SRGB_DENOMINATOR = 12.92F;
-constexpr float SRGB_OFFSET = 0.055F;
-constexpr float SRGB_NUMERATOR = 1.055F;
-constexpr float SRGB_GAMMA = 2.4F;
-float srgbToLinear(float value) noexcept {
-  if (value <= SRGB_EPSILON) {
-    return value / SRGB_DENOMINATOR;
-  }
-  return std::pow((value + SRGB_OFFSET) / SRGB_NUMERATOR, SRGB_GAMMA);
-}
-
 RendererConfigurationScope::RendererConfigurationScope(Renderer* renderer)
     : renderer_(renderer),
       state_(renderer->desc()) {
   // EffectComposer Requires Linear Color Space & No Tone Mapping; No Need To Set Here Since
   // Renderer Only Applies OutputColorSpace/ToneMappingMode When Rendering To Default Framebuffer
-
-  // Convert sRGB ClearColor to Linear for EffectComposer
-  renderer_->setClearColor({srgbToLinear(state_.clearColor[0]), srgbToLinear(state_.clearColor[1]),
-                            srgbToLinear(state_.clearColor[2]), state_.clearColor[3]});
 }
 
 RendererConfigurationScope::~RendererConfigurationScope() {
-  // Restore sRGB ClearColor & Render Target
-  renderer_->setClearColor(state_.clearColor);
+  // Restore Render Target
   renderer_->setRenderTarget(state_.currentTarget_);
 }
 
