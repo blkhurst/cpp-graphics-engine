@@ -58,6 +58,12 @@ void Geometry::setPrimitive(PrimitiveMode mode) {
   spdlog::trace("Geometry({}) setPrimitive {}", uuidString(), static_cast<int>(mode));
 }
 
+void Geometry::setPatchType(PatchType type) {
+  patchVertices_ = static_cast<int>(type);
+  primitive_ = PrimitiveMode::Patches;
+  spdlog::trace("Geometry({}) setPatchType {}", uuidString(), patchVertices_);
+}
+
 // NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
 void Geometry::setDrawRange(int start, int count) {
   drawRange_.start = std::max(0, start);
@@ -75,6 +81,10 @@ void Geometry::clearDrawRange() {
 
 PrimitiveMode Geometry::primitive() const {
   return primitive_;
+}
+
+int Geometry::patchVertices() const {
+  return patchVertices_;
 }
 
 DrawRange Geometry::drawRange() const {

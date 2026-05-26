@@ -12,7 +12,13 @@
 
 namespace blkhurst {
 
-enum class PrimitiveMode : std::uint8_t { Triangles, Lines, Points };
+enum class PrimitiveMode : std::uint8_t { Triangles, Lines, Points, Patches };
+
+enum class PatchType : std::uint8_t {
+  Isolines = 2,
+  Triangles = 3,
+  Quads = 4,
+};
 
 struct DrawRange {
   int start = 0;
@@ -45,10 +51,12 @@ public:
   void setIndex(std::span<const unsigned> indices);
 
   void setPrimitive(PrimitiveMode mode);
+  void setPatchType(PatchType type);
   void setDrawRange(int start, int count);
   void clearDrawRange();
 
   [[nodiscard]] PrimitiveMode primitive() const;
+  [[nodiscard]] int patchVertices() const;
   [[nodiscard]] DrawRange drawRange() const;
   [[nodiscard]] bool isIndexed() const;
   [[nodiscard]] const VertexArray& vertexArray() const;
@@ -62,6 +70,7 @@ private:
   std::unique_ptr<Buffer> ebo_;
 
   PrimitiveMode primitive_ = PrimitiveMode::Triangles;
+  int patchVertices_ = static_cast<int>(PatchType::Quads);
   DrawRange drawRange_;
   bool isIndexed_ = false;
 

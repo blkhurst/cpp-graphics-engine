@@ -354,6 +354,10 @@ void Renderer::drawGeometry(const Geometry& geom, int instanceCount) {
   const DrawRange range = geom.drawRange();
   const GLenum primitive = toGlPrimitive(geom.primitive());
 
+  if (geom.primitive() == PrimitiveMode::Patches) {
+    glPatchParameteri(GL_PATCH_VERTICES, geom.patchVertices());
+  }
+
   if (geom.isIndexed()) {
     auto offsetBytes = range.start * sizeof(std::uint32_t);
     const void* indexOffset = std::bit_cast<const void*>(offsetBytes);
@@ -482,6 +486,8 @@ GLenum Renderer::toGlPrimitive(PrimitiveMode mode) {
     return GL_LINES;
   case PrimitiveMode::Points:
     return GL_POINTS;
+  case PrimitiveMode::Patches:
+    return GL_PATCHES;
   default:
     return GL_TRIANGLES;
   }
