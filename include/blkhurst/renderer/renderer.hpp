@@ -109,6 +109,9 @@ private:
   //
   void applyPerDrawUniforms(const Mesh& mesh, Material& material) const;
 
+  //
+  static void applyInstancing(const Mesh& mesh, Geometry& geometry, Material& material);
+
   // ------ Background / Environment ------
 
   //

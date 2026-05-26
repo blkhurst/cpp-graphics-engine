@@ -299,6 +299,9 @@ void Renderer::renderMesh(const Mesh& mesh, const Camera& camera) {
   //  - DSA allows this, but first frame after a rebuild, uniforms are lost (set on old programID)
   // Order should be setDefines, useProgram (Rebuild), applyUniforms
 
+  // Apply Instancing (sets defines)
+  applyInstancing(mesh, *geometry, *material);
+
   // Apply PipelineState and use shader Program.
   applyPipeline(material->pipeline(), mesh.wireframe());
   material->useProgram();
@@ -412,6 +415,22 @@ void Renderer::applyPerDrawUniforms(const Mesh& mesh, Material& material) const 
   // Apply Uniforms & Resources
   material.applyEnvironment(environmentBundle_);
   material.applyUniformsAndResources(); // Apply last - flushes pending setUniform calls
+}
+
+void Renderer::applyInstancing(const Mesh& mesh, Geometry& geometry, Material& material) {
+  const bool useInstancing = mesh.instanceCount() > 1;
+  material.setDefine(defines::UseInstancing, useInstancing);
+  material.setDefine(defines::UseInstanceColor, useInstancing && mesh.hasInstanceColors());
+
+  if (!useInstancing) {
+    return;
+  }
+
+  // TODO: Implement instancesDirty_ flag to avoid redundant re-uploads
+  geometry.setInstanceMatrices(mesh.instanceMatrices());
+  if (mesh.hasInstanceColors()) {
+    geometry.setInstanceColors(mesh.instanceColors());
+  }
 }
 
 void Renderer::renderBackground(Scene& scene, Camera& camera) {

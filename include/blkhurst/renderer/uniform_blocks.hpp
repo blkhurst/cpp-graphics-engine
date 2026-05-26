@@ -13,7 +13,6 @@ constexpr static int Draw = 1;              // UBO (optional since per-draw)
 constexpr static int LightData = 2;         // UBO
 constexpr static int DirectionalLights = 3; // SSBO
 constexpr static int PointLights = 4;       // SSBO
-constexpr static int Instance = 5;          // SSBO
 }; // namespace uniform_bindings
 
 struct alignas(kCpuAlignment) FrameUniforms {

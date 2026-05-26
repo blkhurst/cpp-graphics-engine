@@ -7,7 +7,8 @@
 
 namespace {
 constexpr bool kDynamic = false;
-}
+constexpr bool kDynamicInstance = true;
+} // namespace
 
 namespace blkhurst {
 
@@ -51,6 +52,40 @@ void Geometry::setIndex(std::span<const unsigned> indices) {
   indexCount_ = indexCount;
   drawRange_.start = 0;
   drawRange_.count = indexCount;
+}
+
+void Geometry::setInstanceMatrices(std::span<const glm::mat4> matrices) {
+  if (!instanceMatrixBuffer_) {
+    instanceMatrixBuffer_ = std::make_unique<Buffer>(matrices, kDynamicInstance);
+  } else {
+    instanceMatrixBuffer_->setData(matrices, kDynamicInstance);
+  }
+
+  constexpr auto bindingIndex = static_cast<unsigned>(Attrib::InstanceMatrix);
+  constexpr int columnCount = 4;
+  constexpr int columnComponents = 4;
+  const auto stride = static_cast<int>(sizeof(glm::mat4));
+
+  vao_.bindVertexBuffer(bindingIndex, instanceMatrixBuffer_->id(), 0, stride);
+  for (int column = 0; column < columnCount; column++) {
+    vao_.linkAttribFloat(bindingIndex + column, bindingIndex, columnComponents, false,
+                         static_cast<unsigned>(sizeof(glm::vec4) * column));
+  }
+  vao_.setAttribDivisor(bindingIndex, 1);
+}
+
+void Geometry::setInstanceColors(std::span<const glm::vec4> colors) {
+  if (!instanceColorBuffer_) {
+    instanceColorBuffer_ = std::make_unique<Buffer>(colors, kDynamicInstance);
+  } else {
+    instanceColorBuffer_->setData(colors, kDynamicInstance);
+  }
+
+  constexpr auto bindingIndex = static_cast<unsigned>(Attrib::InstanceColor);
+  vao_.bindVertexBuffer(bindingIndex, instanceColorBuffer_->id(), 0,
+                        static_cast<int>(sizeof(glm::vec4)));
+  vao_.linkAttribFloat(bindingIndex, bindingIndex, 4);
+  vao_.setAttribDivisor(bindingIndex, 1);
 }
 
 void Geometry::setPrimitive(PrimitiveMode mode) {

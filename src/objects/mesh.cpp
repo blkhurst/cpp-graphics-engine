@@ -31,6 +31,18 @@ int Mesh::instanceCount() const {
   return instanceCount_;
 }
 
+bool Mesh::hasInstanceColors() const {
+  return !instanceColors_.empty();
+}
+
+std::span<const glm::mat4> Mesh::instanceMatrices() const {
+  return instanceMatrices_;
+}
+
+std::span<const glm::vec4> Mesh::instanceColors() const {
+  return instanceColors_;
+}
+
 bool Mesh::wireframe() const {
   return wireframe_;
 }
@@ -45,9 +57,26 @@ void Mesh::setMaterial(std::shared_ptr<Material> material) {
   spdlog::trace("Mesh({}) setMaterial {}", uuidString(), material_ ? "OK" : "null");
 }
 
-void Mesh::setInstanceCount(int count) {
-  instanceCount_ = std::max(1, count);
-  spdlog::trace("Mesh({}) setInstanceCount {}", uuidString(), instanceCount_);
+void Mesh::setInstanceMatrices(std::span<const glm::mat4> matrices) {
+  instanceMatrices_.assign(matrices.begin(), matrices.end());
+  instanceCount_ = std::max(1, static_cast<int>(instanceMatrices_.size()));
+  if (!instanceColors_.empty()) {
+    instanceColors_.resize(instanceCount_, glm::vec4(1.0F));
+  }
+  spdlog::trace("Mesh({}) setInstanceMatrices {}", uuidString(), instanceCount_);
+}
+
+void Mesh::setInstanceColors(std::span<const glm::vec4> colors) {
+  instanceColors_.assign(colors.begin(), colors.end());
+  instanceCount_ = std::max(instanceCount_, static_cast<int>(instanceColors_.size()));
+  instanceMatrices_.resize(instanceCount_, glm::mat4(1.0F));
+  instanceColors_.resize(instanceCount_, glm::vec4(1.0F));
+  spdlog::trace("Mesh({}) setInstanceColors {}", uuidString(), instanceColors_.size());
+}
+
+void Mesh::clearInstanceColors() {
+  instanceColors_.clear();
+  spdlog::trace("Mesh({}) clearInstanceColors", uuidString());
 }
 
 void Mesh::setWireframe(bool enabled) {
@@ -65,7 +94,10 @@ std::unique_ptr<Mesh> Mesh::clone(bool recursive) const {
   copy->setRotation(rotation());
   copy->setScale(scale());
   // Copy Mesh state; sets needsUpdate_ internally
-  copy->setInstanceCount(instanceCount_);
+  copy->setInstanceMatrices(instanceMatrices_);
+  if (!instanceColors_.empty()) {
+    copy->setInstanceColors(instanceColors_);
+  }
   copy->setWireframe(wireframe_);
 
   if (recursive) {

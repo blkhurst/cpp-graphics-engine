@@ -90,6 +90,7 @@ constexpr const char* UseUvTransform = "USE_UV_TRANSFORM";
 constexpr const char* EnvModeReflection = "ENV_MODE_REFLECTION";
 constexpr const char* UseFlatShading = "FLAT_SHADING";
 constexpr const char* UseVertexColor = "USE_VERTEX_COLOR";
+constexpr const char* UseInstancing = "USE_INSTANCING";
 constexpr const char* UseInstanceColor = "USE_INSTANCE_COLOR";
 } // namespace defines
 

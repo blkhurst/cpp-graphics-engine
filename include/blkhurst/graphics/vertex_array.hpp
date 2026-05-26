@@ -21,6 +21,7 @@ public:
                         int stride) const;
   void linkAttribFloat(unsigned int attribIndex, unsigned int bindingIndex, int componentCount,
                        bool normalised = false, unsigned int relativeOffset = 0) const;
+  void setAttribDivisor(unsigned int bindingIndex, unsigned int divisor) const;
   void setElementBuffer(unsigned int bufferId);
 
   // Convenience; single attribute per binding, packed floats

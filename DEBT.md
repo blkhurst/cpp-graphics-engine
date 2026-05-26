@@ -48,6 +48,7 @@
 - [ ] Use `std::unordered_map<Attrib, BufferAttribute>` and add utility `calcDrawCount`.
 - [ ] Swap `Attrib::` to `std::string` and use `glGetAttribLocation`
 - [ ] Add `hasAttribute` so materials can check they have uvs/normals etc before enabling defines.
+- [ ] Revisit instancing storage: attribute divisors are simple for matrices/colors, but SSBO-backed instances may be better for custom per-instance data, compute-driven updates, or very large instance counts.
 
 ## UI
 

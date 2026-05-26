@@ -46,6 +46,11 @@ void VertexArray::linkAttribFloat(GLuint attribIndex, GLuint bindingIndex, GLint
       attribIndex, bindingIndex, componentCount, normalised, relativeOffset);
 }
 
+void VertexArray::setAttribDivisor(GLuint bindingIndex, GLuint divisor) const {
+  glVertexArrayBindingDivisor(id_, bindingIndex, divisor);
+  spdlog::trace("VertexArray({}) sets binding={} divisor={}", id_, bindingIndex, divisor);
+}
+
 void VertexArray::setElementBuffer(GLuint bufferId) {
   glVertexArrayElementBuffer(id_, bufferId);
   spdlog::trace("VertexArray({}) set ElementBuffer({})", id_, bufferId);

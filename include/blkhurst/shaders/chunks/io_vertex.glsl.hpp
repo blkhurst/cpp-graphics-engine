@@ -10,8 +10,8 @@ layout(location = 0) in vec3 aPosition;
 layout(location = 1) in vec3 aColor;
 layout(location = 2) in vec2 aUv;
 layout(location = 3) in vec3 aNormal;
-layout(location = 4) in vec3 aInstanceColor;
-layout(location = 5) in mat4 aInstanceMatrix; // Uses 5,6,7,8
+layout(location = 4) in mat4 aInstanceMatrix; // Uses 4,5,6,7
+layout(location = 8) in vec4 aInstanceColor;
 
 // Out
 out vec2 vUv;
@@ -35,8 +35,11 @@ vec2 computeUv(vec2 uv) {
 void io_vertex(in mat4 model, in mat4 view, in mat4 projection) {
 #ifdef USE_INSTANCING
   model = model * aInstanceMatrix;
-#else
-  model = model;
+#endif
+
+  vec3 instanceColor = vec3(1.0);
+#ifdef USE_INSTANCE_COLOR
+  instanceColor = aInstanceColor.rgb;
 #endif
 
   // Positions
@@ -53,7 +56,7 @@ void io_vertex(in mat4 model, in mat4 view, in mat4 projection) {
   vWorldPosition = worldPosition.xyz;
   vViewPosition = viewPosition.xyz;
   vWorldNormal = worldNormal;
-  vInstanceColor = aInstanceColor;
+  vInstanceColor = instanceColor;
 
   gl_Position = projection * viewPosition;
 }

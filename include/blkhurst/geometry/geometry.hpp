@@ -6,6 +6,7 @@
 #include <blkhurst/util/identifiable.hpp>
 
 #include <cstdint>
+#include <glm/glm.hpp>
 #include <memory>
 #include <span>
 #include <vector>
@@ -31,8 +32,8 @@ enum class Attrib : std::uint8_t {
   Color = 1,
   Uv = 2,
   Normal = 3,
-  InstanceColor = 4,
-  InstanceMatrix = 5,
+  InstanceMatrix = 4, // Uses 4,5,6,7
+  InstanceColor = 8,
 };
 
 class Geometry : public Identifiable {
@@ -49,6 +50,8 @@ public:
 
   void setAttribute(Attrib attrib, std::span<const float> data, int componentCount);
   void setIndex(std::span<const unsigned> indices);
+  void setInstanceMatrices(std::span<const glm::mat4> matrices);
+  void setInstanceColors(std::span<const glm::vec4> colors);
 
   void setPrimitive(PrimitiveMode mode);
   void setPatchType(PatchType type);
@@ -68,6 +71,8 @@ private:
   // Geometry owns Buffer; one attribute per Buffer
   std::vector<std::unique_ptr<Buffer>> vbos_;
   std::unique_ptr<Buffer> ebo_;
+  std::unique_ptr<Buffer> instanceMatrixBuffer_;
+  std::unique_ptr<Buffer> instanceColorBuffer_;
 
   PrimitiveMode primitive_ = PrimitiveMode::Triangles;
   int patchVertices_ = static_cast<int>(PatchType::Quads);
