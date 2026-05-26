@@ -36,6 +36,8 @@ struct GpuBlocks {
 };
 
 struct RendererDesc {
+  const RenderTarget* currentTarget_ = nullptr; // Fix: Does NOT store CubeRenderTarget state
+
   bool autoClear = true;
   glm::vec4 clearColor = defaults::window::clearColor;
   glm::ivec2 framebufferSize = {0, 0}; // Window Backbuffer
@@ -85,7 +87,6 @@ public:
 
 private:
   RendererDesc desc_{};
-  const RenderTarget* currentTarget_ = nullptr;
 
   FrameUniforms frameUniforms_{};
   GpuBlocks gpuBlocks_{};

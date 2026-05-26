@@ -9,6 +9,7 @@
 #include <blkhurst/renderer/cube_render_target.hpp>
 #include <blkhurst/renderer/renderer.hpp>
 #include <blkhurst/scene/scene.hpp>
+#include <blkhurst/util/color.hpp>
 
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glad/gl.h>
@@ -78,7 +79,7 @@ void Renderer::setDefaultFramebufferSize(int width, int height) {
 }
 
 void Renderer::setRenderTarget(const RenderTarget* target) {
-  currentTarget_ = target;
+  desc_.currentTarget_ = target;
 
   bool bindDefaultFramebuffer = (target == nullptr);
   if (bindDefaultFramebuffer) {
@@ -96,7 +97,7 @@ void Renderer::setRenderTarget(const CubeRenderTarget* target, int face, int mip
   // TODO: Merge RenderTarget and CubeRenderTarget for unified "currentTarget_"
   bool bindDefaultFramebuffer = (target == nullptr);
   if (bindDefaultFramebuffer) {
-    currentTarget_ = nullptr; // TODO Move Upwards & Set To "target"
+    desc_.currentTarget_ = nullptr; // TODO Move Upwards & Set To "target"
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     resetViewport();
     return;
@@ -128,6 +129,15 @@ void Renderer::setAutoClear(bool enabled) {
 
 void Renderer::setClearColor(glm::vec4 rgba) {
   desc_.clearColor = rgba;
+}
+
+void applyClearColorForTarget(const RendererDesc& desc) {
+  glm::vec4 rgba = desc.clearColor;
+
+  if (desc.currentTarget_ != nullptr) {
+    rgba = color::srgbToLinear(rgba);
+  }
+
   glClearColor(rgba[0], rgba[1], rgba[2], rgba[3]);
 }
 
@@ -149,6 +159,8 @@ void Renderer::clear(bool color, bool depth, bool stencil) {
   if (stencil) {
     mask |= GL_STENCIL_BUFFER_BIT;
   }
+
+  applyClearColorForTarget(desc_);
   glClear(mask);
 }
 
@@ -158,11 +170,11 @@ void Renderer::setViewport(int xpos, int ypos, int width, int height) {
 }
 
 void Renderer::resetViewport() {
-  if (currentTarget_ == nullptr) {
+  if (desc_.currentTarget_ == nullptr) {
     setViewport(0, 0, desc_.framebufferSize[0], desc_.framebufferSize[1]);
     return;
   }
-  setViewport(0, 0, currentTarget_->width(), currentTarget_->height());
+  setViewport(0, 0, desc_.currentTarget_->width(), desc_.currentTarget_->height());
 }
 
 // NOLINTNEXTLINE(readability-convert-member-functions-to-static)
@@ -361,9 +373,16 @@ void Renderer::drawGeometry(const Geometry& geom, int instanceCount) {
 }
 
 void Renderer::applyPerFrameUniforms(const FrameContext& frameContext) {
+  // Only Apply ColorSpace / ToneMapping When Rendering To Default Framebuffer
+  // https://github.com/mrdoob/three.js/blob/02201339d5429a610a71ec19f5bf36eb4e7d2b04/src/renderers/WebGLRenderer.js#L2198
+  if (desc_.currentTarget_ == nullptr) {
+    frameUniforms_.uOutputColorSpace = static_cast<int>(desc_.outputColorSpace);
+    frameUniforms_.uToneMappingMode = static_cast<int>(desc_.toneMappingMode);
+  } else {
+    frameUniforms_.uOutputColorSpace = static_cast<int>(OutputColorSpace::Linear);
+    frameUniforms_.uToneMappingMode = static_cast<int>(ToneMappingMode::None);
+  }
   frameUniforms_.uToneMappingExposure = desc_.toneMappingExposure;
-  frameUniforms_.uToneMappingMode = static_cast<int>(desc_.toneMappingMode);
-  frameUniforms_.uOutputColorSpace = static_cast<int>(desc_.outputColorSpace);
 
   // Frame Uniforms
   gpuBlocks_.frame.update(frameUniforms_);
@@ -428,7 +447,7 @@ void Renderer::setEnvironment(Scene& scene) {
   const auto& sceneBackground = scene.background();
   auto& sceneEnvironment = scene.environment();
 
-  if (sceneEnvironment.needsUpdate) {
+  if (sceneEnvironment.needsUpdate && sceneEnvironment.equirect) {
     // Convert Equirect to Cubemap
     auto cubemap = CubeRenderTarget::fromEquirect(*this, sceneEnvironment.equirect)->texture();
 

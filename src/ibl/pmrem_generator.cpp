@@ -3,6 +3,7 @@
 #include "ibl/prefilter_ggx_material.hpp"
 #include <blkhurst/cameras/ortho_camera.hpp>
 #include <blkhurst/geometry/plane_geometry.hpp>
+#include <blkhurst/helpers/fullscreen_quad.hpp>
 #include <blkhurst/ibl/pmrem_generator.hpp>
 #include <blkhurst/renderer/renderer.hpp>
 
@@ -57,14 +58,12 @@ std::shared_ptr<Texture> PMREMGenerator::generateBRDFLUT(Renderer& renderer, int
   auto renderTarget = RenderTarget::create(size, size, desc);
 
   // Fullscreen Quad
-  auto camera = OrthoCamera::create();
-  auto planeGeometry = PlaneGeometry::create({2.0F, 2.0F});
   auto brdfMaterial = BrdfLUTMaterial::create();
-  auto fullscreen = Mesh::create(planeGeometry, brdfMaterial);
+  FullscreenQuad fullscreenQuad(BrdfLUTMaterial::create());
 
   // Render
   renderer.setRenderTarget(renderTarget.get());
-  renderer.render(*fullscreen, *camera);
+  fullscreenQuad.render(renderer);
   renderer.setRenderTarget(nullptr);
   return renderTarget->texture();
 }
@@ -117,10 +116,8 @@ PMREMGenerator::prefilterSpecular(Renderer& renderer, const std::shared_ptr<Cube
   auto cubeRenderTarget = CubeRenderTarget::create(size, desc);
 
   // Fullscreen Quad
-  auto camera = OrthoCamera::create();
-  auto planeGeometry = PlaneGeometry::create({2.0F, 2.0F});
   auto prefilterMaterial = PrefilterGGXMaterial::create(src, {.lodBias = lodBias});
-  auto fullscreen = Mesh::create(planeGeometry, prefilterMaterial);
+  FullscreenQuad fullscreenQuad(prefilterMaterial);
 
   // Calculate mip levels.
   // ThreeJS uses a 2D atlas and generates several mips >= 16x16 (MIN_LOD=4).
@@ -141,7 +138,7 @@ PMREMGenerator::prefilterSpecular(Renderer& renderer, const std::shared_ptr<Cube
     for (int face = 0; face < faceCount; ++face) {
       prefilterMaterial->setFace(face);
       renderer.setRenderTarget(cubeRenderTarget.get(), face, mip);
-      renderer.render(*fullscreen, *camera);
+      fullscreenQuad.render(renderer);
     }
   }
 

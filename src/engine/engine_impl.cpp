@@ -12,7 +12,8 @@ Engine::Impl::Impl(const EngineConfig& config)
       ui_(config.ui, events_, window_),
       input_(events_),
       assetLoader_(config.loading.loadMode == SceneLoadPolicy::OnDemandUnloadInactive),
-      loadingManager_(config.loading) {
+      loadingManager_(config.loading),
+      composer_(&renderer_) {
   // Register EventBus Subscriptions
   registerEvents();
 
@@ -25,10 +26,12 @@ Engine::Impl::Impl(const EngineConfig& config)
 }
 
 void Engine::Impl::run() {
+  ClockInfo tick = clock_.tick();
+
   // Preload Scenes If Instance Exists
   for (const auto& sceneEntry : scene_.sceneEntries()) {
     if (sceneEntry.instance) {
-      SceneContext state = gatherSceneContext(sceneEntry.instance.get());
+      SceneContext state = gatherSceneContext(tick, sceneEntry.instance.get());
       RootState rootState = buildRootState(state.tick, state.currentScene, state.currentCamera);
       sceneEntry.instance->ensureStarted(rootState);
     }
@@ -53,11 +56,13 @@ void Engine::Impl::run() {
         assetLoader_.cancelPendingJobs();
       }
       renderer_.resetState();
+      composer_.clearPasses();
       scene_.setScene(newScene.value());
     }
 
     // Gather Frame State
-    const auto ctx = gatherSceneContext(scene_.currentScene());
+    ClockInfo tick = clock_.tick();
+    auto ctx = gatherSceneContext(tick, scene_.currentScene());
     auto rootState = buildRootState(ctx.tick, ctx.currentScene, ctx.currentCamera);
 
     // Handle Scene Attach/Detach
@@ -69,6 +74,10 @@ void Engine::Impl::run() {
       if (ctx.currentScene != nullptr) {
         ctx.currentScene->ensureStarted(rootState);
         ctx.currentScene->onAttach(rootState);
+
+        // onStart/onAttach may replace active camera/controller.
+        ctx = gatherSceneContext(ctx.tick, ctx.currentScene);
+        rootState = buildRootState(ctx.tick, ctx.currentScene, ctx.currentCamera);
       }
       previousScene = ctx.currentScene;
       previousSceneId = ctx.currentSceneId;
@@ -104,7 +113,11 @@ void Engine::Impl::run() {
     ctx.currentScene->traverse([&](Object3D& node) { node.onUpdate(rootState); });
 
     // Render
-    renderer_.render(*ctx.currentScene, *ctx.currentCamera);
+    if (composer_.hasPasses()) {
+      composer_.render();
+    } else {
+      renderer_.render(*ctx.currentScene, *ctx.currentCamera);
+    }
 
     // Render Loading Screen If Needed
     loadingManager_.renderLoadingScreen(renderer_);
@@ -130,6 +143,7 @@ RootState Engine::Impl::buildRootState(const ClockInfo& tick, Scene* currentScen
       .scene = currentScene,
       .events = &events_,
       .assets = &assetLoader_,
+      .effectComposer = &composer_,
       .currentSceneIndex = scene_.currentIndex(),
       .sceneNames = scene_.names(),
   };
@@ -152,9 +166,9 @@ FrameUniforms Engine::Impl::buildFrameUniforms(const Input& input, const ClockIn
   return frameUniforms;
 }
 
-SceneContext Engine::Impl::gatherSceneContext(Scene* scene) {
+SceneContext Engine::Impl::gatherSceneContext(const ClockInfo& tick, Scene* scene) {
   SceneContext state;
-  state.tick = clock_.tick();
+  state.tick = tick;
   state.currentScene = scene;
   if (state.currentScene != nullptr) {
     state.currentSceneId = state.currentScene->uuid();
@@ -198,6 +212,7 @@ void Engine::Impl::registerEvents() {
       [this](const ToggleFullscreen& fullscreen) { window_.useFullscreen(fullscreen.enabled); });
   on<FramebufferResized>([this](const FramebufferResized& size) {
     renderer_.setDefaultFramebufferSize(size.width, size.height);
+    composer_.setSize(size.width, size.height);
   });
 }
 

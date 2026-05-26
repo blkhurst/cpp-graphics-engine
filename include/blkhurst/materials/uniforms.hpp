@@ -46,6 +46,9 @@ constexpr int RoughnessMap = 10;
 constexpr int AoMap = 11;
 constexpr int EmissiveMap = 12;
 constexpr int DisplacementMap = 13;
+// Post-Processing (Separate Draws, But Reserve Safer)
+constexpr int Postprocessing0 = 14;
+constexpr int Postprocessing1 = 15;
 // 16 guaranteed, often 32+
 } // namespace slots
 
@@ -64,6 +67,8 @@ constexpr const char* RoughnessMap = "uRoughnessMap";
 constexpr const char* AoMap = "uAoMap";
 constexpr const char* EmissiveMap = "uEmissiveMap";
 constexpr const char* DisplacementMap = "uDisplacementMap";
+// Post-Processing
+constexpr const char* InputBuffer = "uInputBuffer";
 } // namespace samplers
 
 namespace defines {

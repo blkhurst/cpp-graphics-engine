@@ -12,6 +12,7 @@ class Camera;
 class Scene;
 class Input;
 class AssetLoader;
+class EffectComposer;
 
 struct RootState {
   float delta = 0.0F;
@@ -27,6 +28,7 @@ struct RootState {
   Scene* scene = nullptr;
   EventBus* events = nullptr;
   AssetLoader* assets = nullptr;
+  EffectComposer* effectComposer = nullptr;
 
   int currentSceneIndex = -1;
   std::vector<std::string> sceneNames;
