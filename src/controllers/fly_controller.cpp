@@ -70,10 +70,9 @@ void FlyController::update(const RootState& state) {
 }
 
 void FlyController::initialiseYawPitchFromCamera_(Camera& cam) {
-  const glm::quat quat = cam.rotation();
-  const glm::vec3 eulerXYZ = glm::eulerAngles(quat);
-  pitch_ = eulerXYZ[0];
-  yaw_ = eulerXYZ[1];
+  const glm::vec3 forward = glm::normalize(cam.rotation() * glm::vec3(0.0F, 0.0F, -1.0F));
+  yaw_ = std::atan2(-forward[0], -forward[2]);
+  pitch_ = std::asin(forward[1]);
   yawPitchInitialised_ = true;
 }
 
