@@ -14,6 +14,8 @@
 #include <blkhurst/renderer/render_target.hpp>
 #include <blkhurst/renderer/uniform_blocks.hpp>
 
+#include <chrono>
+
 namespace blkhurst {
 
 enum class ToneMappingMode : int { None = 0, Linear = 1, Neutral = 2, ACES = 3 };
@@ -47,10 +49,19 @@ struct RendererDesc {
   OutputColorSpace outputColorSpace = OutputColorSpace::SRGB;
 };
 
+struct RendererStats {
+  int passes = 0;
+  int drawCalls = 0;
+  int triangles = 0;
+  int instances = 0;
+  float cpuMs = 0.0F;
+  float gpuMs = 0.0F;
+};
+
 class Renderer {
 public:
   Renderer();
-  ~Renderer() = default;
+  ~Renderer();
 
   Renderer(const Renderer&) = delete;
   Renderer& operator=(const Renderer&) = delete;
@@ -58,9 +69,13 @@ public:
   Renderer& operator=(Renderer&&) = delete;
 
   [[nodiscard]] const RendererDesc& desc() const;
+  [[nodiscard]] const RendererStats& stats() const;
 
   void render(Object3D& root, Camera& camera);
   void beginPass();
+
+  void beginFrameStats();
+  void endFrameStats();
 
   void setFrameUniforms(const FrameUniforms& frameUniforms); // Used by Engine
   void setDefaultFramebufferSize(int width, int height);     // Set by engine
@@ -87,6 +102,10 @@ public:
 
 private:
   RendererDesc desc_{};
+  RendererStats stats_{};
+  unsigned statsGpuTimerQueryId_ = 0;
+  bool statsGpuTimerActive_ = false;
+  std::chrono::steady_clock::time_point statsCpuStart_;
 
   FrameUniforms frameUniforms_{};
   GpuBlocks gpuBlocks_{};
@@ -101,7 +120,7 @@ private:
   static void applyPipeline(const PipelineState& state, bool wireframe);
 
   //
-  static void drawGeometry(const Geometry& geom, int instanceCount);
+  void drawGeometry(const Geometry& geom, int instanceCount);
 
   //
   void applyPerFrameUniforms(const FrameContext& frameContext);

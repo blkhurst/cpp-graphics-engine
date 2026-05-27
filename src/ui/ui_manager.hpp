@@ -5,6 +5,7 @@
 #include <blkhurst/engine/root_state.hpp>
 #include <blkhurst/events/event_bus.hpp>
 #include <blkhurst/ui/ui_entry.hpp>
+#include <ui/performance_graph.hpp>
 
 #include <imgui.h>
 #include <string>
@@ -33,12 +34,14 @@ private:
   const WindowManager& window_;
 
   float contentScale_ = 1.0F;
+  PerformanceGraph performanceGraph_;
 
   void initialiseImGui(const WindowManager& windowManager);
   [[nodiscard]] std::string getGlVersionString() const;
   void loadImGuiFont(const std::string& fontPath) const;
 
   void drawStatsHeader(const RootState& state);
+  void drawWindowHeader(const RootState& state);
   void drawScenesHeader(const RootState& state);
 
   static void defaultStyle();

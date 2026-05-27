@@ -36,6 +36,7 @@ inline constexpr float minWindowWidth = 225.0F;
 
 inline constexpr bool useDefaultStyle = true;
 inline constexpr bool showStatsHeader = true;
+inline constexpr bool showWindowHeader = true;
 inline constexpr bool showScenesHeader = true;
 } // namespace ui
 

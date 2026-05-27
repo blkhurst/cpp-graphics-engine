@@ -1,6 +1,7 @@
 #include "ui/ui_manager.hpp"
 #include "ui/fonts/inter/inter_variable_ttf.hpp"
 #include <blkhurst/events/events.hpp>
+#include <blkhurst/renderer/renderer.hpp>
 #include <blkhurst/util/assets.hpp>
 
 #include <cstdio>
@@ -15,6 +16,21 @@ constexpr ImGuiWindowFlags kMainWindowFlags =
 
 constexpr float kWindowPosX = 10.0F;
 constexpr float kWindowPosY = 10.0F;
+
+ImVec4 timingColor(float milliseconds) {
+  const float kFrameBudget60FpsMs = 16.7F;
+  const float kFrameBudget30FpsMs = 33.3F;
+  const ImVec4 kGoodTimingColor{0.36F, 0.84F, 0.50F, 1.0F};
+  const ImVec4 kWarnTimingColor{1.0F, 0.76F, 0.33F, 1.0F};
+  const ImVec4 kBadTimingColor{1.0F, 0.36F, 0.32F, 1.0F};
+  if (milliseconds <= kFrameBudget60FpsMs) {
+    return kGoodTimingColor;
+  }
+  if (milliseconds <= kFrameBudget30FpsMs) {
+    return kWarnTimingColor;
+  }
+  return kBadTimingColor;
+}
 } // namespace
 
 namespace blkhurst {
@@ -107,6 +123,9 @@ void UiManager::drawBaseUi(const RootState& state) {
   if (config_.showStatsHeader) {
     drawStatsHeader(state);
   }
+  if (config_.showWindowHeader) {
+    drawWindowHeader(state);
+  }
   if (config_.showScenesHeader) {
     drawScenesHeader(state);
   }
@@ -128,12 +147,49 @@ void UiManager::draw(UiEntry& entry, const RootState& state) {
 }
 
 void UiManager::drawStatsHeader(const RootState& state) {
-  if (ImGui::CollapsingHeader("Window")) {
-    ImGui::Text("FPS: %.1f", state.fps);
-    ImGui::SameLine();
-    ImGui::Text("MS: %.2f", state.ms);
+  if (ImGui::CollapsingHeader("Stats")) {
+    if (state.renderer == nullptr) {
+      return;
+    }
 
-    // Event Manager Fullscreen Event
+    const auto& stats = state.renderer->stats();
+    performanceGraph_.pushSample({.fps = state.fps, .cpuMs = stats.cpuMs, .gpuMs = stats.gpuMs});
+    performanceGraph_.draw(contentScale_);
+
+    if (ImGui::BeginTable("renderer_stats", 2)) {
+      ImGui::TableNextColumn();
+      ImGui::TextUnformatted("FPS");
+      ImGui::SameLine();
+      ImGui::Text("%.1f", state.fps);
+      ImGui::TableNextColumn();
+      ImGui::TextUnformatted("Frame");
+      ImGui::SameLine();
+      ImGui::Text("%.2f ms", state.ms);
+      ImGui::TableNextColumn();
+      ImGui::TextUnformatted("CPU");
+      ImGui::SameLine();
+      ImGui::TextColored(timingColor(stats.cpuMs), "%.2f ms", stats.cpuMs);
+      ImGui::TableNextColumn();
+      ImGui::TextUnformatted("GPU");
+      ImGui::SameLine();
+      ImGui::TextColored(timingColor(stats.gpuMs), "%.2f ms", stats.gpuMs);
+      ImGui::TableNextColumn();
+      ImGui::Text("Passes: %d", stats.passes);
+      ImGui::TableNextColumn();
+      ImGui::Text("Draw Calls: %d", stats.drawCalls);
+      ImGui::TableNextColumn();
+      ImGui::Text("Triangles: %-6d", stats.triangles); // %-6d prevents jitter from ms changes
+      if (stats.instances > 0) {
+        ImGui::TableNextColumn();
+        ImGui::Text("Instances: %d", stats.instances);
+      }
+      ImGui::EndTable();
+    }
+  }
+}
+
+void UiManager::drawWindowHeader(const RootState& state) {
+  if (ImGui::CollapsingHeader("Window")) {
     static bool useFullscreen = false;
     if (ImGui::Checkbox("Fullscreen", &useFullscreen)) {
       spdlog::debug("UiManager toggled fullscreen({})", useFullscreen);

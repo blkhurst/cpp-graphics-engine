@@ -20,6 +20,8 @@
 namespace blkhurst {
 
 Renderer::Renderer() {
+  glGenQueries(1, &statsGpuTimerQueryId_);
+
   auto backgroundGeom = BoxGeometry::create({.width = 2.0F, .height = 2.0F, .depth = 2.0F});
   auto backgroundMat = SkyBoxMaterial::create();
   skyboxMesh_ = Mesh::create(backgroundGeom, backgroundMat);
@@ -28,8 +30,19 @@ Renderer::Renderer() {
   spdlog::debug("Renderer constructed");
 }
 
+Renderer::~Renderer() {
+  if (statsGpuTimerActive_) {
+    glEndQuery(GL_TIME_ELAPSED);
+  }
+  glDeleteQueries(1, &statsGpuTimerQueryId_);
+}
+
 const RendererDesc& Renderer::desc() const {
   return desc_;
+}
+
+const RendererStats& Renderer::stats() const {
+  return stats_;
 }
 
 void Renderer::render(Object3D& root, Camera& camera) {
@@ -57,6 +70,8 @@ void Renderer::render(Object3D& root, Camera& camera) {
 
 // Set Known-Safe Baseline State Per Pass
 void Renderer::beginPass() {
+  stats_.passes++;
+
   glEnable(GL_DEPTH_TEST);
   glDepthFunc(GL_LESS);
   glDisable(GL_BLEND);
@@ -65,6 +80,33 @@ void Renderer::beginPass() {
   if (desc_.autoClear) {
     clear(true, true, true);
   }
+}
+
+void Renderer::beginFrameStats() {
+  stats_ = {};
+  statsCpuStart_ = std::chrono::steady_clock::now();
+  if (statsGpuTimerActive_) {
+    glEndQuery(GL_TIME_ELAPSED);
+  }
+  glBeginQuery(GL_TIME_ELAPSED, statsGpuTimerQueryId_);
+  statsGpuTimerActive_ = true;
+}
+
+void Renderer::endFrameStats() {
+  const auto cpuEnd = std::chrono::steady_clock::now();
+  stats_.cpuMs = std::chrono::duration<float, std::milli>(cpuEnd - statsCpuStart_).count();
+
+  if (!statsGpuTimerActive_) {
+    return;
+  }
+
+  glEndQuery(GL_TIME_ELAPSED);
+  statsGpuTimerActive_ = false;
+
+  GLuint64 gpuNs = 0;
+  const int NsPerMs = 1'000'000;
+  glGetQueryObjectui64v(statsGpuTimerQueryId_, GL_QUERY_RESULT, &gpuNs);
+  stats_.gpuMs = static_cast<float>(static_cast<double>(gpuNs) / NsPerMs);
 }
 
 void Renderer::setFrameUniforms(const FrameUniforms& frameUniforms) {
@@ -356,6 +398,13 @@ void Renderer::applyPipeline(const PipelineState& state, bool wireframe) {
 void Renderer::drawGeometry(const Geometry& geom, int instanceCount) {
   const DrawRange range = geom.drawRange();
   const GLenum primitive = toGlPrimitive(geom.primitive());
+
+  // Update Stats
+  stats_.drawCalls++;
+  stats_.instances += instanceCount > 1 ? instanceCount : 0;
+  if (geom.primitive() == PrimitiveMode::Triangles) {
+    stats_.triangles += (range.count / 3) * instanceCount;
+  }
 
   if (geom.primitive() == PrimitiveMode::Patches) {
     glPatchParameteri(GL_PATCH_VERTICES, geom.patchVertices());

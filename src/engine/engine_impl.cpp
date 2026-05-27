@@ -91,7 +91,9 @@ void Engine::Impl::run() {
 
     // UI only if no active scene/camera
     if ((ctx.currentScene == nullptr) || (ctx.currentCamera == nullptr)) {
+      renderer_.beginFrameStats();
       renderer_.clear();
+      renderer_.endFrameStats();
       drawUi(rootState, ctx.currentScene);
       window_.swapBuffers();
       continue;
@@ -110,6 +112,7 @@ void Engine::Impl::run() {
     renderer_.setFrameUniforms(frameUniforms);
 
     // Update Scene (May call renderer.render)
+    renderer_.beginFrameStats();
     ctx.currentScene->traverse([&](Object3D& node) { node.onUpdate(rootState); });
 
     // Render
@@ -121,6 +124,7 @@ void Engine::Impl::run() {
 
     // Render Loading Screen If Needed
     loadingManager_.renderLoadingScreen(renderer_);
+    renderer_.endFrameStats();
 
     // Ui
     drawUi(rootState, ctx.currentScene);

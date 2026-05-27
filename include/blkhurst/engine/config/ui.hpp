@@ -16,6 +16,7 @@ struct UiConfig {
 
   bool useDefaultStyle = defaults::ui::useDefaultStyle;
   bool showStatsHeader = defaults::ui::showStatsHeader;
+  bool showWindowHeader = defaults::ui::showWindowHeader;
   bool showScenesHeader = defaults::ui::showScenesHeader;
 };
 
