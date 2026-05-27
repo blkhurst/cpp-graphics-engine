@@ -23,6 +23,11 @@ Engine::Impl::Impl(const EngineConfig& config)
   // Trigger FramebufferResized Event; Set Renderers Default Framebuffer Size
   auto windowFramebufferSize = window_.getFramebufferResolution();
   input_.pushFramebufferSize(windowFramebufferSize.width, windowFramebufferSize.height);
+
+  // Clear/swap immediately to avoid stale backbuffer contents on first frame.
+  renderer_.setDefaultFramebufferSize(windowFramebufferSize.width, windowFramebufferSize.height);
+  renderer_.clear();
+  window_.swapBuffers();
 }
 
 void Engine::Impl::run() {
