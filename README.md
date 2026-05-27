@@ -75,6 +75,22 @@ cmake --build build
 - `BLKHURST_BUILD_EXAMPLES`: Build example applications (default: ON)
 - `BLKHURST_INSTALL`: Generate installation target (default: ON)
 
+### NVIDIA OptiX (optional)
+
+Install the requirements:
+
+- [OptiX SDK](https://developer.nvidia.com/designworks/optix/download)
+- [CUDA Toolkit](https://developer.nvidia.com/cuda-downloads)
+  - or `sudo apt install nvidia-cuda-toolkit`
+
+```bash
+cmake -B build-optix \
+  -DBLKHURST_ENABLE_OPTIX=ON \
+  -DOPTIX_SDK_DIR=/path/to/NVIDIA-OptiX-SDK \
+
+cmake --build build-optix/
+```
+
 ## Installation
 
 ```bash

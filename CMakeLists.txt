@@ -8,6 +8,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 option(BLKHURST_USE_FETCHCONTENT "Fetch deps automatically" OFF)
 option(BLKHURST_BUILD_EXAMPLES "Build examples" ON)
 option(BLKHURST_INSTALL "Generate installation target" ON)
+option(BLKHURST_ENABLE_OPTIX "Build optional NVIDIA OptiX integrations" OFF)
 
 # Dependencies
 find_package(OpenGL REQUIRED)
@@ -60,6 +61,9 @@ add_subdirectory(dependencies)
 
 # Library Source
 file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp)
+if (NOT BLKHURST_ENABLE_OPTIX)
+  list(FILTER SOURCES EXCLUDE REGEX ".*/src/integrations/optix_.*\\.cpp$")
+endif()
 add_library(BlkhurstEngine STATIC ${SOURCES})
 
 target_sources(BlkhurstEngine PRIVATE
@@ -89,6 +93,18 @@ target_link_libraries(BlkhurstEngine
     spdlog::spdlog
     assimp::assimp
 )
+
+if (BLKHURST_ENABLE_OPTIX)
+  find_package(CUDAToolkit REQUIRED)
+  set(OPTIX_SDK_DIR "" CACHE PATH "Path to NVIDIA OptiX SDK root directory")
+  if (NOT OPTIX_SDK_DIR)
+    message(FATAL_ERROR "BLKHURST_ENABLE_OPTIX=ON requires -DOPTIX_SDK_DIR=/path/to/NVIDIA-OptiX-SDK")
+  endif()
+
+  target_compile_definitions(BlkhurstEngine PUBLIC BLKHURST_ENABLE_OPTIX=1)
+  target_include_directories(BlkhurstEngine PUBLIC "${OPTIX_SDK_DIR}/include")
+  target_link_libraries(BlkhurstEngine PRIVATE CUDA::cuda_driver CUDA::cudart)
+endif()
 
 # Compile Features
 set(CMAKE_CXX_STANDARD 20)
