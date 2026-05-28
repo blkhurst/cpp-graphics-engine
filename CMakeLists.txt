@@ -102,8 +102,9 @@ if (BLKHURST_ENABLE_OPTIX)
   endif()
 
   target_compile_definitions(BlkhurstEngine PUBLIC BLKHURST_ENABLE_OPTIX=1)
+  target_compile_definitions(BlkhurstEngine PRIVATE BLKHURST_OPTIX_INCLUDE_DIR="${OPTIX_SDK_DIR}/include")
   target_include_directories(BlkhurstEngine PUBLIC "${OPTIX_SDK_DIR}/include")
-  target_link_libraries(BlkhurstEngine PRIVATE CUDA::cuda_driver CUDA::cudart)
+  target_link_libraries(BlkhurstEngine PRIVATE CUDA::cuda_driver CUDA::cudart CUDA::nvrtc)
 endif()
 
 # Compile Features

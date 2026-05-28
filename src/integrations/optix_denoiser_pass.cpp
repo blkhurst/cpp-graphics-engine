@@ -11,7 +11,6 @@
 #include <cuda_gl_interop.h>
 #include <cuda_runtime.h>
 #include <optix.h>
-#include <optix_function_table_definition.h>
 #include <optix_stubs.h>
 // clang-format on
 #include <spdlog/spdlog.h>
@@ -96,8 +95,8 @@ struct OptixDenoiserPass::Impl {
   explicit Impl(const OptixDenoiserPassDesc& initialDesc)
       : desc(initialDesc) {
     if (desc.useAlbedo || desc.useNormal) {
-      spdlog::warn(
-          "OptixDenoiserPass guide buffers are not implemented yet; ignoring albedo/normal guides.");
+      spdlog::warn("OptixDenoiserPass guide buffers are not implemented yet; ignoring "
+                   "albedo/normal guides.");
       desc.useAlbedo = false;
       desc.useNormal = false;
     }
