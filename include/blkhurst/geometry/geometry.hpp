@@ -63,6 +63,10 @@ public:
   [[nodiscard]] DrawRange drawRange() const;
   [[nodiscard]] bool isIndexed() const;
   [[nodiscard]] const VertexArray& vertexArray() const;
+  [[nodiscard]] std::span<const float> positions() const;
+  [[nodiscard]] std::span<const float> uvs() const;
+  [[nodiscard]] std::span<const float> normals() const;
+  [[nodiscard]] std::span<const unsigned> indices() const;
 
   static std::shared_ptr<Geometry> from(const MeshData& meshData);
 
@@ -73,6 +77,10 @@ private:
   std::unique_ptr<Buffer> ebo_;
   std::unique_ptr<Buffer> instanceMatrixBuffer_;
   std::unique_ptr<Buffer> instanceColorBuffer_;
+  std::vector<float> positions_;
+  std::vector<float> uvs_;
+  std::vector<float> normals_;
+  std::vector<unsigned> indices_;
 
   PrimitiveMode primitive_ = PrimitiveMode::Triangles;
   int patchVertices_ = static_cast<int>(PatchType::Quads);

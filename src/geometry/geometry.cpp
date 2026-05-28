@@ -32,6 +32,8 @@ void Geometry::setAttribute(Attrib attrib, std::span<const float> data, int comp
   vbos_.push_back(std::move(vbo));
 
   if (attrib == Attrib::Position) {
+    positions_.assign(data.begin(), data.end());
+
     const int vertexCount = static_cast<int>(data.size() / componentCount);
     vertexCount_ = vertexCount;
 
@@ -40,10 +42,17 @@ void Geometry::setAttribute(Attrib attrib, std::span<const float> data, int comp
       drawRange_.count = vertexCount;
     }
   }
+  if (attrib == Attrib::Normal) {
+    normals_.assign(data.begin(), data.end());
+  }
+  if (attrib == Attrib::Uv) {
+    uvs_.assign(data.begin(), data.end());
+  }
   // TODO: Attribute count mismatch
 }
 
 void Geometry::setIndex(std::span<const unsigned> indices) {
+  indices_.assign(indices.begin(), indices.end());
   ebo_ = std::make_unique<Buffer>(indices, kDynamic);
   vao_.setElementBuffer(ebo_->id());
 
@@ -132,6 +141,22 @@ bool Geometry::isIndexed() const {
 
 const VertexArray& Geometry::vertexArray() const {
   return vao_;
+}
+
+std::span<const float> Geometry::positions() const {
+  return positions_;
+}
+
+std::span<const float> Geometry::uvs() const {
+  return uvs_;
+}
+
+std::span<const float> Geometry::normals() const {
+  return normals_;
+}
+
+std::span<const unsigned> Geometry::indices() const {
+  return indices_;
 }
 
 std::shared_ptr<Geometry> Geometry::from(const MeshData& meshData) {
